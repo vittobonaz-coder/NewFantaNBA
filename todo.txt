@@ -29,6 +29,10 @@ Metodo is_data_stale (Dati scaduti)
     Spunto: Carica lo storico una volta sola nel costruttore (__init__) 
     e poi aggiorna solo la variabile in RAM.
 
+- L'app dovrà avere come fonte di verità il database online, ma dovrà
+    anche salvare i dati in locale (json) in modo da accedervi 
+    velocemente
+
 
 
 
