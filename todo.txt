@@ -1,0 +1,53 @@
+TO DO:
+- Gestire i DNP: in api_nba non vengono stampati i DNP nei boxscore
+
+- nba_api
+    classe NbaDataManager:
+    def __init__(self, player_ids, season='2025-26'):
+        self.player_ids = player_ids
+        self.season = season
+        # Cache interna per evitare accessi multipli al disco
+        self.last_matchups = []
+        self.last_boxscores = []
+
+Metodo is_data_stale (Dati scaduti)
+
+- last_updated (timestamp). Quando l'app Flet chiama la classe, lei 
+    controlla: "Ho scaricato i dati più di 10 minuti fa? Se sì, 
+    rifaccio il fetch automatico, altrimenti leggo il file locale". 
+    Questo rende l'app intelligentissima e velocissima.
+
+- Gestione automatica del fuso orario
+    Un metodo che calcola la "Data NBA corrente". Se sono le 9:00 
+    del mattino in Italia, la classe sa automaticamente che deve 
+    cercare i dati del giorno prima (ieri negli USA), senza che tu 
+    debba scriverlo a mano ogni volta.
+
+- B. Gestione della Memoria RAM
+    In fetch_and_sync, ritorni l'intera cronologia (full_history). 
+    Se il file diventa grande, caricarlo ogni volta potrebbe rallentare.
+    Spunto: Carica lo storico una volta sola nel costruttore (__init__) 
+    e poi aggiorna solo la variabile in RAM.
+
+
+
+
+SCORCIATOIE UTILI:
+- Flet: Se lancio con "flet run nome_script.py" posso cambiare in realtime salvando il file
+
+- Ambiente Virtuale:
+        Ecco come fare, assumendo che tu abbia già creato la cartella dell'ambiente (solitamente chiamata venv o .venv)
+            CMD --> .venv\Scripts\activate
+            CMD VSCODE  -->     Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+                                .venv\Scripts\activate
+
+- Commit Github:
+        1. git add .
+        2. git commit -m "messaggio"
+        3. git push origin main
+
+- Supabase - Postgres database
+        Project password: DunkestSucks2026
+
+- Scrive automaticamente il file requirements.txt: 
+        pip freeze > requirements.txt

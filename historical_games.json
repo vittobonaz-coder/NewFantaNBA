@@ -1,0 +1,92 @@
+[
+    {
+        "GAME_ID": "0022501187",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "WAS @ CLE",
+        "SCORE": "117 - 130"
+    },
+    {
+        "GAME_ID": "0022501188",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "DET @ IND",
+        "SCORE": "133 - 121"
+    },
+    {
+        "GAME_ID": "0022501190",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "CHA @ NYK",
+        "SCORE": "110 - 96"
+    },
+    {
+        "GAME_ID": "0022501196",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "PHX @ OKC",
+        "SCORE": "135 - 103"
+    },
+    {
+        "GAME_ID": "0022501194",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "MEM @ HOU",
+        "SCORE": "101 - 132"
+    },
+    {
+        "GAME_ID": "0022501193",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "CHI @ DAL",
+        "SCORE": "128 - 149"
+    },
+    {
+        "GAME_ID": "0022501199",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "GSW @ LAC",
+        "SCORE": "110 - 115"
+    },
+    {
+        "GAME_ID": "0022501198",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "UTA @ LAL",
+        "SCORE": "107 - 131"
+    },
+    {
+        "GAME_ID": "0022501195",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "NOP @ MIN",
+        "SCORE": "126 - 132"
+    },
+    {
+        "GAME_ID": "0022501197",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "DEN @ SAS",
+        "SCORE": "128 - 118"
+    },
+    {
+        "GAME_ID": "0022501200",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "SAC @ POR",
+        "SCORE": "110 - 122"
+    },
+    {
+        "GAME_ID": "0022501191",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "MIL @ PHI",
+        "SCORE": "106 - 126"
+    },
+    {
+        "GAME_ID": "0022501186",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "ORL @ BOS",
+        "SCORE": "108 - 113"
+    },
+    {
+        "GAME_ID": "0022501192",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "BKN @ TOR",
+        "SCORE": "101 - 136"
+    },
+    {
+        "GAME_ID": "0022501189",
+        "GAME_DATE": "2026-04-12",
+        "MATCHUP": "ATL @ MIA",
+        "SCORE": "117 - 143"
+    }
+]

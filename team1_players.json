@@ -1,0 +1,80 @@
+[
+    {
+        "PLAYER_ID": 201143,
+        "PLAYER_NAME": "Al Horford",
+        "TEAM": "GSW",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 2544,
+        "PLAYER_NAME": "LeBron James",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629020,
+        "PLAYER_NAME": "Jarred Vanderbilt",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 201935,
+        "PLAYER_NAME": "James Harden",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 201939,
+        "PLAYER_NAME": "Stephen Curry",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629636,
+        "PLAYER_NAME": "Darius Garland",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630163,
+        "PLAYER_NAME": "LaMelo Ball",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630567,
+        "PLAYER_NAME": "Scottie Barnes",
+        "TEAM": "TOR",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1630578,
+        "PLAYER_NAME": "Alperen Sengun",
+        "TEAM": "HOU",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631323,
+        "PLAYER_NAME": "Simone Fontecchio",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641705,
+        "PLAYER_NAME": "Victor Wembanyama",
+        "TEAM": "SAS",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 202331,
+        "PLAYER_NAME": "Paul George",
+        "TEAM": "PHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 201566,
+        "PLAYER_NAME": "Russell Westbrook",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    }
+]
