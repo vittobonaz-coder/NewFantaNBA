@@ -2,6 +2,7 @@ from api_nba import NbaDataManager
 from fanta_obj import Team
 from ui_court import Court
 import flet as ft
+import os
 
 # 1. Configurazione Iniziale
 DATA_TARGET = "2026-04-12"
@@ -50,9 +51,9 @@ def main(page: ft.Page) -> None:
     page.add(Court(my_team))
 
 if __name__ == "__main__":
-    # port = int(os.getenv("PORT", 8080))
+    port = int(os.getenv("PORT", 8080))
     ft.run(main=main, 
-        # port=port, 
+        port=port, 
         host="0.0.0.0", 
         assets_dir="assets",
     )
