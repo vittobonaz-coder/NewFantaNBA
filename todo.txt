@@ -21,7 +21,7 @@ TO DO:
 
 - L'app dovrà avere come fonte di verità il database online, ma dovrà
     anche salvare i dati in locale (json) in modo da accedervi 
-    velocemente
+    velocemente. Per salvataggio centralizzato vedi gemini 23/08
 
 - Aggiornamento dati giornaliero
     Render non ha un "cronjob" (operazione pianificata) nel piano free. 
