@@ -1,48 +1,47 @@
 import flet as ft
-from fanta_obj import Player
-from fanta_obj import Team
-
+from fanta_obj import Player, Team
 ROLE_CONFIGS = {
     "STARTER": {"width": 110, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": 1.0, "button_size": 20, "button_left": -5, "button_top": -5},
-    "SIXTH":   {"width": 110, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": 1.0, "button_size": 20, "button_left": -5, "button_top": -5},
-    "BENCH":   {"width": 80,  "height": 110, "avatar": 40, "font": 13, "opacity": 1.0, "mult": 0.5, "button_size": 15, "button_left": -8, "button_top": -8},
-    "RESERVE": {"width": 80,  "height": 110, "avatar": 40, "font": 13, "opacity": 0.6, "mult": 0.0, "button_size": 15, "button_left": -8, "button_top": -8},
+    "SIXTH": {"width": 110, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": 1.0, "button_size": 20, "button_left": -5, "button_top": -5},
+    "BENCH": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 1.0, "mult": 0.5, "button_size": 15, "button_left": -8, "button_top": -8},
+    "RESERVE": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 0.6, "mult": 0.0, "button_size": 15, "button_left": -8, "button_top": -8},
 }
 
 class PlayerCard(ft.Container):
     """Classe per le cards dei giocatori"""
+
     def __init__(self, player: Player, score: float, role_type: str, slot_index: int):
-        # role_type: "STARTER", "SIXTH", "BENCH", "RESERVE"
         super().__init__()
         self.player = player
         self.score = score
         self.role_type = role_type
-        self.slot_index = slot_index # Indice univoco sul campo (da 0 a 12)
-
-        self.border_radius = 12
-        self.bgcolor = ft.Colors.GREY_900
-        self.border = ft.Border.all(2, ft.Colors.GREY)
-        self.padding = 5
-
+        self.slot_index = slot_index
         # Swap Button
         self.swap_button = ft.PopupMenuButton(
             icon=ft.Icons.SWAP_VERT_CIRCLE, icon_color="white", bgcolor="black"
         )
         
+        # Setup UI
         self.setup_ui()
 
-    # Caricamento configurazione
     def setup_ui(self):
-        """Configura l'aspetto in base al ruolo attuale"""
         conf = ROLE_CONFIGS.get(self.role_type, ROLE_CONFIGS["STARTER"])
+        self.configure_container(conf)
+        self.content = self.build_content(conf)
+
+    def configure_container(self, conf):
+        self.border_radius = 12
+        self.bgcolor = ft.Colors.GREY_900
+        self.border = ft.Border.all(2, ft.Colors.GREY)
+        self.padding = 5
         self.width = conf["width"]
         self.height = conf["height"]
         self.opacity = conf["opacity"]
-        self.content = self._build_content(conf)
 
-
-    def _build_content(self, conf):
-        surname = self.player.name.split()[-1]
+    def build_content(self, conf):
+        name_parts = self.player.name.split()
+        first_initial = name_parts[0][0]
+        surname = ' '.join(name_parts[1:])
         final_score = self.score * conf["mult"]
             
         btn_container = ft.Container(
@@ -50,7 +49,6 @@ class PlayerCard(ft.Container):
             left=conf["button_left"], top=conf["button_top"]
         )
 
-        # CARD
         return ft.Stack(
             alignment=ft.alignment.Alignment.TOP_CENTER,
             controls=[
@@ -59,7 +57,7 @@ class PlayerCard(ft.Container):
                     horizontal_alignment="center",
                     controls=[
                         ft.Image(src=self.player.get_avatar_img(), width=conf["avatar"], height=conf["avatar"]),
-                        ft.Text(surname, size=conf["font"], weight="bold", no_wrap=True),
+                        ft.Text(f"{first_initial}. {surname}", size=conf["font"], weight="bold", no_wrap=True),
                         ft.Text(f"{self.player.team_abbreviation} | {self.player.position}", size=9, color="grey"),
                         ft.Text(f"{final_score:.1f}", size=conf["font"], weight="bold"),
                     ]
@@ -72,7 +70,7 @@ class PlayerCard(ft.Container):
         """Aggiorna i dati della card e rinfresca solo questa"""
         self.player = new_player
         self.score = new_score
-        self.setup_ui() # Ricostruisce il content interno
+        self.setup_ui()
 
 class Court(ft.Column):
     def __init__(self, team_instance: Team):
@@ -80,7 +78,12 @@ class Court(ft.Column):
         self.horizontal_alignment = "center"
         self.spacing = 10
         self.team = team_instance
-        self.lineup = "2-2-1"
+        self.lineup = self.team.lineup 
+
+        # # 1. SALVATAGGIO STATO INIZIALE (per Annulla)
+        # # Salviamo una lista di tuple (Giocatore, Score) per ogni card
+        # self.initial_state = [] 
+        # self.initial_lineup = self.lineup
 
         # Testo UI legato al campo 'score' del Team
         self.total_score_text = ft.Text(
@@ -100,6 +103,13 @@ class Court(ft.Column):
             )
             self.cards.append(card)
 
+        # VALIDAZIONE AUTOMATICA ALL'AVVIO
+        # Se i giocatori caricati non rispettano il modulo attuale, li scambiamo subito
+        self.auto_fix_starters(self.lineup)
+
+        # Popoliamo lo stato iniziale dopo aver creato le cards
+        self._capture_current_state()
+
         # DROPDOWN FORMAZIONE
         self.lineup_dd = ft.Dropdown(
             width=110, height=50, text_size=12, value=self.lineup,
@@ -110,16 +120,114 @@ class Court(ft.Column):
         
         self.starters_container = ft.Container(width=250, height=450)
 
+        # 2. BOTTONI SALVA / ANNULLA
+        self.btn_save = ft.ElevatedButton(
+            "Salva", icon=ft.Icons.SAVE,
+            bgcolor=ft.Colors.GREEN_700, color="white",
+            on_click=self.handle_save
+        )
+        self.btn_cancel = ft.ElevatedButton(
+            "Annulla", icon=ft.Icons.UNDO,
+            bgcolor=ft.Colors.RED_700, color="white",
+            on_click=self.handle_cancel
+        )
+        self.controls_bar = ft.Row(
+            [self.btn_cancel, self.btn_save], 
+            alignment=ft.MainAxisAlignment.CENTER,
+            visible=False # Nascosti all'inizio
+        )
+
+        # # Bottoni Salva/Annulla
+        # self.btn_save = ft.ElevatedButton(
+        #     "Salva", 
+        #     icon=ft.Icons.SAVE,
+        #     # visible=False,
+        #     visible=True,
+        #     bgcolor=ft.Colors.BLACK_54, color="white",
+        #     # disabled=True,
+        #     on_click=self.handle_save
+        # )
+        # self.btn_cancel = ft.ElevatedButton(
+        #     "Annulla", 
+        #     icon=ft.Icons.DELETE,
+        #     # visible=False,
+        #     visible=True,
+        #     bgcolor=ft.Colors.BLACK_54, color="white",
+        #     # disabled=True,
+        #     # TODO: on_click=self._revert_roster_changes
+        # )
+        # self.controls_bar = ft.Row(
+        #     [self.btn_cancel, self.btn_save], 
+        #     alignment=ft.MainAxisAlignment.CENTER,
+        #     # visible=False
+        #     visible=True
+        # )
+
         self.setup_static_ui()
         self.update_starters_layout()
         self.refresh_menus()
         self.refresh_ui_and_data()
+
+
+    def _capture_current_state(self):
+        """Memorizza la posizione attuale dei giocatori e la formazione."""
+        self.initial_state = [(c.player, c.score) for c in self.cards]
+        self.initial_lineup = self.lineup
+
+    def toggle_buttons(self, visible: bool):
+        """Mostra o nasconde la barra dei comandi."""
+        self.controls_bar.visible = visible
+        self.update()
+
+    def handle_save(self, e):
+        """Salva su Supabase, su file locale e nasconde i bottoni."""
+        from supabase_manager import SupabaseSync
+        sync = SupabaseSync()
+
+        # Aggiorniamo i dati nel team (incluso l'ordine dei giocatori)
+        self.refresh_ui_and_data()
+        
+        # Sincronizza Cloud e salva in locale
+        sync.push_team(self.team, court=self)
+        self.team.save_to_json()
+        
+        # Il nuovo stato corrente diventa il punto di ripristino per futuri cambi
+        self._capture_current_state()
+        self.toggle_buttons(False)
+
+        # Feedback all'utente
+        sb = ft.SnackBar(ft.Text(f"Formazione di {self.team.name} salvata!"), bgcolor="green")
+        self.page.overlay.append(sb) # Metodo più robusto per Flet
+        sb.open = True
+        self.page.update()
+
+    def handle_cancel(self, e):
+        """Ripristina i dati all'ultimo salvataggio."""
+        # Ripristina Giocatori nelle card
+        for i, (old_p, old_s) in enumerate(self.initial_state):
+            self.cards[i].update_data(old_p, old_s)
+        
+        # Ripristina Formazione
+        self.lineup = self.initial_lineup
+        self.lineup_dd.value = self.lineup
+        
+        self.update_starters_layout()
+        self.refresh_ui_and_data()
+        self.refresh_menus()
+        self.toggle_buttons(False)
+        self.update()
     
     def refresh_ui_and_data(self):
         """Sincronizza i ruoli nel Team in base alla posizione delle cards e ricalcola."""
+        new_ordered_players = []
         # 1. Aggiorna la roles_map nel Team in base a dove si trovano i giocatori ora
         for card in self.cards:
             self.team.roles_map[card.player.id] = card.role_type
+            new_ordered_players.append(card.player)
+
+        # Cruciale: aggiorniamo la lista players del Team con l'ordine delle cards
+        self.team.players = new_ordered_players
+        self.team.lineup = self.lineup # Salviamo il modulo nel team
         
         # 2. Chiedi al Team di ricalcolare il suo punteggio interno
         new_total = self.team.calculate_total_score(ROLE_CONFIGS)
@@ -128,6 +236,7 @@ class Court(ft.Column):
         self.total_score_text.value = f"TOTAL SCORE: {new_total:.1f}"
     
     def change_lineup(self, e):
+        """Cambio modulo"""
         new_val = self.lineup_dd.value
         if new_val == self.lineup:
             return
@@ -135,6 +244,7 @@ class Court(ft.Column):
         self.auto_fix_starters(new_val)
         # 2. Aggiorna la variabile di stato della formazione
         self.lineup = new_val
+        self.toggle_buttons(True)
         # 3. Sposta fisicamente le righe dell'interfaccia
         self.update_starters_layout()
         # 4. Ricalcola tutti i menu a tendina per gli scambi futuri
@@ -147,7 +257,6 @@ class Court(ft.Column):
         self.controls = [
             # Punteggio Squadra
             self.total_score_text,
-
             # Dropdown formazione
             ft.Container(
                 content=ft.Row([self.lineup_dd], alignment=ft.MainAxisAlignment.START),
@@ -155,6 +264,9 @@ class Court(ft.Column):
             ),
             # Titolari
             self.starters_container,
+
+            self.controls_bar, # Barra Salva/Annulla
+
             # Panchina
             ft.Container(
                 content= ft.Column(
@@ -247,6 +359,7 @@ class Court(ft.Column):
         """Logica di scambio"""
         origin_card = self.cards[origin_idx]
         target_card = self.cards[target_idx]
+        old_player, old_score = origin_card.player, origin_card.score
 
         old_player = origin_card.player
         old_score = origin_card.score
@@ -254,6 +367,7 @@ class Court(ft.Column):
         origin_card.update_data(target_card.player, target_card.score)
         target_card.update_data(old_player, old_score)
 
+        self.toggle_buttons(True)
         # Ricalcola le opzioni valide per tutti visto che il campo è cambiato
         self.refresh_ui_and_data()
         self.refresh_menus()

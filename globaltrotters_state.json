@@ -1,0 +1,111 @@
+{
+    "team_name": "GlobalTrotters",
+    "total_score": 15.0,
+    "lineup": "2-1-2",
+    "roster": [
+        {
+            "id": 203944,
+            "name": "Julius Randle",
+            "team": "BKN",
+            "pos": "A/C",
+            "score": 0.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 1631105,
+            "name": "Jalen Duren",
+            "team": "DET",
+            "pos": "C",
+            "score": 0.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 1628369,
+            "name": "Jayson Tatum",
+            "team": "BOS",
+            "pos": "A/G",
+            "score": 0.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 202681,
+            "name": "Kyrie Irving",
+            "team": "DAL",
+            "pos": "G",
+            "score": 0.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 1628378,
+            "name": "Donovan Mitchell",
+            "team": "CLE",
+            "pos": "G",
+            "score": 0.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 1630162,
+            "name": "Anthony Edwards",
+            "team": "MIN",
+            "pos": "G",
+            "score": 0.0,
+            "role": "SIXTH"
+        },
+        {
+            "id": 201142,
+            "name": "Kevin Durant",
+            "team": "HOU",
+            "pos": "A",
+            "score": 0.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1628969,
+            "name": "Mikal Bridges",
+            "team": "NYK",
+            "pos": "G/A",
+            "score": 0.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1628389,
+            "name": "Bam Adebayo",
+            "team": "MIA",
+            "pos": "C/A",
+            "score": 30.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1630169,
+            "name": "Tyrese Haliburton",
+            "team": "IND",
+            "pos": "G",
+            "score": 0.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1628973,
+            "name": "Jalen Brunson",
+            "team": "NYK",
+            "pos": "G",
+            "score": 0.0,
+            "role": "RESERVE"
+        },
+        {
+            "id": 203507,
+            "name": "Giannis Antetokounmpo",
+            "team": "MIA",
+            "pos": "A",
+            "score": 0.0,
+            "role": "RESERVE"
+        },
+        {
+            "id": 1631096,
+            "name": "Chet Holmgren",
+            "team": "OKC",
+            "pos": "C/A",
+            "score": 0.0,
+            "role": "RESERVE"
+        }
+    ]
+}

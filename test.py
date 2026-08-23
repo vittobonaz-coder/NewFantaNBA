@@ -1,53 +1,64 @@
+import flet as ft
+import json
 from api_nba import NbaDataManager
 from fanta_obj import Team
-from ui_court import Court
-import flet as ft
+from ui_court import Court, ROLE_CONFIGS
 
-# 1. Configurazione Iniziale
+# 1. Caricamento squadre dal File JSON
+def load_fanta_teams(filepath="fanta_teams.json"):
+    with open(filepath, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+# Carichiamo il dizionario con tutte le squadre
+ALL_TEAMS_DATA = load_fanta_teams()
 DATA_TARGET = "2026-04-12"
-roles_map = {
-    "Al Horford": "STARTER", "LeBron James": "STARTER", "Jarred Vanderbilt": "STARTER",
-    "James Harden": "STARTER", "Stephen Curry": "STARTER", "Darius Garland": "SIXTH",
-    "LaMelo Ball": "BENCH", "Scottie Barnes": "BENCH", "Alperen Sengun": "BENCH",
-    "Simone Fontecchio": "BENCH", "Victor Wembanyama": "RESERVE",
-    "Paul George": "RESERVE", "Russell Westbrook": "RESERVE"
-}
-player_names = list(roles_map.keys())
 
-my_team = Team(name="MyTeam")
+# Lista che conterrà le istanze della classe Team
+teams_instances = []
+api_manager = NbaDataManager(player_ids=[])
 
-# 2. Logica di Caricamento Intelligente
-if not my_team.load_from_json():
-    print("File locale non trovato. Scarico dati dalle API...")
-    api_manager = NbaDataManager(player_ids=[])
-    my_team.load_data_from_api(
-        api_manager=api_manager,
-        target_date=DATA_TARGET,
-        names_list=player_names,
-        roles_dict=roles_map
-    )
-    # Calcolo iniziale del punteggio
-    from ui_court import ROLE_CONFIGS # Importiamo i pesi
-    my_team.calculate_total_score(ROLE_CONFIGS)
-    # Salviamo subito per il prossimo avvio
-    my_team.save_to_json()
+# 2. Inizializzazione Automatica di tutte le squadre
+for team_name, roles_map in ALL_TEAMS_DATA.items():
+    team = Team(name=team_name)
+    
+    # Se non esiste il file locale, scarica i dati
+    if not team.load_from_json():
+        print(f"Dati locali per {team_name} non trovati. Scarico da API...")
+        team.load_data_from_api(
+            api_manager=api_manager,
+            target_date=DATA_TARGET,
+            names_list=list(roles_map.keys()),
+            roles_dict=roles_map
+        )
+        team.calculate_total_score(ROLE_CONFIGS)
+        team.save_to_json()
+    
+    teams_instances.append(team)
+
+# Per la UI, scegliamo quale squadra visualizzare (es. la prima)
+current_team = teams_instances[1]
+# current_team = teams_instances[1]
 
 # 3. Applicazione Flet
 def main(page: ft.Page) -> None:
-    page.title = 'Players Cards'
+    page.title = 'Fanta NBA - Dashboard'
     page.scroll = ft.ScrollMode.AUTO
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
     page.window.width = 358
     page.window.height = 757
 
-    # Verifica validità del roster direttamente dal metodo della classe Team
-    if not my_team.is_valid_roster():
-        page.add(ft.Text("Squadra non consentita (Requisito: 5G, 5A, 3C)", color="red"))
+    # Verifica validità
+    if not current_team.is_valid_roster():
+        page.add(ft.Text(f"Errore Roster: {current_team.name}", color="red"))
         return
 
-    # Passiamo l'output formattato dalla classe Team direttamente al Court
-    page.add(Court(my_team))
+    # Aggiungiamo un titolo per capire quale squadra stiamo guardando
+    page.add(ft.Text(f"SQUADRA: {current_team.name}", size=25, weight="bold"))
+    
+    # Creiamo l'interfaccia Court passandogli l'istanza del team
+    court_ui = Court(current_team)
+    page.add(court_ui)
 
 if __name__ == "__main__":
     ft.run(main=main)

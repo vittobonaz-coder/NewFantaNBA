@@ -1,0 +1,110 @@
+{
+    "team_name": "MyTeam",
+    "total_score": 89.5,
+    "roster": [
+        {
+            "id": 201143,
+            "name": "Al Horford",
+            "team": "GSW",
+            "pos": "C/A",
+            "score": 5.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 2544,
+            "name": "LeBron James",
+            "team": "LAL",
+            "pos": "A",
+            "score": 18.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 1629020,
+            "name": "Jarred Vanderbilt",
+            "team": "LAL",
+            "pos": "A",
+            "score": 4.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 201935,
+            "name": "James Harden",
+            "team": "CLE",
+            "pos": "G",
+            "score": 0.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 201939,
+            "name": "Stephen Curry",
+            "team": "GSW",
+            "pos": "G",
+            "score": 24.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 1629636,
+            "name": "Darius Garland",
+            "team": "LAC",
+            "pos": "G",
+            "score": 15.0,
+            "role": "SIXTH"
+        },
+        {
+            "id": 1630163,
+            "name": "LaMelo Ball",
+            "team": "CHA",
+            "pos": "G",
+            "score": 19.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1630567,
+            "name": "Scottie Barnes",
+            "team": "TOR",
+            "pos": "A/G",
+            "score": 28.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1630578,
+            "name": "Alperen Sengun",
+            "team": "HOU",
+            "pos": "C",
+            "score": 0.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1631323,
+            "name": "Simone Fontecchio",
+            "team": "MIA",
+            "pos": "A",
+            "score": 0.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1641705,
+            "name": "Victor Wembanyama",
+            "team": "SAS",
+            "pos": "A/C",
+            "score": 0.0,
+            "role": "RESERVE"
+        },
+        {
+            "id": 202331,
+            "name": "Paul George",
+            "team": "PHI",
+            "pos": "A",
+            "score": 11.0,
+            "role": "RESERVE"
+        },
+        {
+            "id": 201566,
+            "name": "Russell Westbrook",
+            "team": "SAC",
+            "pos": "G",
+            "score": 0.0,
+            "role": "RESERVE"
+        }
+    ]
+}

@@ -75,8 +75,10 @@ class Player:
 
         parts = self.position.replace('-', '/').split('/')
         clean_parts = [mapping.get(p.strip(), p.strip()) for p in parts]
+
+        pos = "/".join(clean_parts)
         
-        return "/".join(clean_parts)
+        return pos
     
     def calculate_score_from_json(self, filename="historical_boxscores.json"):
         """
@@ -180,6 +182,7 @@ class Team:
         self.players: list[Player] = []
         self.roles_map: dict[int, str] = {}
         self.score: float = 0.0
+        self.lineup = "2-2-1"
         self.filename = f"{self.name.replace(' ', '_').lower()}_state.json"
     
     def save_to_json(self):
@@ -187,6 +190,7 @@ class Team:
         data = {
             "team_name": self.name,
             "total_score": self.score,
+            "lineup": self.lineup,
             "roster": self.to_ui_format() # Usiamo il formato UI che è già un dizionario pulito
         }
         with open(self.filename, "w", encoding="utf-8") as f:
@@ -204,6 +208,7 @@ class Team:
             
             self.name = data["team_name"]
             self.score = data["total_score"]
+            self.lineup = data.get("lineup", "2-2-1")
             self.players = []
             self.roles_map = {}
             
@@ -267,6 +272,7 @@ class Team:
                 position=info["POSITION"]
             )
             p_obj.position = p_obj.get_clean_position()
+            print(f"{p_obj.name}: {p_obj.position}")
             p_obj.calculate_score(all_boxscores)
             
             # Recuperiamo il ruolo dal dizionario passato in input usando il nome
@@ -275,13 +281,15 @@ class Team:
 
     def get_ordered_roster(self) -> list[Player]:
         """Restituisce i giocatori ordinati per importanza di ruolo (utile per la UI Court)."""
+        if len(self.players) == 13:
+            return self.players
         return sorted(self.players, key=lambda p: self.ROLE_ORDER.get(self.roles_map[p.id], 99))
 
     def to_ui_format(self) -> list[dict]:
         """Esporta il roster nel formato list[dict] atteso dalla classe Court."""
-        ordered_players = self.get_ordered_roster()
+        # ordered_players = self.get_ordered_roster()
         ui_list = []
-        for p in ordered_players:
+        for p in self.players:
             ui_list.append({
                 "id": p.id,
                 "name": p.name,

@@ -1,27 +1,17 @@
 TO DO:
+- Quando il primo giocatore avvia l'app per la prima volta nel giorno (dopo le 9:00)
+    vengono scaricati boxscores e risultati delle partite dall'api, vengono aggiornate le
+    informazioni su supabase e vengono scritti nel locale del giocatore i json 
+    con le info di giornata.
+    Quando un altro giocatore apre l'app scarica le info già da supabase (verificare
+    se conviene e se c'è un modo per verificare se un altro utente ha già scaricato da 
+    api), e scrive i json del suo locale.
+    Dal secondo accesso in poi di ogni utente si legge dai json locali.
+
+- Metodo che divide una quantità di giorni in settimane e scrive le
+    date di ciascuna settimana in un file
+
 - Gestire i DNP: in api_nba non vengono stampati i DNP nei boxscore
-
-- nba_api
-    classe NbaDataManager:
-    def __init__(self, player_ids, season='2025-26'):
-        self.player_ids = player_ids
-        self.season = season
-        # Cache interna per evitare accessi multipli al disco
-        self.last_matchups = []
-        self.last_boxscores = []
-
-Metodo is_data_stale (Dati scaduti)
-
-- last_updated (timestamp). Quando l'app Flet chiama la classe, lei 
-    controlla: "Ho scaricato i dati più di 10 minuti fa? Se sì, 
-    rifaccio il fetch automatico, altrimenti leggo il file locale". 
-    Questo rende l'app intelligentissima e velocissima.
-
-- Gestione automatica del fuso orario
-    Un metodo che calcola la "Data NBA corrente". Se sono le 9:00 
-    del mattino in Italia, la classe sa automaticamente che deve 
-    cercare i dati del giorno prima (ieri negli USA), senza che tu 
-    debba scriverlo a mano ogni volta.
 
 - B. Gestione della Memoria RAM
     In fetch_and_sync, ritorni l'intera cronologia (full_history). 
@@ -32,6 +22,18 @@ Metodo is_data_stale (Dati scaduti)
 - L'app dovrà avere come fonte di verità il database online, ma dovrà
     anche salvare i dati in locale (json) in modo da accedervi 
     velocemente
+
+- Aggiornamento dati giornaliero
+    Render non ha un "cronjob" (operazione pianificata) nel piano free. 
+    Per aggiornare i dati alle 9:00 ogni giorno hai due opzioni:
+    1. Aggiornamento "Lazy" (Pigro): Quando il primo utente della 
+        giornata apre l'app dopo le 9:00, il codice controlla se il 
+        file JSON è aggiornato a oggi. Se non lo è, scarica i dati e 
+        salva il file.
+    2. GitHub Actions: Puoi creare uno script che gira su GitHub 
+        ogni mattina alle 8:00 UTC (9:00 ITA), scarica i dati e fa un 
+        "auto-commit" dei file JSON nel tuo repository. Render vedrà il 
+        nuovo commit e farà il deploy automatico con i dati freschi.
 
 
 
