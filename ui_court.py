@@ -76,7 +76,10 @@ class Court(ft.Column):
     def __init__(self, team_instance: Team):
         super().__init__()
         self.horizontal_alignment = "center"
-        self.spacing = 10
+        self.scroll = ft.ScrollMode.AUTO
+        self.expand = True
+        self.spacing = 0
+        # self.spacing = 10
         self.team = team_instance
         self.lineup = self.team.lineup 
 
@@ -136,32 +139,6 @@ class Court(ft.Column):
             alignment=ft.MainAxisAlignment.CENTER,
             visible=False # Nascosti all'inizio
         )
-
-        # # Bottoni Salva/Annulla
-        # self.btn_save = ft.ElevatedButton(
-        #     "Salva", 
-        #     icon=ft.Icons.SAVE,
-        #     # visible=False,
-        #     visible=True,
-        #     bgcolor=ft.Colors.BLACK_54, color="white",
-        #     # disabled=True,
-        #     on_click=self.handle_save
-        # )
-        # self.btn_cancel = ft.ElevatedButton(
-        #     "Annulla", 
-        #     icon=ft.Icons.DELETE,
-        #     # visible=False,
-        #     visible=True,
-        #     bgcolor=ft.Colors.BLACK_54, color="white",
-        #     # disabled=True,
-        #     # TODO: on_click=self._revert_roster_changes
-        # )
-        # self.controls_bar = ft.Row(
-        #     [self.btn_cancel, self.btn_save], 
-        #     alignment=ft.MainAxisAlignment.CENTER,
-        #     # visible=False
-        #     visible=True
-        # )
 
         self.setup_static_ui()
         self.update_starters_layout()
@@ -439,6 +416,207 @@ class Court(ft.Column):
                     )
                 )
             card.swap_button.items = valid_items
+
+
+class MainDashboard(ft.Tabs):
+    def __init__(self, team: Team):
+        super().__init__(content=None, length=0)
+        self.team = team
+        self.expand = True # Permette alla dashboard di occupare tutto lo spazio
+        self.length = 5
+        self.selected_index=0
+        self.animation_duration=300
+
+        # Inizializziamo le varie viste
+        # self.team_view = ft.Text("ORCODIO", size=20)
+        self.team_view = Court(self.team)
+        self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
+        self.calendar_view = ft.Text("Vista Calendario - Prossimamente", size=20)
+        self.championship_view = ft.Text("Vista Campionato - Prossimamente", size=20)
+        self.settings_view = ft.Text("Vista Impostazioni - Prossimamente", size=20)
+        
+        self.content=ft.Column(
+            expand=True,
+            controls=[
+                ft.TabBar(
+                    label_text_style=ft.TextStyle(size=9.3),
+                    unselected_label_text_style=ft.TextStyle(size=7.2),
+                    label_color=ft.Colors.ORANGE,           # Colore testo selezionato
+                    unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
+                    indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
+                    tabs=[
+                        ft.Tab(label="Squadra", icon=ft.Icons.SPORTS_BASKETBALL),
+                        ft.Tab(label="Ricerca", icon=ft.Icons.MANAGE_SEARCH),
+                        ft.Tab(label="Calendario", icon=ft.Icons.CALENDAR_MONTH),
+                        ft.Tab(label="Campionato", icon=ft.Icons.EMOJI_EVENTS),
+                        ft.Tab(label="Impostazioni", icon=ft.Icons.SETTINGS),
+                    ]
+                ),
+                ft.TabBarView(
+                    expand=True,
+                    controls=[
+                        # Squadra
+                        self.team_view,
+                        # Ricerca
+                        ft.Container(
+                            content=self.search_view,
+                            padding=0
+                        ),
+                        # Calendario
+                        ft.Container(
+                            content=(
+                                self.calendar_view
+                            )
+                        ),
+                        # Campionato
+                        ft.Container(
+                            content=self.championship_view
+                        ),
+                        # Impostazioni
+                        ft.Container(
+                            content=self.settings_view
+                        ),
+                    ],
+                ),
+            ],
+        )
+
+
+# class MainDashboard(ft.Tabs):
+#     def __init__(self, team: Team):
+#         super().__init__(content=None, length=0)
+#         self.team = team
+#         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
+#         self.length = 5
+#         self.selected_index=0
+#         self.animation_duration=300
+
+#         # Inizializziamo le varie viste
+#         self.team_view = Court(self.team)
+#         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
+#         self.calendar_view = ft.Text("Vista Calendario - Prossimamente", size=20)
+#         self.championship_view = ft.Text("Vista Campionato - Prossimamente", size=20)
+#         self.settings_view = ft.Text("Vista Impostazioni - Prossimamente", size=20)
+        
+#         self.content=ft.Column(
+#             expand=True,
+#             controls=[
+#                 ft.TabBar(
+#                     label_text_style=ft.TextStyle(size=9.3),
+#                     unselected_label_text_style=ft.TextStyle(size=7.2),
+#                     label_color=ft.Colors.ORANGE,           # Colore testo selezionato
+#                     unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
+#                     indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
+#                     tabs=[
+#                         ft.Tab(label="Squadra", icon=ft.Icons.SPORTS_BASKETBALL),
+#                         ft.Tab(label="Ricerca", icon=ft.Icons.MANAGE_SEARCH),
+#                         ft.Tab(label="Calendario", icon=ft.Icons.CALENDAR_MONTH),
+#                         ft.Tab(label="Campionato", icon=ft.Icons.EMOJI_EVENTS),
+#                         ft.Tab(label="Impostazioni", icon=ft.Icons.SETTINGS),
+#                     ]
+#                 ),
+#                 ft.TabBarView(
+#                     expand=True,
+#                     controls=[
+#                         # Squadra
+#                         ft.Container(
+#                             content=self.team_view
+#                         ),
+#                         # Ricerca
+#                         ft.Container(
+#                             content=self.search_view,
+#                             padding=0
+#                         ),
+#                         # Calendario
+#                         ft.Container(
+#                             content=(
+#                                 self.calendar_view
+#                             )
+#                         ),
+#                         # Campionato
+#                         ft.Container(
+#                             content=self.championship_view
+#                         ),
+#                         # Impostazioni
+#                         ft.Container(
+#                             content=self.settings_view
+#                         ),
+#                     ],
+#                 ),
+#             ],
+#         )
+
+
+# class MainDashboard(ft.Column):
+#     def __init__(self, team: Team):
+#         super().__init__()
+#         self.team = team
+#         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
+#         self.spacing = 0
+#         self.scroll = ft.ScrollMode.AUTO
+        
+#         # Inizializziamo le varie viste
+#         self.team_view = Court(self.team)
+#         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
+#         self.calendar_view = ft.Text("Vista Calendario - Prossimamente", size=20)
+#         self.championship_view = ft.Text("Vista Campionato - Prossimamente", size=20)
+#         self.settings_view = ft.Text("Vista Impostazioni - Prossimamente", size=20)
+
+#         # Definiamo i TabBar e TabBarView
+#         # Nota: Usiamo TabBar e TabBarView dentro una Column come nel tuo snippet
+#         self.controls = [ft.Tabs(
+#             selected_index=0,
+#             animation_duration=300,
+#             length=5,
+#             expand=True,
+#             content=ft.Column(
+#                 expand=True,
+#                 controls=[
+#                     ft.TabBar(
+#                         label_text_style=ft.TextStyle(size=9.3),
+#                         unselected_label_text_style=ft.TextStyle(size=7.2),
+#                         label_color=ft.Colors.ORANGE,           # Colore testo selezionato
+#                         unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
+#                         indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
+#                         tabs=[
+#                             ft.Tab(label="Squadra", icon=ft.Icons.SPORTS_BASKETBALL),
+#                             ft.Tab(label="Ricerca", icon=ft.Icons.MANAGE_SEARCH),
+#                             ft.Tab(label="Calendario", icon=ft.Icons.CALENDAR_MONTH),
+#                             ft.Tab(label="Campionato", icon=ft.Icons.EMOJI_EVENTS),
+#                             ft.Tab(label="Impostazioni", icon=ft.Icons.SETTINGS),
+#                         ]
+#                     ),
+#                     ft.TabBarView(
+#                         expand=True,
+#                         controls=[
+#                             # Squadra
+#                             ft.Container(
+#                                 content=self.team_view
+#                             ),
+#                             # Ricerca
+#                             ft.Container(
+#                                 content=self.search_view,
+#                                 padding=0
+#                             ),
+#                             # Calendario
+#                             ft.Container(
+#                                 content=(
+#                                     self.calendar_view
+#                                 )
+#                             ),
+#                             # Campionato
+#                             ft.Container(
+#                                 content=self.championship_view
+#                             ),
+#                             # Impostazioni
+#                             ft.Container(
+#                                 content=self.settings_view
+#                             ),
+#                         ],
+#                     ),
+#                 ],
+#             ),
+#         )]
 
 # def main(page: ft.Page) -> None:
 #     page.title = 'Players Cards'

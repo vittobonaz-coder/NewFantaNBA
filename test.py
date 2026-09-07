@@ -42,7 +42,7 @@ current_team = teams_instances[1]
 # 3. Applicazione Flet
 def main(page: ft.Page) -> None:
     page.title = 'Fanta NBA - Dashboard'
-    page.scroll = ft.ScrollMode.AUTO
+    # page.scroll = ft.ScrollMode.AUTO
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
     page.window.width = 358
@@ -52,13 +52,11 @@ def main(page: ft.Page) -> None:
     if not current_team.is_valid_roster():
         page.add(ft.Text(f"Errore Roster: {current_team.name}", color="red"))
         return
-
-    # Aggiungiamo un titolo per capire quale squadra stiamo guardando
-    page.add(ft.Text(f"SQUADRA: {current_team.name}", size=25, weight="bold"))
     
-    # Creiamo l'interfaccia Court passandogli l'istanza del team
-    court_ui = Court(current_team)
-    page.add(court_ui)
+    from ui_court import MainDashboard
+    
+    # Aggiungiamo la dashboard completa
+    page.add(MainDashboard(current_team))
 
 if __name__ == "__main__":
     ft.run(main=main)
