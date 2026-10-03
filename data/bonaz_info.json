@@ -1,0 +1,80 @@
+[
+    {
+        "PLAYER_ID": 1627826,
+        "PLAYER_NAME": "Ivica Zubac",
+        "TEAM": "IND",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630183,
+        "PLAYER_NAME": "Jaden McDaniels",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 202710,
+        "PLAYER_NAME": "Jimmy Butler III",
+        "TEAM": "GSW",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629632,
+        "PLAYER_NAME": "Coby White",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641718,
+        "PLAYER_NAME": "Keyonte George",
+        "TEAM": "UTA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630169,
+        "PLAYER_NAME": "Tyrese Haliburton",
+        "TEAM": "IND",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630228,
+        "PLAYER_NAME": "Jonathan Kuminga",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629057,
+        "PLAYER_NAME": "Robert Williams III",
+        "TEAM": "POR",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 101108,
+        "PLAYER_NAME": "Chris Paul",
+        "TEAM": "",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629660,
+        "PLAYER_NAME": "Ty Jerome",
+        "TEAM": "MEM",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1630245,
+        "PLAYER_NAME": "Ayo Dosunmu",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631097,
+        "PLAYER_NAME": "Bennedict Mathurin",
+        "TEAM": "NOP",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1631117,
+        "PLAYER_NAME": "Walker Kessler",
+        "TEAM": "LAL",
+        "POSITION": "Center"
+    }
+]

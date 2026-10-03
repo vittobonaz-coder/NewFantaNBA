@@ -12,13 +12,17 @@ class NbaDataManager:
         self.player_ids = player_ids
         self.season = season
         self.s_type = s_type
-        self.games_file = "historical_games.json"
-        self.boxscores_file = "historical_boxscores.json"
         self.stats_to_save = [
             "PLAYER_ID", "GAME_ID", "GAME_DATE", "MATCHUP", "WL", "MIN", 
             "FGM", "FGA", "FG3M", "FG3A", "FTM", "FTA", "OREB", "DREB", 
             "REB", "AST", "STL", "BLK", "TOV", "PF", "PTS", "PLUS_MINUS"
         ]
+        self.data_dir = "data"
+        if not os.path.exists(self.data_dir):
+            os.makedirs(self.data_dir)
+        self.games_file = os.path.join(self.data_dir, "historical_games.json")
+        self.boxscores_file = os.path.join(self.data_dir, "historical_boxscores.json")
+        self.all_players_file = os.path.join(self.data_dir, "all_players.json")
     
 
     def fetch_and_sync(self, date_string):
@@ -42,9 +46,6 @@ class NbaDataManager:
     def sync_file(self, new_data, filename):
         """Gestisce l'archiviazione dei dati evitando che lo stesso risultato o lo stesso tabellino venga salvato due volte"""
         if not new_data: return []
-        
-        if not filename.endswith(".json"):
-            filename += ".json"
 
         data = []
         if os.path.exists(filename):
@@ -179,11 +180,12 @@ class NbaDataManager:
         df = pd.DataFrame(active_players)
         df_filtered = df[['id', 'full_name']].copy()
         df_filtered.rename(columns={'id': 'PLAYER_ID', 'full_name': 'PLAYER_NAME'}, inplace=True)
-        df_filtered.to_json("all_players.json", orient="records", indent=4)
-        print(f"{len(df_filtered)} active players found.")
+        df_filtered.to_json(self.all_players_file, orient="records", indent=4)
+        print(f"{len(df_filtered)} active players found in {self.all_players_file}")
     
 
-    def fetch_players_info(self, player_ids, filename="giocatori_nba.json"):
+    fetch_players_path = os.path.join("data", "giocatori_nba.json")
+    def fetch_players_info(self, player_ids, filename=fetch_players_path):
         """Scarica info dettagliate per una lista di ID e salva su un file specificato"""
         players_list = []
         
@@ -226,7 +228,8 @@ class NbaDataManager:
 
     def get_players_ids_by_name(self, player_names_list):
         """Riceve una lista di nomi (stringhe) e restituisce una lista di ID (interi) leggendo dal file all_players.json."""
-        filename = "all_players.json"
+        filename = os.path.join("data", "all_players.json")
+
 
         if not os.path.exists(filename):
             print(f"Errore: il file {filename} non esiste. Esegui prima download_all_players().")

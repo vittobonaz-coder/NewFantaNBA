@@ -1,0 +1,80 @@
+[
+    {
+        "PLAYER_ID": 1631105,
+        "PLAYER_NAME": "Jalen Duren",
+        "TEAM": "DET",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1627742,
+        "PLAYER_NAME": "Brandon Ingram",
+        "TEAM": "LAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628369,
+        "PLAYER_NAME": "Jayson Tatum",
+        "TEAM": "BOS",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1629029,
+        "PLAYER_NAME": "Luka Dončić",
+        "TEAM": "LAL",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 201566,
+        "PLAYER_NAME": "Russell Westbrook",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630202,
+        "PLAYER_NAME": "Payton Pritchard",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 201942,
+        "PLAYER_NAME": "DeMar DeRozan",
+        "TEAM": "DEN",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1629673,
+        "PLAYER_NAME": "Jordan Poole",
+        "TEAM": "NOP",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641824,
+        "PLAYER_NAME": "Matas Buzelis",
+        "TEAM": "CHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628386,
+        "PLAYER_NAME": "Jarrett Allen",
+        "TEAM": "CLE",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 201950,
+        "PLAYER_NAME": "Jrue Holiday",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630180,
+        "PLAYER_NAME": "Saddiq Bey",
+        "TEAM": "NOP",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 203994,
+        "PLAYER_NAME": "Jusuf Nurkić",
+        "TEAM": "UTA",
+        "POSITION": "Center"
+    }
+]

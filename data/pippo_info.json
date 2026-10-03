@@ -1,0 +1,80 @@
+[
+    {
+        "PLAYER_ID": 1630596,
+        "PLAYER_NAME": "Evan Mobley",
+        "TEAM": "CLE",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1628374,
+        "PLAYER_NAME": "Lauri Markkanen",
+        "TEAM": "UTA",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1630567,
+        "PLAYER_NAME": "Scottie Barnes",
+        "TEAM": "TOR",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1630178,
+        "PLAYER_NAME": "Tyrese Maxey",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203081,
+        "PLAYER_NAME": "Damian Lillard",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642264,
+        "PLAYER_NAME": "Stephon Castle",
+        "TEAM": "SAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628368,
+        "PLAYER_NAME": "De'Aaron Fox",
+        "TEAM": "SAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631110,
+        "PLAYER_NAME": "Jeremy Sochan",
+        "TEAM": "POR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631114,
+        "PLAYER_NAME": "Jalen Williams",
+        "TEAM": "OKC",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1642270,
+        "PLAYER_NAME": "Donovan Clingan",
+        "TEAM": "POR",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630700,
+        "PLAYER_NAME": "Dyson Daniels",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641706,
+        "PLAYER_NAME": "Brandon Miller",
+        "TEAM": "CHA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629674,
+        "PLAYER_NAME": "Neemias Queta",
+        "TEAM": "BOS",
+        "POSITION": "Center"
+    }
+]

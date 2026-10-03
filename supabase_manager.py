@@ -12,98 +12,80 @@ class SupabaseSync:
         """Salva l'intero stato del team su Supabase"""
         print(f"Sincronizzazione team {team.name} su Supabase...")
 
-        # 1. Upsert Giocatori
+        # 1. Upsert Giocatori (nba_players)
         players_data = []
         for p in team.players:
             players_data.append({
                 "id": p.id,
-                "name": p.name,
-                "team_abbreviation": p.team_abbreviation,
-                "position": p.position,
-                "score": p.score
+                "full_name": p.name,       # <--- Adattato al nuovo DB
+                "nba_team": p.team_abbreviation,
+                "position": p.position
             })
-        self.supabase.table("players").upsert(players_data).execute()
+        self.supabase.table("nba_players").upsert(players_data).execute()
 
-        # 2. Upsert Team
-        # Se court è presente prendiamo la lineup dalla UI, altrimenti default '2-2-1'
-        lineup_val = court.lineup if court else team.lineup
-        team_row = {
-            "name": team.name,
-            "total_score": team.score,
-            "lineup_type": lineup_val
-        }
-        team_res = self.supabase.table("fanta_teams").upsert(team_row, on_conflict="name").execute()
-        fanta_team_id = team_res.data[0]["id"]
+        # 2. Gestione Fanta-Team (Sostituito upsert con logica manuale)
+        existing_team = self.supabase.table("fanta_teams").select("id").eq("name", team.name).execute()
+        
+        if existing_team.data:
+            fanta_team_id = existing_team.data[0]["id"]
+        else:
+            team_res = self.supabase.table("fanta_teams").insert({"name": team.name}).execute()
+            fanta_team_id = team_res.data[0]["id"]
 
-        # 3. Aggiorna il Roster (incluso il nome del giocatore)
-        self.supabase.table("roster").delete().eq("fanta_team_id", fanta_team_id).execute()
+        # 3. Aggiorna il Roster (Tabella rosters)
+        self.supabase.table("rosters").delete().eq("fanta_team_id", fanta_team_id).execute()
         
         roster_data = []
-        ordered_players = team.get_ordered_roster()
-        for idx, p in enumerate(ordered_players):
+        for p in team.players:
             roster_data.append({
                 "fanta_team_id": fanta_team_id,
-                "player_id": p.id,
-                "player_name": p.name,  # <--- Nuovo campo salvato
-                "role": team.roles_map[p.id],
-                "slot_index": idx
+                "nba_player_id": p.id,
+                "assigned_position": team.roles_map[p.id],
+                "player_name": p.name
             })
-        self.supabase.table("roster").insert(roster_data).execute()
+        self.supabase.table("rosters").insert(roster_data).execute()
         print(f"Sincronizzazione {team.name} completata.")
 
-
-    def push_all_teams(self, teams_list: list[Team]):
-        """Carica tutte le squadre della lista su Supabase"""
-        print(f"Inizio sincronizzazione massiva di {len(teams_list)} squadre...")
-        for t in teams_list:
-            try:
-                self.push_team(t)
-            except Exception as e:
-                print(f"Errore durante l'upload di {t.name}: {e}")
-        print("Sincronizzazione globale terminata.")
-
-
     def pull_team(self, team_name: str) -> Team:
-        """Recupera i dati da Supabase e ricostruisce l'oggetto Team"""
+        """Recupera i dati da Supabase"""
+        # Join tra fanta_teams, rosters e nba_players
         response = self.supabase.table("fanta_teams") \
-            .select("*, roster(*, players(*))") \
+            .select("name, rosters(nba_players(*))") \
             .eq("name", team_name) \
             .single() \
             .execute()
 
         data = response.data
-        if not data:
-            return None
+        if not data: return None
 
         new_team = Team(name=data["name"])
-        new_team.score = data["total_score"]
-
-        for item in data["roster"]:
-            p_data = item["players"]
+        
+        for item in data["rosters"]:
+            p_data = item["nba_players"]
             player = Player(
                 id=p_data["id"],
-                name=p_data["name"],
-                team_abbreviation=p_data["team_abbreviation"],
-                position=p_data["position"],
-                score=p_data["score"]
+                name=p_data["full_name"], # <--- Adattato al nuovo DB
+                team_abbreviation=p_data["nba_team"],
+                position=p_data["position"]
             )
-            new_team.add_player(player, item["role"])
+            # Nota: nel pull attuale mancano i punteggi salvati se non li aggiungi alla tabella
+            new_team.add_player(player, "RISERVA") 
         
         return new_team
 
 # --- ESEMPIO DI UTILIZZO ---
-if __name__ == "__main__":
-    sync_manager = SupabaseSync()
+# if __name__ == "__main__":
+#     sync_manager = SupabaseSync()
 
-    # Esempio Scrittura: prendiamo il team esistente dal file locale (caricato in test.py)
-    # my_team = Team(name="MyTeam")
-    # my_team.load_from_json()
-    # my_court = Court(my_team)
-    # sync_manager.push_team(my_team, my_court)
+#     # Esempio Scrittura: prendiamo il team esistente dal file locale (caricato in test.py)
+#     # my_team = Team(name="MyTeam")
+#     # my_team.load_from_json()
+#     # my_court = Court(my_team)
+#     # sync_manager.push_team(my_team, my_court)
 
-    # Esempio Lettura:
-    team_remoto = sync_manager.pull_team("MyTeam")
-    if team_remoto:
-        print(f"Team caricato da Cloud: {team_remoto.name}, Score: {team_remoto.score}")
-        for p in team_remoto.get_ordered_roster():
-            print(f" - {p.name} [{team_remoto.roles_map[p.id]}]")
+#     # Esempio Lettura:
+#     team_remoto = sync_manager.pull_team("MyTeam")
+#     if team_remoto:
+#         print(f"Team caricato da Cloud: {team_remoto.name}, Score: {team_remoto.score}")
+#         for p in team_remoto.get_ordered_roster():
+#             print(f" - {p.name} [{team_remoto.roles_map[p.id]}]")

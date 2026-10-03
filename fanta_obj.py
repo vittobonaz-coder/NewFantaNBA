@@ -12,6 +12,11 @@ class Player:
     position: str = ""
     score: float = 0.0
 
+    def __post_init__(self):
+        # Ogni volta che l'oggetto viene istanziato, pulisce la posizione
+        if self.position:
+            self.position = self.get_clean_position()
+
     def get_avatar_img(self):
         return f"/players/{self.id}.png" if self.id else "avatar_placeholder.png"
 
@@ -79,8 +84,9 @@ class Player:
         pos = "/".join(clean_parts)
         
         return pos
-    
-    def calculate_score_from_json(self, filename="historical_boxscores.json"):
+
+    calculate_score_from_json_path = os.path.join("data", "historical_boxscores.json")    
+    def calculate_score_from_json(self, filename=calculate_score_from_json_path):
         """
         Cerca le prestazioni del giocatore nel file boxscores e calcola il punteggio.
         Se ci sono più partite, calcola la media.
@@ -183,7 +189,7 @@ class Team:
         self.roles_map: dict[int, str] = {}
         self.score: float = 0.0
         self.lineup = "2-2-1"
-        self.filename = f"{self.name.replace(' ', '_').lower()}_state.json"
+        self.filename = os.path.join("data", f"{self.name.replace(' ', '_').lower()}_state.json")
     
     def save_to_json(self):
         """Salva l'intero stato del team, inclusi i dati dei giocatori e il punteggio totale."""
@@ -193,6 +199,8 @@ class Team:
             "lineup": self.lineup,
             "roster": self.to_ui_format() # Usiamo il formato UI che è già un dizionario pulito
         }
+        if not os.path.exists("data"):
+            os.makedirs("data")
         with open(self.filename, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
         print(f"Stato del team salvato in {self.filename}")
@@ -260,7 +268,7 @@ class Team:
         api_manager.player_ids = p_ids
         
         # 2. Scarico Info anagrafiche e Boxscores
-        players_raw_info = api_manager.fetch_players_info(p_ids, filename=f"{self.name}_info.json")
+        players_raw_info = api_manager.fetch_players_info(p_ids, filename=os.path.join("data", f"{self.name}_info.json"))
         _, all_boxscores = api_manager.fetch_and_sync(target_date)
         
         # 3. Creazione oggetti Player
@@ -299,6 +307,39 @@ class Team:
                 "role": self.roles_map[p.id]
             })
         return ui_list
+
+    def update_team_scores_for_date(self, api_manager: NbaDataManager, target_date: str, names_list: list[str], roles_dict: dict[str, str]):
+        """Carica l'anagrafica dai file JSON locali e aggiorna i punteggi scaricando solo i boxscores."""
+        # 1. Recupero gli ID dei giocatori
+        p_ids = api_manager.get_players_ids_by_name(names_list)
+        api_manager.player_ids = p_ids
+        
+        # 2. Scarica e sincronizza SOLO i boxscores della data target
+        _, all_boxscores = api_manager.fetch_and_sync(target_date)
+        
+        # 3. Legge l'anagrafica locale già scaricata nel setup statico
+        info_path = os.path.join("data", f"{self.name.replace(' ', '_').lower()}_info.json")
+        
+        if os.path.exists(info_path):
+            with open(info_path, "r", encoding="utf-8") as f:
+                players_raw_info = json.load(f)
+        else:
+            # Fallback se il file locale non esiste ancora
+            players_raw_info = api_manager.fetch_players_info(p_ids, filename=info_path)
+        
+        # 4. Ricostruisce la lista giocatori e calcola i punteggi sui boxscores aggiornati
+        self.players = []
+        for info in players_raw_info:
+            p_obj = Player(
+                id=info["PLAYER_ID"],
+                name=info["PLAYER_NAME"],
+                team_abbreviation=info["TEAM"],
+                position=info["POSITION"]
+            )
+            p_obj.calculate_score(all_boxscores)
+            
+            role = roles_dict.get(p_obj.name, "RESERVE")
+            self.add_player(p_obj, role)
 
 
 # from api_nba import NbaDataManager

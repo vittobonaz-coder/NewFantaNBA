@@ -1,0 +1,80 @@
+[
+    {
+        "PLAYER_ID": 1642259,
+        "PLAYER_NAME": "Alex Sarr",
+        "TEAM": "WAS",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630166,
+        "PLAYER_NAME": "Deni Avdija",
+        "TEAM": "POR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 2544,
+        "PLAYER_NAME": "LeBron James",
+        "TEAM": "PHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 201939,
+        "PLAYER_NAME": "Stephen Curry",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 202681,
+        "PLAYER_NAME": "Kyrie Irving",
+        "TEAM": "DAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630163,
+        "PLAYER_NAME": "LaMelo Ball",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629638,
+        "PLAYER_NAME": "Nickeil Alexander-Walker",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627734,
+        "PLAYER_NAME": "Domantas Sabonis",
+        "TEAM": "SAC",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1628384,
+        "PLAYER_NAME": "OG Anunoby",
+        "TEAM": "NYK",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1629651,
+        "PLAYER_NAME": "Nic Claxton",
+        "TEAM": "CHI",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1626179,
+        "PLAYER_NAME": "Terry Rozier",
+        "TEAM": "MIA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631095,
+        "PLAYER_NAME": "Jabari Smith Jr.",
+        "TEAM": "HOU",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630168,
+        "PLAYER_NAME": "Onyeka Okongwu",
+        "TEAM": "ATL",
+        "POSITION": "Forward-Center"
+    }
+]

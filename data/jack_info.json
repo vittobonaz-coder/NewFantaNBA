@@ -1,0 +1,80 @@
+[
+    {
+        "PLAYER_ID": 1628389,
+        "PLAYER_NAME": "Bam Adebayo",
+        "TEAM": "MIA",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1641705,
+        "PLAYER_NAME": "Victor Wembanyama",
+        "TEAM": "SAS",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 201142,
+        "PLAYER_NAME": "Kevin Durant",
+        "TEAM": "HOU",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628973,
+        "PLAYER_NAME": "Jalen Brunson",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629614,
+        "PLAYER_NAME": "Andrew Nembhard",
+        "TEAM": "IND",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1627749,
+        "PLAYER_NAME": "Dejounte Murray",
+        "TEAM": "NOP",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627750,
+        "PLAYER_NAME": "Jamal Murray",
+        "TEAM": "DEN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 202331,
+        "PLAYER_NAME": "Paul George",
+        "TEAM": "BOS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629008,
+        "PLAYER_NAME": "Michael Porter Jr.",
+        "TEAM": "BKN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 202696,
+        "PLAYER_NAME": "Nikola Vučević",
+        "TEAM": "ORL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 203935,
+        "PLAYER_NAME": "Marcus Smart",
+        "TEAM": "HOU",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628398,
+        "PLAYER_NAME": "Kyle Kuzma",
+        "TEAM": "MIL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629028,
+        "PLAYER_NAME": "Deandre Ayton",
+        "TEAM": "WAS",
+        "POSITION": "Center"
+    }
+]

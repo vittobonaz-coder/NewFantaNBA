@@ -1,0 +1,80 @@
+[
+    {
+        "PLAYER_ID": 1627751,
+        "PLAYER_NAME": "Jakob Poeltl",
+        "TEAM": "TOR",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 203507,
+        "PLAYER_NAME": "Giannis Antetokounmpo",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 204001,
+        "PLAYER_NAME": "Kristaps Porziņģis",
+        "TEAM": "GSW",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1629027,
+        "PLAYER_NAME": "Trae Young",
+        "TEAM": "WAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628378,
+        "PLAYER_NAME": "Donovan Mitchell",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631096,
+        "PLAYER_NAME": "Chet Holmgren",
+        "TEAM": "OKC",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1630200,
+        "PLAYER_NAME": "Tre Jones",
+        "TEAM": "CHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629636,
+        "PLAYER_NAME": "Darius Garland",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627783,
+        "PLAYER_NAME": "Pascal Siakam",
+        "TEAM": "IND",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629628,
+        "PLAYER_NAME": "RJ Barrett",
+        "TEAM": "TOR",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1630591,
+        "PLAYER_NAME": "Jalen Suggs",
+        "TEAM": "ORL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203952,
+        "PLAYER_NAME": "Andrew Wiggins",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 203500,
+        "PLAYER_NAME": "Steven Adams",
+        "TEAM": "HOU",
+        "POSITION": "Center"
+    }
+]
