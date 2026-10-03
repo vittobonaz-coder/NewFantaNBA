@@ -1,0 +1,80 @@
+[
+    {
+        "PLAYER_ID": 203999,
+        "PLAYER_NAME": "Nikola Jokić",
+        "TEAM": "DEN",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 203076,
+        "PLAYER_NAME": "Anthony Davis",
+        "TEAM": "WAS",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 203932,
+        "PLAYER_NAME": "Aaron Gordon",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630581,
+        "PLAYER_NAME": "Josh Giddey",
+        "TEAM": "CHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630595,
+        "PLAYER_NAME": "Cade Cunningham",
+        "TEAM": "DET",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1626164,
+        "PLAYER_NAME": "Devin Booker",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630559,
+        "PLAYER_NAME": "Austin Reaves",
+        "TEAM": "LAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629680,
+        "PLAYER_NAME": "Matisse Thybulle",
+        "TEAM": "LAL",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1641709,
+        "PLAYER_NAME": "Ausar Thompson",
+        "TEAM": "DET",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1630191,
+        "PLAYER_NAME": "Isaiah Stewart",
+        "TEAM": "MEM",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1628366,
+        "PLAYER_NAME": "Lonzo Ball",
+        "TEAM": "",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628991,
+        "PLAYER_NAME": "Jaren Jackson Jr.",
+        "TEAM": "UTA",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 203497,
+        "PLAYER_NAME": "Rudy Gobert",
+        "TEAM": "MIN",
+        "POSITION": "Center"
+    }
+]
