@@ -5,40 +5,31 @@ from api_nba import NbaDataManager
 from fanta_obj import Team
 from ui_court import Court, ROLE_CONFIGS
 
-# 1. Caricamento squadre dal File JSON
-def load_fanta_teams(filepath="fanta_teams.json"):
-    with open(filepath, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-# Carichiamo il dizionario con tutte le squadre
-ALL_TEAMS_DATA = load_fanta_teams()
-DATA_TARGET = "2026-04-12"
-
-# Lista che conterrà le istanze della classe Team
-teams_instances = []
-api_manager = NbaDataManager(player_ids=[])
-
-# 2. Inizializzazione Automatica di tutte le squadre
-for team_name, roles_map in ALL_TEAMS_DATA.items():
-    team = Team(name=team_name)
+def init_all_teams():
+    api_manager = NbaDataManager(player_ids=[])
+    DATA_TARGET = "2026-04-12"
     
-    # Se non esiste il file locale, scarica i dati
-    if not team.load_from_json():
-        print(f"Dati locali per {team_name} non trovati. Scarico da API...")
-        team.load_data_from_api(
+    # Carica la configurazione
+    with open(os.path.join("data", "fanta_teams.json"), "r", encoding="utf-8") as f:
+        data = json.load(f)
+        
+    teams = []
+    for team_name, roles_map in data.items():
+        team = Team(name=team_name)
+        
+        # Carica i dati anagrafici dal file locale e aggiorna solo i punteggi tramite i boxscore
+        team.update_team_scores_for_date(
             api_manager=api_manager,
             target_date=DATA_TARGET,
             names_list=list(roles_map.keys()),
             roles_dict=roles_map
         )
         team.calculate_total_score(ROLE_CONFIGS)
-        team.save_to_json()
-    
-    teams_instances.append(team)
+        teams.append(team)
+    return teams
 
-# Per la UI, scegliamo quale squadra visualizzare (es. la prima)
-current_team = teams_instances[1]
-# current_team = teams_instances[1]
+teams_instances = init_all_teams()
+current_team = teams_instances[0] # Bonaz
 
 # 3. Applicazione Flet
 def main(page: ft.Page) -> None:
