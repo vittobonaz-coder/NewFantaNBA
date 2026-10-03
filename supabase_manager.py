@@ -73,6 +73,62 @@ class SupabaseSync:
         
         return new_team
 
+    def push_calendar(self, calendar: list[dict]):
+        """
+        Popola la tabella matchups su Supabase partendo dal calendario generato.
+        """
+        print("Sincronizzazione del calendario su Supabase...")
+
+        # 1. Recupera la mappa nome_team -> uuid da fanta_teams
+        teams_res = self.supabase.table("fanta_teams").select("id, name").execute()
+        if not teams_res.data:
+            print("Errore: Nessun fanta_team trovato su Supabase. Esegui prima push_team.")
+            return
+
+        team_map = {t["name"]: t["id"] for t in teams_res.data}
+
+        # 2. Prepara le righe da inserire nella tabella matchups
+        matchups_data = []
+        for round_data in calendar:
+            gameweek = round_data["round_number"]
+            start_date = round_data["start_date"]
+            end_date = round_data["end_date"]
+
+            for matchup in round_data["matchups"]:
+                home_name = matchup["home_team"]
+                away_name = matchup["away_team"]
+
+                home_id = team_map.get(home_name)
+                away_id = team_map.get(away_name)
+
+                if home_id and away_id:
+                    matchups_data.append({
+                        "gameweek": gameweek,
+                        "start_date": start_date,
+                        "end_date": end_date,
+                        "home_team_id": home_id,
+                        "away_team_id": away_id,
+                        "home_score": 0.00,
+                        "away_score": 0.00,
+                        "was_played": False,
+                        "home_lineup": "NULL",
+                        "away_lineup": "NULL"
+                    })
+                else:
+                    print(f"Attenzione: ID non trovato per {home_name} o {away_name}")
+
+        # 4. Inserimento batch in Supabase
+        if matchups_data:
+            self.supabase.table("matchups").insert(matchups_data).execute()
+            print(f"Calendario caricato con successo: {len(matchups_data)} matchup inseriti su Supabase.")
+
+
+
+
+
+
+
+
 # --- ESEMPIO DI UTILIZZO ---
 # if __name__ == "__main__":
 #     sync_manager = SupabaseSync()

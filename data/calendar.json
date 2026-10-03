@@ -1,0 +1,106 @@
+[
+    {
+        "round_number": 1,
+        "start_date": "2026-10-04",
+        "end_date": "2026-10-10",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Jack",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Pit",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 2,
+        "start_date": "2026-10-11",
+        "end_date": "2026-10-16",
+        "matchups": [
+            {
+                "home_team": "Freezer",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Testo",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Jack",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Pit",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    }
+]
