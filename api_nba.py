@@ -8,7 +8,8 @@ import time
 
 class NbaDataManager:
 
-    def __init__(self, player_ids, season='2025-26', s_type='Regular Season'):
+    # def __init__(self, player_ids, season='2026-27', s_type='Regular Season'):
+    def __init__(self, player_ids, season='2026-27', s_type='Pre Season'):
         self.player_ids = player_ids
         self.season = season
         self.s_type = s_type

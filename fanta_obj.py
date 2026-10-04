@@ -30,6 +30,7 @@ class Player:
             position=data.get("pos", "")
         )
         obj.position = obj.get_clean_position()
+        obj.score = data.get("score", 0.0)
         return obj
     
     @classmethod
@@ -80,39 +81,49 @@ class Player:
 
         parts = self.position.replace('-', '/').split('/')
         clean_parts = [mapping.get(p.strip(), p.strip()) for p in parts]
-
-        pos = "/".join(clean_parts)
         
-        return pos
+        return "/".join(clean_parts)
 
     calculate_score_from_json_path = os.path.join("data", "historical_boxscores.json")    
-    def calculate_score_from_json(self, filename=calculate_score_from_json_path):
+    def calculate_score_from_json(self, filename: str = calculate_score_from_json_path, target_date: str = None, average: bool = False) -> float:
         """
         Cerca le prestazioni del giocatore nel file boxscores e calcola il punteggio.
-        Se ci sono più partite, calcola la media.
+        :param filename: Il percorso del file JSON da cui caricare i boxscore.
+        :param target_date: Opzionale. Se fornita (es. 'YYYY-MM-DD'), filtra le partite di quella data.
+        :param average: Se True fa la media, altrimenti calcola il totale singolo/giornaliero.
         """
         if not os.path.exists(filename) or self.id == 0:
+            self.score = 0.0
             return 0.0
 
         with open(filename, "r", encoding="utf-8") as f:
             try:
                 boxscores = json.load(f)
-            except:
+            except Exception as e:
+                print(f"Errore nella lettura dei boxscore da {filename}: {e}")
+                self.score = 0.0
                 return 0.0
         
-        return self.calculate_score(boxscores)
+        return self.calculate_score(boxscores, target_date=target_date, average=average)
     
-    def calculate_score(self, boxscores: dict):
+    def calculate_score(self, boxscores: list[dict], target_date: str = None, average: bool = False) -> float:
         """
         Riceve una lista di boxscores (dizionari) e calcola il punteggio del giocatore.
-        Restituisce la media se ci sono più partite.
+        :param boxscores: Lista dei boxscore di gara.
+        :param target_date: Opzionale. Se specificata, valuta solo le partite con GAME_DATE corrispondente.
+        :param average: Se True calcola la media su tutte le gare trovate.
+                        Se False somma i punteggi ottenuti nel target selezionato.
         """
         if not boxscores or self.id == 0:
             self.score = 0.0
             return 0.0
         
-        # Filtriamo le partite giocate da QUESTO giocatore
+        # 1. Filtriamo le partite giocate da QUESTO giocatore
         player_games = [g for g in boxscores if g.get("PLAYER_ID") == self.id]
+
+        # 2. Se è specificata una data target, filtra ulteriormente per la data
+        if target_date:
+            player_games = [g for g in player_games if g.get("GAME_DATE") == target_date]
 
         if not player_games:
             self.score = 0.0
@@ -138,11 +149,10 @@ class Player:
             pm = game.get("PLUS_MINUS", 0)
             wl_str = game.get("WL", 0)
 
-            if wl_str == "W": wl = 3
-            else: wl = -3
+            wl = 3 if wl_str == "W" else (-3 if wl_str == "L" else 0)
 
             # Algoritmo di base
-            current_score = pts
+            current_score = float(pts)
             # current_score = (
             #     pts * 1.0 +         
             #     dreb * 1.0 +
@@ -161,19 +171,23 @@ class Player:
             stats_to_check = [pts, reb, ast, stl, blk]
             double_digits_count = sum(1 for s in stats_to_check if s >= 10)
 
-            if double_digits_count == 2:
-                current_score += 5   # Doppia Doppia
-            elif double_digits_count == 3:
-                current_score += 10  # Tripla Doppia
-            elif double_digits_count == 4:
-                current_score += 40  # Quadrupla Doppia (Rarissima)
-            elif double_digits_count == 5:
-                current_score += 100 # Quintupla Doppia (Leggendaria)
+            # if double_digits_count == 2:
+            #     current_score += 5   # Doppia Doppia
+            # elif double_digits_count == 3:
+            #     current_score += 10  # Tripla Doppia
+            # elif double_digits_count == 4:
+            #     current_score += 40  # Quadrupla Doppia (Rarissima)
+            # elif double_digits_count == 5:
+            #     current_score += 100 # Quintupla Doppia (Leggendaria)
 
             total_scores.append(current_score)
 
-        # Calcoliamo la media se ha giocato più partite nello stesso file
-        self.score = sum(total_scores) / len(total_scores)
+        # Se richiesto esplicitamente fa la media (es. per historical_boxscores / statistiche generali)
+        if average:
+            self.score = sum(total_scores) / len(total_scores) if total_scores else 0.0
+        else:
+            # Per il singolo giorno prende il punteggio della gara
+            self.score = float(sum(total_scores)) if total_scores else 0.0
         return self.score
     
 
@@ -223,7 +237,6 @@ class Team:
             for p_data in data["roster"]:
                 # Ricostruiamo l'oggetto Player dai dati salvati
                 p = Player.from_dict(p_data)
-                p.score = p_data["score"] # Ripristiniamo il punteggio del singolo
                 self.add_player(p, p_data["role"])
                 
             print(f"Dati caricati da {self.filename}. Punteggio: {self.score}")
@@ -240,7 +253,7 @@ class Team:
             multiplier = role_configs.get(role, {}).get("mult", 0.0)
             total += p.score * multiplier
         
-        self.score = total # Aggiorna il campo della classe
+        self.score = float(total) # Aggiorna il campo della classe
         return self.score
         
     def add_player(self, player: Player, role: str):
@@ -269,7 +282,7 @@ class Team:
         
         # 2. Scarico Info anagrafiche e Boxscores
         players_raw_info = api_manager.fetch_players_info(p_ids, filename=os.path.join("data", f"{self.name}_info.json"))
-        _, all_boxscores = api_manager.fetch_and_sync(target_date)
+        _, daily_boxscores = api_manager.fetch_and_sync(target_date)
         
         # 3. Creazione oggetti Player
         for info in players_raw_info:
@@ -281,7 +294,7 @@ class Team:
             )
             p_obj.position = p_obj.get_clean_position()
             print(f"{p_obj.name}: {p_obj.position}")
-            p_obj.calculate_score(all_boxscores)
+            p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
             
             # Recuperiamo il ruolo dal dizionario passato in input usando il nome
             role = roles_dict.get(p_obj.name, "RESERVE")
@@ -315,7 +328,7 @@ class Team:
         api_manager.player_ids = p_ids
         
         # 2. Scarica e sincronizza SOLO i boxscores della data target
-        _, all_boxscores = api_manager.fetch_and_sync(target_date)
+        _, daily_boxscores = api_manager.fetch_and_sync(target_date)
         
         # 3. Legge l'anagrafica locale già scaricata nel setup statico
         info_path = os.path.join("data", f"{self.name.replace(' ', '_').lower()}_info.json")
@@ -336,7 +349,7 @@ class Team:
                 team_abbreviation=info["TEAM"],
                 position=info["POSITION"]
             )
-            p_obj.calculate_score(all_boxscores)
+            p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
             
             role = roles_dict.get(p_obj.name, "RESERVE")
             self.add_player(p_obj, role)

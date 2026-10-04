@@ -7,7 +7,7 @@ import os
 
 def init_all_teams():
     api_manager = NbaDataManager(player_ids=[])
-    DATA_TARGET = "2026-04-12"
+    DATA_TARGET = "2026-10-03"
     
     # Carica la configurazione
     with open(os.path.join("data", "fanta_teams.json"), "r", encoding="utf-8") as f:
@@ -29,7 +29,7 @@ def init_all_teams():
     return teams
 
 teams_instances = init_all_teams()
-current_team = teams_instances[0] # Bonaz
+current_team = teams_instances[2] # Bonaz
 
 # 3. Applicazione Flet
 def main(page: ft.Page) -> None:
