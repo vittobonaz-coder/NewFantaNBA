@@ -1,5 +1,9 @@
 import flet as ft
+import os
+import json
 from fanta_obj import Player, Team
+
+
 ROLE_CONFIGS = {
     "STARTER": {"width": 110, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": 1.0, "button_size": 20, "button_left": -5, "button_top": -5},
     "SIXTH": {"width": 110, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": 1.0, "button_size": 20, "button_left": -5, "button_top": -5},
@@ -418,6 +422,71 @@ class Court(ft.Column):
             card.swap_button.items = valid_items
 
 
+class CalendarView(ft.Tabs):
+    def __init__(self):
+        super().__init__(content=None, length=0)
+        self.load_calendar()
+        self.expand = True # Permette alla dashboard di occupare tutto lo spazio
+        self.length = 5
+        self.selected_index=0
+        self.animation_duration=300
+
+    def load_calendar(self):
+        cal_path = os.path.join("data", "calendar.json")
+        if not os.path.exists(cal_path):
+            self.controls.append(ft.Text("Calendario non trovato."))
+            return
+
+        with open(cal_path, "r", encoding="utf-8") as f:
+            calendar_data = json.load(f)
+
+        round_tabs = []
+        round_col = []
+
+        for round_data in calendar_data:
+            round_n = round_data['round_number']
+            round_col.append(
+                ft.Column(
+                    controls=[
+                        ft.Text(f"{round_data['start_date']} - {round_data['end_date']}", size=16, weight="bold", color="amber"),
+                        ft.Divider()
+                    ]
+                )
+            )
+            for m in round_data["matchups"]:
+                round_col[-1].controls.append(
+                    ft.Container(
+                        content=ft.Row([
+                            ft.Text(f"{m['home_team']}", expand=True, text_align="right"),
+                            ft.Text("vs", weight="bold"),
+                            ft.Text(f"{m['away_team']}", expand=True, text_align="left"),
+                        ]),
+                        padding=10,
+                        bgcolor=ft.Colors.GREY_900,
+                        border_radius=8
+                    )
+                )
+            round_tabs.append(ft.Tab(label=f"{round_n}"))
+        
+        self.content=ft.Column(
+            expand=True,
+            controls=[
+                ft.TabBar(
+                    label_text_style=ft.TextStyle(size=20),
+                    unselected_label_text_style=ft.TextStyle(size=17),
+                    label_color=ft.Colors.ORANGE,           # Colore testo selezionato
+                    unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
+                    indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
+                    tabs=round_tabs
+                ),
+                ft.TabBarView(
+                    expand=True,
+                    controls=round_col
+                ),
+            ],
+        )
+
+
 class MainDashboard(ft.Tabs):
     def __init__(self, team: Team):
         super().__init__(content=None, length=0)
@@ -428,10 +497,9 @@ class MainDashboard(ft.Tabs):
         self.animation_duration=300
 
         # Inizializziamo le varie viste
-        # self.team_view = ft.Text("ORCODIO", size=20)
         self.team_view = Court(self.team)
         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
-        self.calendar_view = ft.Text("Vista Calendario - Prossimamente", size=20)
+        self.calendar_view = CalendarView()
         self.championship_view = ft.Text("Vista Campionato - Prossimamente", size=20)
         self.settings_view = ft.Text("Vista Impostazioni - Prossimamente", size=20)
         
