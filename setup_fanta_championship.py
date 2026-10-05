@@ -140,5 +140,5 @@ def run_calendar_setup(start_date: str, end_date: str):
 
 
 if __name__ == "__main__":
-    # run_teams_setup()
+    run_teams_setup()
     run_calendar_setup(start_date="2026-10-04", end_date="2026-10-16")

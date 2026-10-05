@@ -121,27 +121,3 @@ class SupabaseSync:
         if matchups_data:
             self.supabase.table("matchups").insert(matchups_data).execute()
             print(f"Calendario caricato con successo: {len(matchups_data)} matchup inseriti su Supabase.")
-
-
-
-
-
-
-
-
-# --- ESEMPIO DI UTILIZZO ---
-# if __name__ == "__main__":
-#     sync_manager = SupabaseSync()
-
-#     # Esempio Scrittura: prendiamo il team esistente dal file locale (caricato in test.py)
-#     # my_team = Team(name="MyTeam")
-#     # my_team.load_from_json()
-#     # my_court = Court(my_team)
-#     # sync_manager.push_team(my_team, my_court)
-
-#     # Esempio Lettura:
-#     team_remoto = sync_manager.pull_team("MyTeam")
-#     if team_remoto:
-#         print(f"Team caricato da Cloud: {team_remoto.name}, Score: {team_remoto.score}")
-#         for p in team_remoto.get_ordered_roster():
-#             print(f" - {p.name} [{team_remoto.roles_map[p.id]}]")

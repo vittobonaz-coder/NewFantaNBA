@@ -550,181 +550,35 @@ class MainDashboard(ft.Tabs):
         )
 
 
-# class MainDashboard(ft.Tabs):
-#     def __init__(self, team: Team):
-#         super().__init__(content=None, length=0)
-#         self.team = team
-#         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
-#         self.length = 5
-#         self.selected_index=0
-#         self.animation_duration=300
-
-#         # Inizializziamo le varie viste
-#         self.team_view = Court(self.team)
-#         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
-#         self.calendar_view = ft.Text("Vista Calendario - Prossimamente", size=20)
-#         self.championship_view = ft.Text("Vista Campionato - Prossimamente", size=20)
-#         self.settings_view = ft.Text("Vista Impostazioni - Prossimamente", size=20)
+class LoginView(ft.Column):
+    def __init__(self, page: ft.Page, on_login_success):
+        super().__init__()
+        self.app_page = page
+        self.on_login_success = on_login_success
+        self.alignment = ft.MainAxisAlignment.CENTER
+        self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
-#         self.content=ft.Column(
-#             expand=True,
-#             controls=[
-#                 ft.TabBar(
-#                     label_text_style=ft.TextStyle(size=9.3),
-#                     unselected_label_text_style=ft.TextStyle(size=7.2),
-#                     label_color=ft.Colors.ORANGE,           # Colore testo selezionato
-#                     unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
-#                     indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
-#                     tabs=[
-#                         ft.Tab(label="Squadra", icon=ft.Icons.SPORTS_BASKETBALL),
-#                         ft.Tab(label="Ricerca", icon=ft.Icons.MANAGE_SEARCH),
-#                         ft.Tab(label="Calendario", icon=ft.Icons.CALENDAR_MONTH),
-#                         ft.Tab(label="Campionato", icon=ft.Icons.EMOJI_EVENTS),
-#                         ft.Tab(label="Impostazioni", icon=ft.Icons.SETTINGS),
-#                     ]
-#                 ),
-#                 ft.TabBarView(
-#                     expand=True,
-#                     controls=[
-#                         # Squadra
-#                         ft.Container(
-#                             content=self.team_view
-#                         ),
-#                         # Ricerca
-#                         ft.Container(
-#                             content=self.search_view,
-#                             padding=0
-#                         ),
-#                         # Calendario
-#                         ft.Container(
-#                             content=(
-#                                 self.calendar_view
-#                             )
-#                         ),
-#                         # Campionato
-#                         ft.Container(
-#                             content=self.championship_view
-#                         ),
-#                         # Impostazioni
-#                         ft.Container(
-#                             content=self.settings_view
-#                         ),
-#                     ],
-#                 ),
-#             ],
-#         )
-
-
-# class MainDashboard(ft.Column):
-#     def __init__(self, team: Team):
-#         super().__init__()
-#         self.team = team
-#         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
-#         self.spacing = 0
-#         self.scroll = ft.ScrollMode.AUTO
+        self.username_field = ft.TextField(label="Username", width=280, bgcolor="#1a1a1a")
+        self.password_field = ft.TextField(label="Password", width=280, password=True, can_reveal_password=True, bgcolor="#1a1a1a")
+        self.error_text = ft.Text("", color="red")
         
-#         # Inizializziamo le varie viste
-#         self.team_view = Court(self.team)
-#         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
-#         self.calendar_view = ft.Text("Vista Calendario - Prossimamente", size=20)
-#         self.championship_view = ft.Text("Vista Campionato - Prossimamente", size=20)
-#         self.settings_view = ft.Text("Vista Impostazioni - Prossimamente", size=20)
+        self.controls = [
+            ft.Icon(ft.Icons.SPORTS_BASKETBALL, size=80, color="amber"),
+            ft.Text("NewFantaNBA Login", size=24, weight="bold"),
+            self.username_field,
+            self.password_field,
+            self.error_text,
+            ft.ElevatedButton("Entra", on_click=self._check_login, bgcolor="amber", color="black")
+        ]
 
-#         # Definiamo i TabBar e TabBarView
-#         # Nota: Usiamo TabBar e TabBarView dentro una Column come nel tuo snippet
-#         self.controls = [ft.Tabs(
-#             selected_index=0,
-#             animation_duration=300,
-#             length=5,
-#             expand=True,
-#             content=ft.Column(
-#                 expand=True,
-#                 controls=[
-#                     ft.TabBar(
-#                         label_text_style=ft.TextStyle(size=9.3),
-#                         unselected_label_text_style=ft.TextStyle(size=7.2),
-#                         label_color=ft.Colors.ORANGE,           # Colore testo selezionato
-#                         unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
-#                         indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
-#                         tabs=[
-#                             ft.Tab(label="Squadra", icon=ft.Icons.SPORTS_BASKETBALL),
-#                             ft.Tab(label="Ricerca", icon=ft.Icons.MANAGE_SEARCH),
-#                             ft.Tab(label="Calendario", icon=ft.Icons.CALENDAR_MONTH),
-#                             ft.Tab(label="Campionato", icon=ft.Icons.EMOJI_EVENTS),
-#                             ft.Tab(label="Impostazioni", icon=ft.Icons.SETTINGS),
-#                         ]
-#                     ),
-#                     ft.TabBarView(
-#                         expand=True,
-#                         controls=[
-#                             # Squadra
-#                             ft.Container(
-#                                 content=self.team_view
-#                             ),
-#                             # Ricerca
-#                             ft.Container(
-#                                 content=self.search_view,
-#                                 padding=0
-#                             ),
-#                             # Calendario
-#                             ft.Container(
-#                                 content=(
-#                                     self.calendar_view
-#                                 )
-#                             ),
-#                             # Campionato
-#                             ft.Container(
-#                                 content=self.championship_view
-#                             ),
-#                             # Impostazioni
-#                             ft.Container(
-#                                 content=self.settings_view
-#                             ),
-#                         ],
-#                     ),
-#                 ],
-#             ),
-#         )]
-
-# def main(page: ft.Page) -> None:
-#     page.title = 'Players Cards'
-#     page.scroll = ft.ScrollMode.AUTO
-#     page.vertical_alignment = ft.MainAxisAlignment.CENTER
-#     page.theme_mode = ft.ThemeMode.DARK
-#     page.window.width = 358
-#     page.window.height = 757
-
-#     players_data = [
-#         {"id": 201143, "name": "Al Horford", "team": "GSW", "pos": "C/A", "score": 21.5, "role": "STARTER"},
-#         {"id": 2544, "name": "Lebron James", "team": "LAL", "pos": "A", "score": 27.5, "role": "STARTER"},
-#         {"id": 1629029, "name": "Luka Doncic", "team": "LAL", "pos": "A/G", "score": 58.0, "role": "STARTER"},
-#         {"id": 201935, "name": "James Harden", "team": "LAC", "pos": "G", "score": 38.0, "role": "STARTER"},
-#         {"id": 201939, "name": "Stephen Curry", "team": "GSW", "pos": "G", "score": 36.1, "role": "STARTER"},
-#         {"id": 1629636, "name": "Darius Garland", "team": "LAC", "pos": "G", "score": 24.8, "role": "SIXTH"},
-#         {"id": 1630163, "name": "LaMelo Ball", "team": "CHA", "pos": "G", "score": 44.5, "role": "BENCH"},
-#         {"id": 1630567, "name": "Scottie Barnes", "team": "TOR", "pos": "A/G", "score": 39.5, "role": "BENCH"},
-#         {"id": 1630578, "name": "Alperen Sengun", "team": "HOU", "pos": "C", "score": 41.0, "role": "BENCH"},
-#         {"id": 1631323, "name": "Simone Fontecchio", "team": "MIA", "pos": "A/C", "score": 13.2, "role": "BENCH"},
-#         {"id": 1641705, "name": "Victor Wembanyama", "team": "SAS", "pos": "A/C", "score": 48.3, "role": "RESERVE"},
-#         {"id": 202331, "name": "Paul George", "team": "PHI", "pos": "A", "score": 32.0, "role": "RESERVE"},
-#         {"id": 201566, "name": "Russell Westbrook", "team": "SAC", "pos": "G", "score": 28.2, "role": "RESERVE"},
-#     ]
-    
-#     page.add(Court(players_data))
-    
-
-#     ## Verifica che la squadra sia composta da 5G, 5A, 3C
-#     from itertools import product
-#     # 1. Estrai le opzioni per ogni giocatore: "A/G" diventa ["A", "G"]
-#     options = [d["pos"].split('/') for d in players_data]
-#     # 2. Genera tutte le combinazioni e conta quante soddisfano i target (G:5, A:5, C:3)
-#     valid = any(c.count('G')==5 and c.count('A')==5 and c.count('C')==3 for c in product(*options))
-#     # 3. Visualizza solo se la condizione è True
-#     if not valid:
-#         page.clean()
-#         page.add(ft.Text("Squadra non consentita"))
-
-#     # page.add(Court(players_data))
-
-# if __name__ == '__main__':
-#     ft.run(main=main)
+    def _check_login(self, e):
+        with open("data/profiles.json", "r") as f:
+            profiles = json.load(f)
+            
+        for user in profiles:
+            if user["username"] == self.username_field.value and user["password"] == self.password_field.value:
+                self.on_login_success(user)
+                return
+        
+        self.error_text.value = "Credenziali errate"
+        self.update()
