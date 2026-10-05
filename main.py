@@ -1,37 +1,11 @@
-import os
 import flet as ft
 import json
+import os
 from api_nba import NbaDataManager
 from fanta_obj import Team
-from ui_court import Court, ROLE_CONFIGS
+from ui_court import Court, ROLE_CONFIGS, MainDashboard, LoginView
 
-def init_all_teams():
-    api_manager = NbaDataManager(player_ids=[])
-    DATA_TARGET = "2026-04-12"
-    
-    # Carica la configurazione
-    with open(os.path.join("data", "fanta_teams.json"), "r", encoding="utf-8") as f:
-        data = json.load(f)
-        
-    teams = []
-    for team_name, roles_map in data.items():
-        team = Team(name=team_name)
-        
-        # Carica i dati anagrafici dal file locale e aggiorna solo i punteggi tramite i boxscore
-        team.update_team_scores_for_date(
-            api_manager=api_manager,
-            target_date=DATA_TARGET,
-            names_list=list(roles_map.keys()),
-            roles_dict=roles_map
-        )
-        team.calculate_total_score(ROLE_CONFIGS)
-        teams.append(team)
-    return teams
 
-teams_instances = init_all_teams()
-current_team = teams_instances[0] # Bonaz
-
-# 3. Applicazione Flet
 def main(page: ft.Page) -> None:
     page.title = 'Fanta NBA - Dashboard'
     # page.scroll = ft.ScrollMode.AUTO
@@ -40,15 +14,42 @@ def main(page: ft.Page) -> None:
     page.window.width = 358
     page.window.height = 757
 
-    # Verifica validità
-    if not current_team.is_valid_roster():
-        page.add(ft.Text(f"Errore Roster: {current_team.name}", color="red"))
-        return
+    def on_login_success(user_data):
+        team_name = user_data["username"].replace("_user", "") 
+        team = Team(name=team_name)
+        
+        # PROVA A CARICARE LO STATO SALVATO
+        if not team.load_from_json():
+            print(f"File di stato non trovato per {team_name}, inizializzo da API...")
+            
+            # Carichiamo la configurazione dai file JSON
+            with open("data/fanta_teams.json", "r", encoding="utf-8") as f:
+                all_teams_config = json.load(f)
+            
+            roles_map = all_teams_config.get(team_name, {})
+            names_list = list(roles_map.keys())
+            
+            # Inizializziamo via API (usando il metodo che avevi già predisposto)
+            api_manager = NbaDataManager(player_ids=[])
+            team.update_team_scores_for_date(
+                api_manager=api_manager,
+                target_date="2026-10-03", # Data di riferimento per il setup iniziale
+                names_list=names_list,
+                roles_dict=roles_map
+            )
+            # Salviamo per le prossime volte
+            team.save_to_json()
+        
+        if not team.is_valid_roster():
+            page.add(ft.Text(f"Errore Roster: {team.name}", color="red"))
+            return
+        
+        page.clean()
+        page.add(MainDashboard(team))
+        page.update()
     
-    from ui_court import MainDashboard
-    
-    # Aggiungiamo la dashboard completa
-    page.add(MainDashboard(current_team))
+    # Avvio con schermata di login
+    page.add(LoginView(page, on_login_success))
 
 if __name__ == "__main__":
     # Render usa la variabile d'ambiente PORT
