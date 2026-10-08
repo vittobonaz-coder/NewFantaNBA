@@ -3,35 +3,6 @@ import requests
 import flet as ft
 import json
 import os
-
-# def test_api():
-#     # Per eliminare qualsiasi problema con il terminale di Windows,
-#     # INCOLLA LA TUA CHIAVE DIRETTAMENTE QUI SOTTO tra le virgolette:
-#     api_key = "78008e43b200285bc518fb31ce23ef20"
-    
-#     url = "https://v1.basketball.api-sports.io/seasons"
-#     headers = {
-#         "x-apisports-key": api_key
-#     }
-
-#     print("🚀 Invio della richiesta ad API-NBA...")
-    
-#     try:
-#         response = requests.get(url, headers=headers, timeout=10)
-        
-#         print(f"📊 Status Code ricevuto dal server: {response.status_code}")
-#         print("📄 Testo grezzo della risposta:")
-#         print("-" * 40)
-#         print(response.text)  # Stampa l'esatto errore inviato dal server
-#         print("-" * 40)
-        
-#     except requests.exceptions.RequestException as e:
-#         print(f"💥 Errore di rete: {e}")
-
-# if __name__ == "__main__":
-#     test_api()
-
-
 # Per eliminare qualsiasi problema con il terminale di Windows,
 # INCOLLA LA TUA CHIAVE DIRETTAMENTE QUI SOTTO tra le virgolette:
 api_key = "78008e43b200285bc518fb31ce23ef20"
