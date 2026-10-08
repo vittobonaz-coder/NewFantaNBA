@@ -16,8 +16,25 @@ else:
     teams_data = {}
 
 
+def ensure_history_files():
+    """Crea i file storici se non esistono."""
+    data_dir = "data"
+    files = ["historical_boxscores.json", "historical_games.json"]
+    
+    for filename in files:
+        filepath = os.path.join(data_dir, filename)
+        if not os.path.exists(filepath):
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump([], f)
+            print(f"File {filename} creato.")
+        else:
+            print(f"File {filename} già presente.")
+
+
 def run_teams_setup():
     # --- SETUP DELLE SQUADRE E DEI ROSTER ---
+    ensure_history_files()
+    
     for team_name, roles_map in teams_data.items():
         team = Team(name=team_name)
         # Scarica anagrafiche NBA
