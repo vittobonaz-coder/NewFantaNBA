@@ -3,6 +3,7 @@ import json
 from supabase import create_client, Client
 from fanta_obj import Player, Team
 from pathlib import Path
+from datetime import date
 
 SUPABASE_URL = "https://ifqiarpfsbcrfpmabdus.supabase.co"
 SUPABASE_KEY = "sb_publishable_KNhdTSkcs0XuzDwKqNbIOA_XpiJlqFZ"
@@ -155,6 +156,59 @@ class SupabaseSync:
             print(f"Errore durante la sincronizzazione della classifica: {e}")
             raise e
 
+    def get_last_updated_dates(self) -> dict[str, str]:
+        """
+        Recupera le date di ultimo aggiornamento per ogni fanta-team.
+        Restituisce un dizionario con struttura: {"Nome Team": "YYYY-MM-DD"}
+        """
+        try:
+            response = (
+                self.supabase.table("fanta_teams")
+                .select("name, last_updated_date")
+                .execute()
+            )
+            
+            data = response.data or []
+            return {item["name"]: item["last_updated_date"] for item in data}
 
-# if __name__ == "__main__":
-#     SupabaseSync().sync_standings()
+        except Exception as e:
+            print(f"Errore durante il recupero delle date di aggiornamento: {e}")
+            return {}
+
+    def update_team_last_updated_date(self, team_id: str, new_date: date | str = None) -> bool:
+        """
+        Aggiorna la colonna last_updated_date per la squadra specificata da team_id.
+        Se new_date non viene passato, imposta la data di oggi (YYYY-MM-DD).
+        """
+        # Se non viene fornita una data specifica, usa la data odierna nel formato ISO (YYYY-MM-DD)
+        if new_date is None:
+            formatted_date = date.today().isoformat()
+        elif isinstance(new_date, date):
+            formatted_date = new_date.isoformat()
+        else:
+            formatted_date = str(new_date)
+
+        print(f"Aggiornamento last_updated_date per la squadra {team_id} alla data {formatted_date}...")
+
+        try:
+            response = (
+                self.supabase.table("fanta_teams")
+                .update({"last_updated_date": formatted_date})
+                .eq("id", team_id)
+                .execute()
+            )
+
+            if response.data:
+                print(f"Data aggiornata con successo per il team ID: {team_id}")
+                return True
+            else:
+                print(f"Attenzione: Nessuna squadra trovata con ID: {team_id}")
+                return False
+
+        except Exception as e:
+            print(f"Errore durante l'aggiornamento di last_updated_date: {e}")
+            raise e
+
+
+if __name__ == "__main__":
+    SupabaseSync().update_team_last_updated_date(team_id="1bca61f0-aea0-41fe-9c55-39b9e9fa825e")

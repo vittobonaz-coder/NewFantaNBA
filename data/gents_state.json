@@ -1,0 +1,111 @@
+{
+    "team_name": "Gents",
+    "total_score": 0.0,
+    "lineup": "2-2-1",
+    "roster": [
+        {
+            "id": 1627751,
+            "name": "Jakob Poeltl",
+            "team": "TOR",
+            "pos": "C",
+            "score": 9.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 203507,
+            "name": "Giannis Antetokounmpo",
+            "team": "MIA",
+            "pos": "A",
+            "score": 9.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 204001,
+            "name": "Kristaps Porzi\u0146\u0123is",
+            "team": "GSW",
+            "pos": "A/C",
+            "score": 0.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 1629027,
+            "name": "Trae Young",
+            "team": "WAS",
+            "pos": "G",
+            "score": 0.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 1628378,
+            "name": "Donovan Mitchell",
+            "team": "CLE",
+            "pos": "G",
+            "score": 0.0,
+            "role": "STARTER"
+        },
+        {
+            "id": 1631096,
+            "name": "Chet Holmgren",
+            "team": "OKC",
+            "pos": "C/A",
+            "score": 0.0,
+            "role": "SIXTH"
+        },
+        {
+            "id": 1630200,
+            "name": "Tre Jones",
+            "team": "CHI",
+            "pos": "G",
+            "score": 0.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1629636,
+            "name": "Darius Garland",
+            "team": "LAC",
+            "pos": "G",
+            "score": 0.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1627783,
+            "name": "Pascal Siakam",
+            "team": "IND",
+            "pos": "A",
+            "score": 0.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1629628,
+            "name": "RJ Barrett",
+            "team": "TOR",
+            "pos": "A/G",
+            "score": 15.0,
+            "role": "BENCH"
+        },
+        {
+            "id": 1630591,
+            "name": "Jalen Suggs",
+            "team": "ORL",
+            "pos": "G",
+            "score": 0.0,
+            "role": "RESERVE"
+        },
+        {
+            "id": 203952,
+            "name": "Andrew Wiggins",
+            "team": "MIA",
+            "pos": "A",
+            "score": 12.0,
+            "role": "RESERVE"
+        },
+        {
+            "id": 203500,
+            "name": "Steven Adams",
+            "team": "HOU",
+            "pos": "C",
+            "score": 0.0,
+            "role": "RESERVE"
+        }
+    ]
+}
