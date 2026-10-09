@@ -1,6 +1,6 @@
 {
     "Bonaz": {
-        "Ivica Zubac": "STARTER",
+        "Ivica Zubac": "RESERVE",
         "Jaden McDaniels": "STARTER",
         "Jimmy Butler III": "STARTER",
         "Coby White": "STARTER",
@@ -12,13 +12,13 @@
         "Ty Jerome": "BENCH",
         "Ayo Dosunmu": "RESERVE",
         "Bennedict Mathurin": "RESERVE",
-        "Walker Kessler": "RESERVE"
+        "Walker Kessler": "STARTER"
     },
     "Mazen": {
         "Jalen Duren": "STARTER",
         "Brandon Ingram": "STARTER",
         "Jayson Tatum": "STARTER",
-        "Luka Don\u010di\u0107": "STARTER",
+        "Luka Dončić": "STARTER",
         "Russell Westbrook": "STARTER",
         "Payton Pritchard": "SIXTH",
         "DeMar DeRozan": "BENCH",
@@ -27,12 +27,12 @@
         "Jarrett Allen": "BENCH",
         "Jrue Holiday": "RESERVE",
         "Saddiq Bey": "RESERVE",
-        "Jusuf Nurki\u0107": "RESERVE"
+        "Jusuf Nurkić": "RESERVE"
     },
     "Gents": {
         "Jakob Poeltl": "STARTER",
         "Giannis Antetokounmpo": "STARTER",
-        "Kristaps Porzi\u0146\u0123is": "STARTER",
+        "Kristaps Porziņģis": "STARTER",
         "Trae Young": "STARTER",
         "Donovan Mitchell": "STARTER",
         "Chet Holmgren": "SIXTH",
@@ -99,13 +99,13 @@
         "Jamal Murray": "BENCH",
         "Paul George": "BENCH",
         "Michael Porter Jr.": "BENCH",
-        "Nikola Vu\u010devi\u0107": "BENCH",
+        "Nikola Vučević": "BENCH",
         "Marcus Smart": "RESERVE",
         "Kyle Kuzma": "RESERVE",
         "Deandre Ayton": "RESERVE"
     },
     "Testo": {
-        "Nikola Joki\u0107": "STARTER",
+        "Nikola Jokić": "STARTER",
         "Anthony Davis": "STARTER",
         "Aaron Gordon": "STARTER",
         "Josh Giddey": "STARTER",
