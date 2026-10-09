@@ -487,6 +487,92 @@ class CalendarView(ft.Tabs):
         )
 
 
+class StandingsView(ft.Column):
+    def __init__(self, json_path: str = os.path.join("data", "standings.json")):
+        super().__init__()
+        self.json_path = json_path
+        self.expand = True
+        self.scroll = ft.ScrollMode.AUTO
+        self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+        
+        self.setup_ui()
+
+    def load_standings_data(self) -> list:
+        """Carica la classifica dal file JSON e la ordina per vittorie descrescenti."""
+        if not os.path.exists(self.json_path):
+            return []
+
+        try:
+            with open(self.json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            # Ordina: prima per vittorie (Wins), in caso di parità per Punti Fatti (total_score)
+            data.sort(key=lambda x: (x.get("wins", 0), x.get("total_score", 0.0)), reverse=True)
+            return data
+        except Exception as err:
+            print(f"Errore durante il caricamento della classifica: {err}")
+            return []
+
+    def setup_ui(self):
+        standings_data = self.load_standings_data()
+
+        if not standings_data:
+            self.controls = [
+                ft.Container(
+                    content=ft.Text("Nessun dato classifica disponibile.", size=16, color="grey"),
+                    padding=20
+                )
+            ]
+            return
+
+        # Costruzione righe della DataTable (Posizione + Campi JSON filtrati)
+        data_rows = []
+        for pos, team in enumerate(standings_data, start=1):
+            data_rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(f"{pos}", weight="bold", color="amber" if pos <= 3 else "white")),
+                        ft.DataCell(ft.Text(team.get("team_name", "-"), weight="bold")),
+                        ft.DataCell(ft.Text(str(team.get("wins", 0)), color="green_400")),
+                        ft.DataCell(ft.Text(str(team.get("losses", 0)), color="red_400")),
+                        ft.DataCell(ft.Text(f"{team.get('total_score', 0.0):.1f}")),
+                        ft.DataCell(ft.Text(f"{team.get('total_points_against', 0.0):.1f}")),
+                    ]
+                )
+            )
+
+        # Tabella reattiva Flet
+        standings_table = ft.DataTable(
+            bgcolor=ft.Colors.GREY_900,
+            border_radius=10,
+            column_spacing=18,
+            heading_row_height=45,
+            columns=[
+                ft.DataColumn(ft.Text("#", weight="bold")),
+                ft.DataColumn(ft.Text("Squadra", weight="bold")),
+                ft.DataColumn(ft.Text("V", weight="bold", color="green_400")),
+                ft.DataColumn(ft.Text("P", weight="bold", color="red_400")),
+                ft.DataColumn(ft.Text("PF", weight="bold"), numeric=True),
+                ft.DataColumn(ft.Text("PS", weight="bold"), numeric=True),
+            ],
+            rows=data_rows
+        )
+
+        self.controls = [
+            ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text("Classifica Campionato", size=20, weight="bold", color="amber"),
+                        ft.Divider(color="grey_800"),
+                        ft.Row([standings_table], alignment=ft.MainAxisAlignment.CENTER)
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                padding=10
+            )
+        ]
+
+
 class MainDashboard(ft.Tabs):
     def __init__(self, team: Team):
         super().__init__(content=None, length=0)
@@ -500,7 +586,7 @@ class MainDashboard(ft.Tabs):
         self.team_view = Court(self.team)
         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
         self.calendar_view = CalendarView()
-        self.championship_view = ft.Text("Vista Campionato - Prossimamente", size=20)
+        self.championship_view = StandingsView()
         self.settings_view = ft.Text("Vista Impostazioni - Prossimamente", size=20)
         
         self.content=ft.Column(

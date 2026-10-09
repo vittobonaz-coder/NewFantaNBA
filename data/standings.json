@@ -1,0 +1,92 @@
+[
+    {
+        "fanta_team_id": "1bca61f0-aea0-41fe-9c55-39b9e9fa825e",
+        "team_name": "Jack",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    },
+    {
+        "fanta_team_id": "1e7ddefa-d00c-4cea-899a-370e707cabb5",
+        "team_name": "Cola",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    },
+    {
+        "fanta_team_id": "2e5d3bf8-3de8-4652-ad80-bb786ed617a1",
+        "team_name": "Cile",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    },
+    {
+        "fanta_team_id": "30d4c0cd-030b-49fd-8ba2-f089ddff04bf",
+        "team_name": "Pippo",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    },
+    {
+        "fanta_team_id": "66495ee8-f2d5-4a24-91ef-de4c50cbae90",
+        "team_name": "Gents",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    },
+    {
+        "fanta_team_id": "a4ddff3f-33cd-4ba2-b7e0-f50eb5efe9b8",
+        "team_name": "Bonaz",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    },
+    {
+        "fanta_team_id": "b2ff51b1-b77b-4e60-a8d9-9abcde093f29",
+        "team_name": "Freezer",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    },
+    {
+        "fanta_team_id": "be6f3e79-4548-4d74-82dd-ae4869b02ef8",
+        "team_name": "Mazen",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    },
+    {
+        "fanta_team_id": "db1bd565-2954-4f20-b213-334a52bbc5c6",
+        "team_name": "Testo",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    },
+    {
+        "fanta_team_id": "e59aa92f-2646-45e2-916f-912a10e74588",
+        "team_name": "Pit",
+        "played": 0,
+        "wins": 0,
+        "losses": 0,
+        "total_score": 0.0,
+        "total_points_against": 0.0
+    }
+]

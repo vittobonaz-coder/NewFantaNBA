@@ -1,8 +1,8 @@
 import json
+import os
 from api_nba import NbaDataManager
 from fanta_obj import Team, Player
 from supabase_manager import SupabaseSync
-import os
 from datetime import datetime, timedelta
 
 sync = SupabaseSync()
@@ -159,3 +159,4 @@ def run_calendar_setup(start_date: str, end_date: str):
 if __name__ == "__main__":
     run_teams_setup()
     run_calendar_setup(start_date="2026-10-04", end_date="2026-10-16")
+    SupabaseSync().sync_standings()

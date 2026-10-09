@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\vitto\Python_Projects\New_FantaNBA\.venv
+set VIRTUAL_ENV=C:\Users\v.bonato\OneDrive - Airworks srl\Altro\NewFantaNBA\.venv
 
 if not defined PROMPT set PROMPT=$P$G
 

@@ -1,5 +1,8 @@
+import os
+import json
 from supabase import create_client, Client
 from fanta_obj import Player, Team
+from pathlib import Path
 
 SUPABASE_URL = "https://ifqiarpfsbcrfpmabdus.supabase.co"
 SUPABASE_KEY = "sb_publishable_KNhdTSkcs0XuzDwKqNbIOA_XpiJlqFZ"
@@ -121,3 +124,37 @@ class SupabaseSync:
         if matchups_data:
             self.supabase.table("matchups").insert(matchups_data).execute()
             print(f"Calendario caricato con successo: {len(matchups_data)} matchup inseriti su Supabase.")
+
+    def sync_standings(self, filepath: str = os.path.join("data", "standings.json")) -> list[dict]:
+        """
+        Sincronizza la classifica locale leggendo la vista 'v_standings' da Supabase 
+        e salvando i dati nella cartella 'data/standings.json'.
+        """
+        print("Sincronizzazione classifica da Supabase in corso...")
+        
+        try:
+            # 1. Fetch dei dati dalla vista 'v_standings'
+            response = self.supabase.table("v_standings").select("*").execute()
+            standings_data = response.data
+
+            if standings_data is None:
+                print("Avviso: Nessun dato restituito dalla vista 'v_standings'.")
+                standings_data = []
+
+            # 2. Scrittura del file JSON nella cartella 'data' (creata se non esiste)
+            path = Path(filepath)
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(standings_data, f, ensure_ascii=False, indent=4)
+
+            print(f"Classifica aggiornata con successo in '{filepath}' ({len(standings_data)} squadre).")
+            return standings_data
+
+        except Exception as e:
+            print(f"Errore durante la sincronizzazione della classifica: {e}")
+            raise e
+
+
+# if __name__ == "__main__":
+#     SupabaseSync().sync_standings()
