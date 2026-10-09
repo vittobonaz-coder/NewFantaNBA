@@ -209,6 +209,152 @@ class SupabaseSync:
             print(f"Errore durante l'aggiornamento di last_updated_date: {e}")
             raise e
 
+    def get_team_score_for_gameweek(self, team_id: str, gameweek: int) -> float | None:
+        """
+        Restituisce il punteggio ottenuto dalla squadra (home_score o away_score) 
+        nella tabella 'matchups' per una determinata gameweek.
+        
+        Ritorna None se la partita non esiste.
+        """
+        try:
+            # 1. Cerca se la squadra ha giocato in casa nella gameweek
+            home_res = (
+                self.supabase.table("matchups")
+                .select("home_score")
+                .eq("gameweek", gameweek)
+                .eq("home_team_id", team_id)
+                .execute()
+            )
+
+            if home_res.data:
+                score_raw = home_res.data[0]["home_score"]
+                return float(score_raw) if score_raw is not None else 0.0
+
+            # 2. Se non era in casa, cerca se ha giocato in trasferta
+            away_res = (
+                self.supabase.table("matchups")
+                .select("away_score")
+                .eq("gameweek", gameweek)
+                .eq("away_team_id", team_id)
+                .execute()
+            )
+
+            if away_res.data:
+                score_raw = away_res.data[0]["away_score"]
+                return float(score_raw) if score_raw is not None else 0.0
+
+            print(f"Nessun matchup trovato per team_id={team_id} nella gameweek {gameweek}.")
+            return None
+
+        except Exception as e:
+            print(f"Errore durante il recupero del punteggio per team_id={team_id}, gameweek={gameweek}: {e}")
+            raise e
+
+    def update_team_score_for_gameweek(self, team_id: str, gameweek: int, score: float) -> bool:
+        """
+        Aggiorna il punteggio di una squadra nella tabella 'matchups' per una determinata gameweek.
+        Riconosce autonomamente se la squadra ha giocato in casa (home_score) o in trasferta (away_score).
+        """
+        print(f"Aggiornamento punteggio ({score}) per il team {team_id} nella gameweek {gameweek}...")
+        try:
+            # 1. Controlla se il team gioca in casa per questa gameweek
+            home_check = (
+                self.supabase.table("matchups")
+                .select("id")
+                .eq("gameweek", gameweek)
+                .eq("home_team_id", team_id)
+                .execute()
+            )
+
+            if home_check.data:
+                matchup_id = home_check.data[0]["id"]
+                self.supabase.table("matchups").update({"home_score": score}).eq("id", matchup_id).execute()
+                print(f"Aggiornato home_score = {score} per la partita {matchup_id}.")
+                return True
+
+            # 2. Se non gioca in casa, controlla se gioca in trasferta
+            away_check = (
+                self.supabase.table("matchups")
+                .select("id")
+                .eq("gameweek", gameweek)
+                .eq("away_team_id", team_id)
+                .execute()
+            )
+
+            if away_check.data:
+                matchup_id = away_check.data[0]["id"]
+                self.supabase.table("matchups").update({"away_score": score}).eq("id", matchup_id).execute()
+                print(f"Aggiornato away_score = {score} per la partita {matchup_id}.")
+                return True
+
+            print(f"Attenzione: Nessuna partita trovata per team_id={team_id} nella gameweek {gameweek}.")
+            return False
+
+        except Exception as e:
+            print(f"Errore durante l'aggiornamento del punteggio: {e}")
+            raise e
+
+    def sync_team_positions_to_json(self, team_id: str, filepath: str = os.path.join("data", "fanta_teams.json")) -> bool:
+        """
+        Legge la colonna 'assigned_position' dei giocatori per un determinato team_id
+        dalla tabella 'rosters' e aggiorna le posizioni corrispondenti nel file JSON fanta_teams.json.
+        """
+        print(f"Sincronizzazione posizioni per il team ID: {team_id}...")
+        try:
+            # 1. Recupera il nome del fanta-team da fanta_teams
+            team_res = self.supabase.table("fanta_teams").select("name").eq("id", team_id).execute()
+            if not team_res.data:
+                print(f"Errore: Nessun fanta-team trovato con ID {team_id}.")
+                return False
+
+            team_name = team_res.data[0]["name"]
+
+            # 2. Recupera i giocatori e le loro posizioni assegnate dalla tabella rosters
+            roster_res = (
+                self.supabase.table("rosters")
+                .select("player_name, assigned_position")
+                .eq("fanta_team_id", team_id)
+                .execute()
+            )
+
+            if not roster_res.data:
+                print(f"Attenzione: Nessun giocatore trovato nel roster per il team {team_name} ({team_id}).")
+                return False
+
+            # Crea la mappa localmente { "Nome Giocatore": "STARTER" / "BENCH" / ... }
+            db_positions = {row["player_name"]: row["assigned_position"] for row in roster_res.data}
+
+            # 3. Legge e aggiorna il file fanta_teams.json
+            json_path = Path(filepath)
+            if not json_path.exists():
+                print(f"Errore: Il file '{filepath}' non esiste.")
+                return False
+
+            with open(json_path, "r", encoding="utf-8") as f:
+                teams_data = json.load(f)
+
+            if team_name not in teams_data:
+                teams_data[team_name] = {}
+
+            # Sovrascrive/aggiorna le posizioni dei giocatori per questa squadra
+            for player_name, assigned_pos in db_positions.items():
+                teams_data[team_name][player_name] = assigned_pos
+
+            # 4. Salva il file JSON aggiornato
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(teams_data, f, ensure_ascii=False, indent=4)
+
+            print(f"Posizioni per '{team_name}' aggiornate con successo nel file '{filepath}'.")
+            return True
+
+        except Exception as e:
+            print(f"Errore durante l'aggiornamento del file JSON per il team ID {team_id}: {e}")
+            raise e
+        
 
 if __name__ == "__main__":
-    SupabaseSync().update_team_last_updated_date(team_id="1bca61f0-aea0-41fe-9c55-39b9e9fa825e")
+    sync = SupabaseSync()
+    
+    # Esempio con l'ID di un team (es. "Bonaz" o "Mazen")
+    team_uuid = "a4ddff3f-33cd-4ba2-b7e0-f50eb5efe9b8"
+    sync.sync_team_positions_to_json(team_id=team_uuid)

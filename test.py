@@ -37,7 +37,7 @@ def main(page: ft.Page) -> None:
                 roles_dict=roles_map
             )
             # Salviamo per le prossime volte
-            team.save_to_json()
+            # team.save_to_json()
         
         if not team.is_valid_roster():
             page.add(ft.Text(f"Errore Roster: {team.name}", color="red"))

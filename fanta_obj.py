@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from itertools import product
 from api_nba import NbaDataManager
+from datetime import datetime
 import os
 import json
 
@@ -203,12 +204,14 @@ class Team:
         self.roles_map: dict[int, str] = {}
         self.score: float = 0.0
         self.lineup = "2-2-1"
+        self.target_date = ""
         self.filename = os.path.join("data", f"{self.name.replace(' ', '_').lower()}_state.json")
     
     def save_to_json(self):
         """Salva l'intero stato del team, inclusi i dati dei giocatori e il punteggio totale."""
         data = {
             "team_name": self.name,
+            "target_date": self.target_date,
             "total_score": self.score,
             "lineup": self.lineup,
             "roster": self.to_ui_format() # Usiamo il formato UI che è già un dizionario pulito
@@ -229,6 +232,7 @@ class Team:
                 data = json.load(f)
             
             self.name = data["team_name"]
+            self.target_date = data.get("target_date", "")
             self.score = data["total_score"]
             self.lineup = data.get("lineup", "2-2-1")
             self.players = []
@@ -322,7 +326,21 @@ class Team:
         return ui_list
 
     def update_team_scores_for_date(self, api_manager: NbaDataManager, target_date: str, names_list: list[str], roles_dict: dict[str, str]):
-        """Carica l'anagrafica dai file JSON locali e aggiorna i punteggi scaricando solo i boxscores."""
+        """Carica l'anagrafica dai file JSON locali e aggiorna i punteggi. Usa la cache se la data coincide."""
+        
+        # 0. Controllo Cache State: se il file esiste e ha la stessa target_date, salta il ricalcolo
+        if os.path.exists(self.filename):
+            try:
+                with open(self.filename, "r", encoding="utf-8") as f:
+                    saved_data = json.load(f)
+                
+                if saved_data.get("target_date") == target_date:
+                    print(f"Stato locale aggiornato trovato per {target_date}. Lettura da cache: {self.filename}")
+                    self.load_from_json()
+                    return  # Termina qui, i punteggi sono stati caricati in memoria
+            except Exception as e:
+                print(f"Impossibile leggere lo stato locale, procedo con il calcolo: {e}")
+        
         # 1. Recupero gli ID dei giocatori
         p_ids = api_manager.get_players_ids_by_name(names_list)
         api_manager.player_ids = p_ids
@@ -353,6 +371,10 @@ class Team:
             
             role = roles_dict.get(p_obj.name, "RESERVE")
             self.add_player(p_obj, role)
+
+        # 5. Salva il nuovo stato appena calcolato 
+        self.target_date = target_date
+        self.save_to_json()
 
 
 # from api_nba import NbaDataManager
