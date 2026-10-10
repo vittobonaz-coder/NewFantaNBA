@@ -214,8 +214,9 @@ def main(page: ft.Page) -> None:
         # TODO: la riga seguente va sostituita con un metodo
         team_name = user_data["username"].replace("_user", "") 
         team = Team(name=team_name)
-        
-        team_id = SupabaseSync().get_team_id_by_name(team_name=team_name)
+
+        sync = SupabaseSync()
+        team_id = sync.get_team_id_by_name(team_name=team_name)
         # username = user_data["username"] 
         if daily_update_needed(team_name=team_name):
             run_daily_update(team_id=team_id, new_date=target_date)
@@ -223,9 +224,13 @@ def main(page: ft.Page) -> None:
         # 1. Prova a caricare lo stato dal file locale
         loaded_local = team.load_from_json()
 
+        # 2. SINCRONIZZA SEMPRE I RUOLI DAL DB AL JSON LOCALE
+        # Questo sovrascrive 'role' in <nome_team>_state.json con i dati freschi da Supabase
+        sync.sync_team_positions_to_json(team_id=team_id)
+
         # 2. Se il file locale non esiste o è vuoto, scarica da Supabase
         if not loaded_local or not team.players:
-            roles_map, names_list = SupabaseSync().get_team_roster_data(team_id=team_id)
+            roles_map, names_list = sync.get_team_roster_data(team_id=team_id)
         else:
             roles_map = {p.id: team.roles_map.get(p.id, "RESERVE") for p in team.players}
             names_list = [p.name for p in team.players]
