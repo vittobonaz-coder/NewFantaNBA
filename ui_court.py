@@ -102,10 +102,14 @@ class Court(ft.Column):
         self.cards = []
         ordered_players = self.team.get_ordered_roster()
         for i, p in enumerate(ordered_players):
+            # Il ruolo della card è determinato rigidamente dalla sua posizione/slot nella Court
+            slot_role = "STARTER" if i < 5 else ("SIXTH" if i == 5 else ("BENCH" if i < 10 else "RESERVE"))
+            # Sincronizziamo la mappa interna del team con lo slot effettivo
+            self.team.roles_map[p.id] = slot_role
             card = PlayerCard(
                 player=p,
                 score=p.score,
-                role_type=self.team.roles_map[p.id],
+                role_type=slot_role,  # <--- Assegna il ruolo corretto in base allo SLOT
                 slot_index=i
             )
             self.cards.append(card)
