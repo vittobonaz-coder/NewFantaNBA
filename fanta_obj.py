@@ -288,26 +288,31 @@ class Team:
         players_raw_info = api_manager.fetch_players_info(p_ids, filename=os.path.join("data", f"{self.name}_info.json"))
         _, daily_boxscores = api_manager.fetch_and_sync(target_date)
         
-        # 3. Creazione oggetti Player
-        for info in players_raw_info:
-            p_obj = Player(
-                id=info["PLAYER_ID"],
-                name=info["PLAYER_NAME"],
-                team_abbreviation=info["TEAM"],
-                position=info["POSITION"]
-            )
-            p_obj.position = p_obj.get_clean_position()
-            print(f"{p_obj.name}: {p_obj.position}")
-            p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
-            
-            # Recuperiamo il ruolo dal dizionario passato in input usando il nome
-            role = roles_dict.get(p_obj.name, "RESERVE")
-            self.add_player(p_obj, role)
+        # 3. Creazione oggetti Player rispettando l'ordine di names_list
+        info_by_name = {info["PLAYER_NAME"].lower(): info for info in players_raw_info}
+        
+        self.players = []
+        self.roles_map = {}
+
+        for name in names_list:
+            info = info_by_name.get(name.lower())
+            if info:
+                p_obj = Player(
+                    id=info["PLAYER_ID"],
+                    name=info["PLAYER_NAME"],
+                    team_abbreviation=info["TEAM"],
+                    position=info["POSITION"]
+                )
+                print(f"{p_obj.name}: {p_obj.position}")
+                p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
+                
+                role = roles_dict.get(p_obj.name, "RESERVE")
+                self.add_player(p_obj, role)
 
     def get_ordered_roster(self) -> list[Player]:
         """Restituisce i giocatori ordinati per importanza di ruolo (utile per la UI Court)."""
-        if len(self.players) == 13:
-            return self.players
+        # if len(self.players) == 13:
+        #     return self.players
         return sorted(self.players, key=lambda p: self.ROLE_ORDER.get(self.roles_map[p.id], 99))
 
     def to_ui_format(self) -> list[dict]:
@@ -340,6 +345,8 @@ class Team:
                     return  # Termina qui, i punteggi sono stati caricati in memoria
             except Exception as e:
                 print(f"Impossibile leggere lo stato locale, procedo con il calcolo: {e}")
+        else:
+            print(f"Il file {self.filename} non esiste --> Calcolo da API")
         
         # 1. Recupero gli ID dei giocatori
         p_ids = api_manager.get_players_ids_by_name(names_list)
@@ -359,18 +366,27 @@ class Team:
             players_raw_info = api_manager.fetch_players_info(p_ids, filename=info_path)
         
         # 4. Ricostruisce la lista giocatori e calcola i punteggi sui boxscores aggiornati
+        # Creiamo un dizionario per cercare velocemente i dati per nome (ignorando maiuscole/minuscole per sicurezza)
+        info_by_name = {info["PLAYER_NAME"].lower(): info for info in players_raw_info}
         self.players = []
-        for info in players_raw_info:
-            p_obj = Player(
-                id=info["PLAYER_ID"],
-                name=info["PLAYER_NAME"],
-                team_abbreviation=info["TEAM"],
-                position=info["POSITION"]
-            )
-            p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
-            
-            role = roles_dict.get(p_obj.name, "RESERVE")
-            self.add_player(p_obj, role)
+        self.roles_map = {}
+        for name in names_list:
+            info = info_by_name.get(name.lower())
+            if info:
+                p_obj = Player(
+                    id=info["PLAYER_ID"],
+                    name=info["PLAYER_NAME"],
+                    team_abbreviation=info["TEAM"],
+                    position=info["POSITION"]
+                )
+                # Calcola il punteggio aggiornato
+                p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
+                
+                # Recupera il ruolo (o fallback a RESERVE)
+                role = roles_dict.get(p_obj.name, "RESERVE")
+                self.add_player(p_obj, role)
+            else:
+                print(f"Attenzione: Dati anagrafici non trovati nel file info per il giocatore '{name}'")
 
         # 5. Salva il nuovo stato appena calcolato 
         self.target_date = target_date

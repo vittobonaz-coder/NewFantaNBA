@@ -103,7 +103,7 @@ class TimeManager:
             
         return target_date.strftime("%Y-%m-%d")
 
-print(TimeManager().get_nba_target_date())
+print(TimeManager().is_past_eight_am())
 
 
 
