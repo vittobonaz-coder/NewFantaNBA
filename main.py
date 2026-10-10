@@ -34,7 +34,8 @@ def main(page: ft.Page) -> None:
                 api_manager=api_manager,
                 target_date="2026-10-03", # Data di riferimento per il setup iniziale
                 names_list=names_list,
-                roles_dict=roles_map
+                roles_dict=roles_map,
+                role_configs=ROLE_CONFIGS
             )
             # Salviamo per le prossime volte
             # team.save_to_json()

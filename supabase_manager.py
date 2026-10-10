@@ -294,10 +294,10 @@ class SupabaseSync:
             print(f"Errore durante l'aggiornamento del punteggio: {e}")
             raise e
 
-    def sync_team_positions_to_json(self, team_id: str, filepath: str = os.path.join("data", "fanta_teams.json")) -> bool:
+    def sync_team_positions_to_json(self, team_id: str, data_dir: str = "data") -> bool:
         """
         Legge la colonna 'assigned_position' dei giocatori per un determinato team_id
-        dalla tabella 'rosters' e aggiorna le posizioni corrispondenti nel file JSON fanta_teams.json.
+        dalla tabella 'rosters' e aggiorna il campo 'role' nel file JSON '<nome_team>_state.json'.
         """
         print(f"Sincronizzazione posizioni per il team ID: {team_id}...")
         try:
@@ -312,7 +312,7 @@ class SupabaseSync:
             # 2. Recupera i giocatori e le loro posizioni assegnate dalla tabella rosters
             roster_res = (
                 self.supabase.table("rosters")
-                .select("player_name, assigned_position")
+                .select("nba_player_id, player_name, assigned_position")
                 .eq("fanta_team_id", team_id)
                 .execute()
             )
@@ -321,34 +321,227 @@ class SupabaseSync:
                 print(f"Attenzione: Nessun giocatore trovato nel roster per il team {team_name} ({team_id}).")
                 return False
 
-            # Crea la mappa localmente { "Nome Giocatore": "STARTER" / "BENCH" / ... }
-            db_positions = {row["player_name"]: row["assigned_position"] for row in roster_res.data}
+            # Crea le mappe di confronto sia per Nome che per ID NBA (per massima affidabilità)
+            db_positions_by_name = {row["player_name"]: row["assigned_position"] for row in roster_res.data}
+            db_positions_by_id = {row["nba_player_id"]: row["assigned_position"] for row in roster_res.data}
 
-            # 3. Legge e aggiorna il file fanta_teams.json
-            json_path = Path(filepath)
+            # 3. Costruisce il percorso del file <nome_team>_state.json
+            filename = f"{team_name.lower()}_state.json"
+            json_path = Path(data_dir) / filename
+
             if not json_path.exists():
-                print(f"Errore: Il file '{filepath}' non esiste.")
+                print(f"Errore: Il file '{json_path}' non esiste.")
                 return False
 
             with open(json_path, "r", encoding="utf-8") as f:
-                teams_data = json.load(f)
+                state_data = json.load(f)
 
-            if team_name not in teams_data:
-                teams_data[team_name] = {}
+            # 4. Aggiorna il campo 'role' di ogni giocatore presente nella lista 'roster'
+            updated_count = 0
+            if "roster" in state_data and isinstance(state_data["roster"], list):
+                for player in state_data["roster"]:
+                    p_id = player.get("id")
+                    p_name = player.get("name")
 
-            # Sovrascrive/aggiorna le posizioni dei giocatori per questa squadra
-            for player_name, assigned_pos in db_positions.items():
-                teams_data[team_name][player_name] = assigned_pos
+                    # Trova il nuovo ruolo controllando prima l'ID, poi il Nome
+                    new_role = db_positions_by_id.get(p_id) or db_positions_by_name.get(p_name)
+                    
+                    if new_role:
+                        player["role"] = new_role
+                        updated_count += 1
 
-            # 4. Salva il file JSON aggiornato
+            # 5. Salva il file JSON aggiornato
             with open(json_path, "w", encoding="utf-8") as f:
-                json.dump(teams_data, f, ensure_ascii=False, indent=4)
+                json.dump(state_data, f, ensure_ascii=False, indent=4)
 
-            print(f"Posizioni per '{team_name}' aggiornate con successo nel file '{filepath}'.")
+            print(f"Posizioni per '{team_name}' aggiornate con successo in '{json_path}' ({updated_count} giocatori).")
             return True
 
         except Exception as e:
-            print(f"Errore durante l'aggiornamento del file JSON per il team ID {team_id}: {e}")
+            print(f"Errore durante l'aggiornamento del file state JSON per il team ID {team_id}: {e}")
+            raise e
+
+    def get_team_roster_data(self, team_id: str) -> tuple[dict[str, str], list[str]]:
+        """
+        Legge la tabella 'rosters' per un determinato team_id e restituisce una tupla contenente:
+        - roles_map: dict {player_name: assigned_position}
+        - names_list: list [player_name, ...]
+        """
+        try:
+            response = (
+                self.supabase.table("rosters")
+                .select("player_name, assigned_position")
+                .eq("fanta_team_id", team_id)
+                .execute()
+            )
+
+            data = response.data or []
+
+            if not data:
+                print(f"Attenzione: Nessun giocatore trovato nella tabella rosters per il team_id {team_id}.")
+                return {}, []
+
+            roles_map = {row["player_name"]: row["assigned_position"] for row in data if row.get("player_name")}
+            names_list = [row["player_name"] for row in data if row.get("player_name")]
+
+            return roles_map, names_list
+
+        except Exception as e:
+            print(f"Errore durante il recupero dei dati del roster per team_id {team_id}: {e}")
+            raise e
+
+    def get_team_id_by_name(self, team_name: str) -> str | None:
+        """
+        Restituisce il team_id (UUID) di una fanta-squadra a partire dal suo nome.
+        Ritorna None se la squadra non viene trovata.
+        """
+        try:
+            response = (
+                self.supabase.table("fanta_teams")
+                .select("id")
+                .eq("name", team_name)
+                .execute()
+            )
+
+            data = response.data
+            if data and len(data) > 0:
+                return data[0]["id"]
+
+            print(f"Attenzione: Nessuna squadra trovata con nome '{team_name}'.")
+            return None
+
+        except Exception as e:
+            print(f"Errore durante il recupero dell'ID per la squadra '{team_name}': {e}")
+            raise e
+
+    def get_gameweek_by_date(self, target_date: date | str) -> int | None:
+        """
+        Restituisce la gameweek corrispondente a una determinata data
+        verificando l'intervallo start_date <= target_date <= end_date nella tabella 'matchups'.
+        Ritorna None se la data non rientra in alcuna gameweek.
+        """
+        # Formatta la data nel formato ISO "YYYY-MM-DD"
+        if isinstance(target_date, date):
+            date_str = target_date.isoformat()
+        else:
+            date_str = str(target_date)
+
+        try:
+            # Filtra i matchups dove start_date <= date_str e end_date >= date_str
+            response = (
+                self.supabase.table("matchups")
+                .select("gameweek")
+                .lte("start_date", date_str)
+                .gte("end_date", date_str)
+                .limit(1)
+                .execute()
+            )
+
+            data = response.data
+
+            if data and len(data) > 0:
+                return int(data[0]["gameweek"])
+
+            print(f"Nessuna gameweek trovata per la data {date_str}.")
+            return None
+
+        except Exception as e:
+            print(f"Errore durante il recupero della gameweek per la data {date_str}: {e}")
+            raise e
+
+    def sync_all_teams_state_to_json(self, data_dir: str = "data") -> None:
+        """
+        Allinea i file '<nome_team>_state.json' locali con il database Supabase per TUTTE le squadre.
+        Se il file esiste, aggiorna il roster preservando score e lineup. 
+        Se non esiste, lo crea da zero.
+        """
+        print("Inizio sincronizzazione di tutti i file di stato dei team (state.json)...")
+        
+        try:
+            # 1. Recupera tutte le tabelle necessarie in sole 3 query (ottimizzazione)
+            teams_res = self.supabase.table("fanta_teams").select("*").execute()
+            rosters_res = self.supabase.table("rosters").select("*").execute()
+            players_res = self.supabase.table("nba_players").select("*").execute()
+
+            teams_data = teams_res.data or []
+            rosters_data = rosters_res.data or []
+            players_data = players_res.data or []
+
+            # 2. Crea dizionari di supporto per incrociare i dati velocemente in memoria
+            players_dict = {p["id"]: p for p in players_data}
+            
+            rosters_by_team = {}
+            for r in rosters_data:
+                t_id = r["fanta_team_id"]
+                if t_id not in rosters_by_team:
+                    rosters_by_team[t_id] = []
+                rosters_by_team[t_id].append(r)
+
+            # 3. Assicurati che la cartella 'data' esista
+            dir_path = Path(data_dir)
+            dir_path.mkdir(parents=True, exist_ok=True)
+
+            # 4. Itera su ogni fanta-squadra per creare/aggiornare il JSON
+            for team in teams_data:
+                team_id = team["id"]
+                team_name = team["name"]
+                
+                filename = f"{team_name.lower()}_state.json"
+                json_path = dir_path / filename
+
+                # Dati base se il file non esiste
+                state_data = {
+                    "team_name": team_name,
+                    "target_date": date.today().isoformat(),
+                    "total_score": 0.0,
+                    "lineup": "2-2-1",
+                    "roster": []
+                }
+
+                # Dizionario per mantenere i punteggi attuali (score) se il file esiste
+                existing_scores = {}
+
+                if json_path.exists():
+                    with open(json_path, "r", encoding="utf-8") as f:
+                        try:
+                            existing_data = json.load(f)
+                            # Preserva campi vitali dal file preesistente
+                            state_data["target_date"] = existing_data.get("target_date", state_data["target_date"])
+                            state_data["total_score"] = existing_data.get("total_score", 0.0)
+                            state_data["lineup"] = existing_data.get("lineup", "2-2-1")
+                            
+                            # Salva gli score attuali dei giocatori mappati per ID
+                            for p in existing_data.get("roster", []):
+                                if "id" in p:
+                                    existing_scores[p["id"]] = p.get("score", 0.0)
+                        except json.JSONDecodeError:
+                            print(f"Avviso: Il file {filename} era corrotto. Verrà ricreato.")
+
+                # 5. Costruisci il nuovo roster allineato al DB
+                new_roster = []
+                for r_entry in rosters_by_team.get(team_id, []):
+                    nba_id = r_entry["nba_player_id"]
+                    player_info = players_dict.get(nba_id, {})
+                    
+                    new_roster.append({
+                        "id": nba_id,
+                        "name": player_info.get("full_name", r_entry.get("player_name", "Sconosciuto")),
+                        "team": player_info.get("nba_team", ""),
+                        "pos": player_info.get("position", ""),
+                        "score": existing_scores.get(nba_id, 0.0), # Ripristina il vecchio score se presente
+                        "role": r_entry.get("assigned_position", "RESERVE")
+                    })
+                
+                state_data["roster"] = new_roster
+
+                # 6. Salva il file su disco
+                with open(json_path, "w", encoding="utf-8") as f:
+                    json.dump(state_data, f, ensure_ascii=False, indent=4)
+                
+            print(f"Sincronizzazione completata con successo! Aggiornati/Creati {len(teams_data)} file JSON.")
+
+        except Exception as e:
+            print(f"Errore critico durante la sincronizzazione massiva dei team state: {e}")
             raise e
         
 
@@ -357,4 +550,5 @@ if __name__ == "__main__":
     
     # Esempio con l'ID di un team (es. "Bonaz" o "Mazen")
     team_uuid = "a4ddff3f-33cd-4ba2-b7e0-f50eb5efe9b8"
-    sync.sync_team_positions_to_json(team_id=team_uuid)
+
+    sync.sync_all_teams_state_to_json()

@@ -325,7 +325,7 @@ class Team:
             })
         return ui_list
 
-    def update_team_scores_for_date(self, api_manager: NbaDataManager, target_date: str, names_list: list[str], roles_dict: dict[str, str]):
+    def update_team_scores_for_date(self, api_manager: NbaDataManager, target_date: str, names_list: list[str], roles_dict: dict[str, str], role_configs: dict):
         """Carica l'anagrafica dai file JSON locali e aggiorna i punteggi. Usa la cache se la data coincide."""
         
         # 0. Controllo Cache State: se il file esiste e ha la stessa target_date, salta il ricalcolo
@@ -374,6 +374,7 @@ class Team:
 
         # 5. Salva il nuovo stato appena calcolato 
         self.target_date = target_date
+        self.calculate_total_score(role_configs)
         self.save_to_json()
 
 
