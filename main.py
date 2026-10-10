@@ -221,12 +221,12 @@ def main(page: ft.Page) -> None:
         if daily_update_needed(team_name=team_name):
             run_daily_update(team_id=team_id, new_date=target_date)
 
-        # 1. Prova a caricare lo stato dal file locale
-        loaded_local = team.load_from_json()
-
         # 2. SINCRONIZZA SEMPRE I RUOLI DAL DB AL JSON LOCALE
         # Questo sovrascrive 'role' in <nome_team>_state.json con i dati freschi da Supabase
         sync.sync_team_positions_to_json(team_id=team_id)
+
+        # 1. Prova a caricare lo stato dal file locale
+        loaded_local = team.load_from_json()
 
         # 2. Se il file locale non esiste o è vuoto, scarica da Supabase
         if not loaded_local or not team.players:

@@ -336,12 +336,16 @@ class SupabaseSync:
             with open(json_path, "r", encoding="utf-8") as f:
                 state_data = json.load(f)
 
+            # Convertiamo sia ID che nomi in stringhe per evitare fallimenti di lookup
+            db_positions_by_name = {str(row["player_name"]).lower().strip(): row["assigned_position"] for row in roster_res.data if row.get("player_name")}
+            db_positions_by_id = {str(row["nba_player_id"]): row["assigned_position"] for row in roster_res.data if row.get("nba_player_id")}
+
             # 4. Aggiorna il campo 'role' di ogni giocatore presente nella lista 'roster'
             updated_count = 0
             if "roster" in state_data and isinstance(state_data["roster"], list):
                 for player in state_data["roster"]:
-                    p_id = player.get("id")
-                    p_name = player.get("name")
+                    p_id = str(player.get("id")) if player.get("id") is not None else ""
+                    p_name = str(player.get("name")).lower().strip() if player.get("name") else ""
 
                     # Trova il nuovo ruolo controllando prima l'ID, poi il Nome
                     new_role = db_positions_by_id.get(p_id) or db_positions_by_name.get(p_name)
