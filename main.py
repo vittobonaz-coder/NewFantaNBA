@@ -47,6 +47,44 @@ def get_user_date(team_name: str, teams_dict: Optional[Dict[str, str]] = None, a
         print(f"Errore: Il formato della data per '{team_name}' non è valido (%Y-%m-%d).")
         return None
 
+def get_best_player_score(team_name: str, player_id: int, new_score: float, target_date: str, gameweek: int, sync: SupabaseSync) -> float:
+    """
+    Controlla il vecchio punteggio del giocatore e restituisce il maggiore tra il vecchio e il nuovo.
+    - Se esiste {team}_state.json e la target_date combacia, usa lo score del file locale.
+    - Se il file non esiste o la target_date è antecedente, usa lo score da Supabase.
+    """
+    state_file = os.path.join("data", f"{team_name.lower()}_state.json")
+    old_score = 0.0
+
+    # Condizione 1: Controllo file locale
+    if os.path.exists(state_file):
+        try:
+            with open(state_file, "r", encoding="utf-8") as f:
+                state_data = json.load(f)
+            
+            json_target_date = state_data.get("target_date")
+            
+            # Se la data è quella corretta, prendiamo lo score dal JSON
+            if json_target_date == target_date:
+                for p_data in state_data.get("roster", []):
+                    if p_data.get("id") == player_id:
+                        old_score = float(p_data.get("score", 0.0))
+                        return max(new_score, old_score)
+        except Exception as e:
+            print(f"Errore nella lettura del file locale per {team_name}: {e}")
+
+    # Condizione 2: File non esiste o target_date è diversa/precedente
+    if gameweek is not None:
+        team_id = sync.get_team_id_by_name(team_name)
+        if team_id:
+            old_score = sync.get_lineup_player_score(
+                gameweek=gameweek, 
+                fanta_team_id=team_id, 
+                nba_player_id=player_id
+            )
+
+    return max(new_score, old_score)
+
 def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_CONFIGS):
     """
     Calcola e aggiorna i punteggi di tutte le squadre e dei giocatori in lineup_players per una determinata data.
@@ -108,6 +146,21 @@ def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_
 
             # I boxscore dell'API contengono GAME_DATE == nba_date ("2026-10-03")
             player.calculate_score(daily_boxscores, target_date=nba_date, average=False)
+            
+            # PRENDIAMO IL PUNTEGGIO MIGLIORE
+            new_calculated_score = player.score
+            best_score = get_best_player_score(
+                team_name=team_name,
+                player_id=player.id,
+                new_score=new_calculated_score,
+                target_date=nba_date,
+                gameweek=gameweek,
+                sync=sync
+            )
+            
+            # Sovrascriviamo il punteggio dell'oggetto player con il punteggio migliore
+            player.score = best_score
+            
             team.add_player(player, role)
 
             # Aggiorna lo score del singolo giocatore anche nella tabella lineup_players
@@ -140,6 +193,23 @@ def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_
             print(f"Errore durante l'aggiornamento su Supabase per {team_name}: {e}")
 
     return updated_teams
+
+def get_best_score_from_db(sync: SupabaseSync, gameweek: int, team_id: str, player_id: int, new_score: float, are_games_live: bool) -> float:
+    """
+    Se le partite sono live, accetta il nuovo score (che può salire o scendere).
+    Se le partite sono concluse, restituisce il maggiore tra il nuovo calcolo e il DB.
+    """
+    if are_games_live:
+        return new_score
+    
+    # Partite concluse: andiamo in protezione e non facciamo scendere lo score
+    db_score = sync.get_lineup_player_score(
+        gameweek=gameweek, 
+        fanta_team_id=team_id, 
+        nba_player_id=player_id
+    )
+    
+    return max(new_score, db_score)
 
 def daily_update_needed(team_name: str) -> bool:
     if TimeManager.is_past_eight_am():
@@ -225,7 +295,34 @@ def main(page: ft.Page) -> None:
             roles_dict=roles_map,
             role_configs=ROLE_CONFIGS
         )
-        
+        # 2. Recupera info per il DB
+        ita_date = TimeManager().nba_date_to_italian_date(nba_date_str=target_date)
+        gw = sync.get_gameweek_by_date(target_date=ita_date)
+        games_are_live = False # TODO: Implementare calcolo games_are_live
+
+        # 3. Confronta i punteggi con il DB e aggiorna l'oggetto team
+        scores_modified = False
+
+        for player in team.players:
+            best_score = get_best_score_from_db(
+                sync=sync,
+                gameweek=gw,
+                team_id=team_id,
+                player_id=player.id,
+                new_score=player.score,
+                are_games_live=games_are_live
+            )
+            
+            # Se il DB aveva un punteggio più alto, sovrascriviamo quello locale
+            if best_score > player.score:
+                player.score = best_score
+                scores_modified = True
+
+        # 4. Se abbiamo "salvato" almeno un punteggio da un calo errato, ricalcoliamo il totale e ri-salviamo il JSON locale
+        if scores_modified:
+            team.calculate_total_score(role_configs=ROLE_CONFIGS)
+            team.save_to_json()
+            print("Punteggi locali corretti e protetti in base ai dati salvati su Supabase.")
         
         if not team.is_valid_roster():
             page.add(ft.Text(f"Errore Roster: {team.name}", color="red"))

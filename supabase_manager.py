@@ -582,6 +582,26 @@ class SupabaseSync:
             print(f"Errore durante l'aggiornamento del punteggio in lineup_players per {nba_player_id or player_name} (GW: {gameweek}): {e}")
             return False
 
+    def get_lineup_player_score(self, gameweek: int, fanta_team_id: str, nba_player_id: int) -> float:
+        """
+        Recupera lo score attuale di un giocatore dalla tabella lineup_players su Supabase.
+        """
+        try:
+            response = self.supabase.table('lineup_players') \
+                .select('score') \
+                .eq('gameweek', gameweek) \
+                .eq('fanta_team_id', fanta_team_id) \
+                .eq('nba_player_id', nba_player_id) \
+                .execute()
+            
+            if response.data and len(response.data) > 0:
+                raw_score = response.data[0].get('score')
+                return float(raw_score) if raw_score is not None else 0.0
+        except Exception as e:
+            print(f"Errore recupero score per player {nba_player_id} da supabase: {e}")
+            
+        return 0.0
+
     def push_lineup_for_team(self, team_name: str, data_dir: str = "data") -> bool:
         """
         Legge il file state.json di una singola squadra e compila la tabella lineup_players 
