@@ -455,12 +455,29 @@ class CalendarView(ft.Tabs):
                 )
             )
             for m in round_data["matchups"]:
+                # Formattiamo i punteggi a 1 decimale
+                h_score = m.get('home_score', 0.0)
+                a_score = m.get('away_score', 0.0)
+                
+                # Se la partita non è stata ancora giocata o ha punteggio a 0, possiamo mostrare uno stato diverso
+                # (Opzionale: se vuoi mantenere lo 0.0 o mostrare "vs" quando non è stata giocata)
+                score_text = f"{h_score:.1f} - {a_score:.1f}" if m.get('was_played', False) or h_score > 0 or a_score > 0 else " vs "
+
                 round_col[-1].controls.append(
                     ft.Container(
                         content=ft.Row([
-                            ft.Text(f"{m['home_team']}", expand=True, text_align="right"),
-                            ft.Text("vs", weight="bold"),
-                            ft.Text(f"{m['away_team']}", expand=True, text_align="left"),
+                            # Squadra di casa
+                            ft.Text(f"{m['home_team']}", expand=True, text_align="right", size=14),
+                            
+                            # Punteggio centrale
+                            ft.Container(
+                                content=ft.Text(score_text, weight="bold", color="amber"),
+                                width=80, 
+                                alignment=ft.alignment.Alignment.CENTER
+                            ),
+                            
+                            # Squadra in trasferta
+                            ft.Text(f"{m['away_team']}", expand=True, text_align="left", size=14),
                         ]),
                         padding=10,
                         bgcolor=ft.Colors.GREY_900,

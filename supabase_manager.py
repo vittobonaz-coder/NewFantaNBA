@@ -818,6 +818,72 @@ class SupabaseSync:
             print(f"Errore durante il recupero del nome per il team ID '{team_id}': {e}")
             raise e
 
+    def pull_calendar(self, filepath: str = os.path.join("data", "calendar.json")) -> list[dict]:
+        """
+        Scarica il calendario dalla tabella 'matchups' di Supabase, risolve i nomi delle squadre
+        e salva la struttura formattata in 'data/calendar.json'.
+        """
+        print("Sincronizzazione del calendario da Supabase in corso...")
+        try:
+            # Query con join per ottenere i nomi di home_team e away_team
+            response = (
+                self.supabase.table("matchups")
+                .select(
+                    "gameweek, start_date, end_date, home_score, away_score, was_played, "
+                    "home_lineup, away_lineup, "
+                    "home_team:fanta_teams!home_team_id(name), "
+                    "away_team:fanta_teams!away_team_id(name)"
+                )
+                .order("gameweek")
+                .execute()
+            )
+
+            data = response.data or []
+            if not data:
+                print("Avviso: Nessun matchup trovato su Supabase.")
+                return []
+
+            # Raggruppa i matchup per gameweek
+            rounds_dict = {}
+            for row in data:
+                gw = row["gameweek"]
+                if gw not in rounds_dict:
+                    rounds_dict[gw] = {
+                        "round_number": gw,
+                        "start_date": str(row["start_date"]),
+                        "end_date": str(row["end_date"]),
+                        "matchups": []
+                    }
+
+                home_name = row["home_team"]["name"] if row.get("home_team") else "Unknown"
+                away_name = row["away_team"]["name"] if row.get("away_team") else "Unknown"
+
+                rounds_dict[gw]["matchups"].append({
+                    "home_team": home_name,
+                    "away_team": away_name,
+                    "home_score": float(row["home_score"] or 0.0),
+                    "away_score": float(row["away_score"] or 0.0),
+                    "was_played": bool(row["was_played"]),
+                    "home_lineup": row["home_lineup"] or "2-2-1",
+                    "away_lineup": row["away_lineup"] or "2-2-1"
+                })
+
+            calendar_data = list(rounds_dict.values())
+
+            # Scrittura su file JSON
+            path = Path(filepath)
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(calendar_data, f, ensure_ascii=False, indent=4)
+
+            print(f"Calendario salvato con successo in '{filepath}' ({len(calendar_data)} giornate).")
+            return calendar_data
+
+        except Exception as e:
+            print(f"Errore durante il pull del calendario da Supabase: {e}")
+            raise e
+
 
 if __name__ == "__main__":
     sync = SupabaseSync()

@@ -49,7 +49,7 @@ def get_user_date(team_name: str, teams_dict: Optional[Dict[str, str]] = None, a
 
 def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_CONFIGS):
     """
-    Calcola e aggiorna i punteggi di tutte le squadre e dei giocatori in lineup_players per una determinata data distinguendo tra data NBA (USA) e data di lega (Italiana).
+    Calcola e aggiorna i punteggi di tutte le squadre e dei giocatori in lineup_players per una determinata data.
     :param target_date: Data NBA/USA in input (es. "2026-10-03")
     """
     # 0. Gestione della duplice data (NBA vs Italia)
@@ -120,7 +120,7 @@ def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_
 
         # 5. Calcola il totale del team e salva in locale
         team.calculate_total_score(role_configs)
-        team.save_to_json()
+        team.save_to_json() # Salva stato team su <nome_team>_state.json
         updated_teams.append(team)
 
         print(f"-> {team_name} aggiornato: {team.score} pt totali.")
@@ -177,9 +177,13 @@ def run_daily_update(team_id: str, new_date: date | str):
         SupabaseSync().sync_all_teams_state_to_json()
         update_all_teams_scores_via_api(target_date=date_str)
 
+    # Pull e salvo classifica in locale da Supabase
     SupabaseSync().sync_standings()
+    # Pull e salvo lo stato in locale
     team_name = SupabaseSync().get_team_name_by_id(team_id=team_id)
     SupabaseSync().pull_lineup_for_team(team_name=team_name, gameweek=gw)
+    # Pull e salvo calendario in locale
+    SupabaseSync().pull_calendar()
 
 
 def main(page: ft.Page) -> None:
