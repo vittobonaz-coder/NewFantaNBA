@@ -103,7 +103,7 @@ class TimeManager:
             
         return target_date.strftime("%Y-%m-%d")
 
-print(TimeManager().is_past_eight_am())
+# print(TimeManager().is_past_eight_am())
 
 
 
@@ -111,8 +111,6 @@ print(TimeManager().is_past_eight_am())
 
 # from datetime import datetime, time, timedelta
 # from zoneinfo import ZoneInfo
-
-
 
 # def get_current_times():
 #     now_ita = datetime.now(ITA_TZ)

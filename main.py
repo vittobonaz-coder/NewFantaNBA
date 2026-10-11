@@ -9,35 +9,6 @@ from ui_court import ROLE_CONFIGS, MainDashboard, LoginView
 from time_manager import TimeManager
 from supabase_manager import SupabaseSync
 
-def calculate_all_team_scores(target_date: str, role_config=ROLE_CONFIGS):
-    api_mgr = NbaDataManager(player_ids=[])
-    teams_scores = {}
-    
-    # 1. Recupera i nomi delle squadre da fanta_teams.json
-    teams_path = os.path.join("data", "fanta_teams.json")
-    with open(teams_path, "r", encoding="utf-8") as f:
-        team_names = list(json.load(f).keys())
-
-    # 2. Per ogni squadra carica lo stato corrente dal rispettivo <nome_team>_state.json
-    for t_name in team_names:
-        team = Team(t_name)
-        
-        # Carica il roster e la roles_map dal file state (es. data/bonaz_state.json)
-        if team.load_from_json():
-            # Estraggo nomi e ruoli caricati dallo state per aggiornare i punteggi del giorno
-            names_list = [p.name for p in team.players]
-            roles_dict = {p.name: team.roles_map.get(p.id, "RESERVE") for p in team.players}
-            
-            # Aggiorna i punteggi individuali dei giocatori per la data target
-            team.update_team_scores_for_date(api_mgr, target_date, names_list, roles_dict, role_configs=ROLE_CONFIGS)
-            
-            # Calcola e registra il punteggio totale del team
-            teams_scores[t_name] = team.calculate_total_score(role_config)
-        else:
-            print(f"Attenzione: Impossibile caricare lo stato per il team '{t_name}'.")
-
-    return teams_scores
-
 def get_user_date(team_name: str, teams_dict: Optional[Dict[str, str]] = None, as_date_object: bool = False, output_format: Optional[str] = None) -> Union[str, date, None]:
     """
     Restituisce la data associata a un username presente nel dizionario.
@@ -78,9 +49,7 @@ def get_user_date(team_name: str, teams_dict: Optional[Dict[str, str]] = None, a
 
 def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_CONFIGS):
     """
-    Calcola e aggiorna i punteggi di tutte le squadre per una determinata data
-    distinguendo tra data NBA (USA) e data di lega (Italiana).
-    
+    Calcola e aggiorna i punteggi di tutte le squadre e dei giocatori in lineup_players per una determinata data distinguendo tra data NBA (USA) e data di lega (Italiana).
     :param target_date: Data NBA/USA in input (es. "2026-10-03")
     """
     # 0. Gestione della duplice data (NBA vs Italia)
@@ -141,6 +110,14 @@ def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_
             player.calculate_score(daily_boxscores, target_date=nba_date, average=False)
             team.add_player(player, role)
 
+            # Aggiorna lo score del singolo giocatore anche nella tabella lineup_players
+            if gameweek is not None:
+                sync.update_lineup_player_score(
+                    gameweek=gameweek,
+                    score=player.score,
+                    nba_player_id=player.id
+                )
+
         # 5. Calcola il totale del team e salva in locale
         team.calculate_total_score(role_configs)
         team.save_to_json()
@@ -156,7 +133,7 @@ def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_
                     sync.update_team_score_for_gameweek(team_id, gameweek, team.score)
 
                 # Aggiorna last_updated_date con la data italiana
-                sync.update_team_last_updated_date(team_id, italian_date)
+                # sync.update_team_last_updated_date(team_id, italian_date)
             else:
                 print(f"Attenzione: Impossibile trovare l'ID Supabase per il team '{team_name}'.")
         except Exception as e:
@@ -183,23 +160,26 @@ def run_daily_update(team_id: str, new_date: date | str):
         date_str = new_date.isoformat()
     else:
         date_str = str(new_date)
-    gw = SupabaseSync().get_gameweek_by_date(target_date=date_str)
+    ita_date = TimeManager().nba_date_to_italian_date(nba_date_str=date_str)
+    gw = SupabaseSync().get_gameweek_by_date(target_date=ita_date)
 
     # 1. Aggiorno last_updated_dates in fanta_teams (supabase)
-    SupabaseSync().update_team_last_updated_date(team_id=team_id, new_date=date_str)
+    SupabaseSync().update_team_last_updated_date(team_id=team_id, new_date=ita_date)
     # 2. Controllo se il database è già stato aggiornato da un altro utente
     last_updated_dates = SupabaseSync().get_last_updated_dates()
     today_str = datetime.now().strftime("%Y-%m-%d")
     if today_str in last_updated_dates.values():
-        # Leggo il punteggio della squadra direttamente da mathups (supabase)
+        # Leggo il punteggio della squadra direttamente da matchups (supabase)
         # team_score = SupabaseSync().get_team_score_for_gameweek(team_id=team_id, gameweek=gw)
-        return # matchups e v-standings sono già aggiornate
+        pass # matchups e v-standings sono già aggiornate
     else:
         SupabaseSync().sync_team_positions_to_json(team_id=team_id)
         SupabaseSync().sync_all_teams_state_to_json()
         update_all_teams_scores_via_api(target_date=date_str)
 
     SupabaseSync().sync_standings()
+    team_name = SupabaseSync().get_team_name_by_id(team_id=team_id)
+    SupabaseSync().pull_lineup_for_team(team_name=team_name, gameweek=gw)
 
 
 def main(page: ft.Page) -> None:
@@ -221,10 +201,6 @@ def main(page: ft.Page) -> None:
         if daily_update_needed(team_name=team_name):
             run_daily_update(team_id=team_id, new_date=target_date)
 
-        # 2. SINCRONIZZA SEMPRE I RUOLI DAL DB AL JSON LOCALE
-        # Questo sovrascrive 'role' in <nome_team>_state.json con i dati freschi da Supabase
-        sync.sync_team_positions_to_json(team_id=team_id)
-
         # 1. Prova a caricare lo stato dal file locale
         loaded_local = team.load_from_json()
 
@@ -232,7 +208,8 @@ def main(page: ft.Page) -> None:
         if not loaded_local or not team.players:
             roles_map, names_list = sync.get_team_roster_data(team_id=team_id)
         else:
-            roles_map = {p.id: team.roles_map.get(p.id, "RESERVE") for p in team.players}
+            # leggendo il ruolo dalla mappa interna di team (che usa p.id come chiave)
+            roles_map = {p.name: team.roles_map.get(p.id, "RESERVE") for p in team.players}
             names_list = [p.name for p in team.players]
 
         # 3. Aggiorna i punteggi per la data di riferimento
@@ -256,6 +233,7 @@ def main(page: ft.Page) -> None:
     
     # Avvio con schermata di login
     page.add(LoginView(page, on_login_success))
+
 
 if __name__ == "__main__":
     # Render usa la variabile d'ambiente PORT

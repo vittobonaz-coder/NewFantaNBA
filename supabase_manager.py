@@ -4,6 +4,7 @@ from supabase import create_client, Client
 from fanta_obj import Player, Team
 from pathlib import Path
 from datetime import date
+from time_manager import TimeManager
 
 SUPABASE_URL = "https://ifqiarpfsbcrfpmabdus.supabase.co"
 SUPABASE_KEY = "sb_publishable_KNhdTSkcs0XuzDwKqNbIOA_XpiJlqFZ"
@@ -547,7 +548,276 @@ class SupabaseSync:
         except Exception as e:
             print(f"Errore critico durante la sincronizzazione massiva dei team state: {e}")
             raise e
+
+    def update_lineup_player_score(self, gameweek: int, score: float, nba_player_id: int = None, player_name: str = None) -> bool:
+        """
+        Aggiorna il campo 'score' nella tabella lineup_players per un giocatore in una determinata gameweek.
+        Utilizza nba_player_id (consigliato) o player_name per identificare il giocatore.
+        """
+        if nba_player_id is None and player_name is None:
+            print("Errore: Devi fornire nba_player_id o player_name per aggiornare lo score.")
+            return False
+            
+        try:
+            # Prepariamo l'update di base con la gameweek
+            query = self.supabase.table("lineup_players").update({"score": score}).eq("gameweek", gameweek)
+            
+            # Aggiungiamo il filtro per il giocatore
+            if nba_player_id is not None:
+                query = query.eq("nba_player_id", nba_player_id)
+            else:
+                query = query.eq("player_name", player_name)
+                
+            response = query.execute()
+            
+            # Se response.data è valorizzato, l'update è andato a buon fine (il giocatore era schierato)
+            if response.data:
+                # print(f"Score ({score}) aggiornato in lineup_players per id={nba_player_id} / gw={gameweek}.")
+                return True
+            else:
+                # Il giocatore potrebbe non essere stato inserito nella lineup di questa gameweek, ignoriamo silenziosamente o logghiamo
+                return False
+                
+        except Exception as e:
+            print(f"Errore durante l'aggiornamento del punteggio in lineup_players per {nba_player_id or player_name} (GW: {gameweek}): {e}")
+            return False
+
+    def push_lineup_for_team(self, team_name: str, data_dir: str = "data") -> bool:
+        """
+        Legge il file state.json di una singola squadra e compila la tabella lineup_players 
+        per la gameweek corrente, calcolata dalla target_date.
+        """
+        filename = f"{team_name.lower()}_state.json"
+        json_path = Path(data_dir) / filename
+
+        if not json_path.exists():
+            print(f"Errore: File {json_path} non trovato per il team {team_name}.")
+            return False
+
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                state_data = json.load(f)
+
+            target_date_nba = state_data.get("target_date")
+            if not target_date_nba:
+                print(f"Errore: target_date mancante nel file {filename}.")
+                return False
+
+            # 1. Calcola la data italiana (Lega) per recuperare la gameweek corretta
+            # (Assicurati di aver importato TimeManager nel tuo file)
+            italian_date = TimeManager.nba_date_to_italian_date(target_date_nba)
+            
+            gameweek = self.get_gameweek_by_date(italian_date)
+            if gameweek is None:
+                print(f"Errore: Nessuna gameweek trovata su Supabase per la data {italian_date}.")
+                return False
+
+            # 2. Ottieni il fanta_team_id
+            fanta_team_id = self.get_team_id_by_name(team_name)
+            if not fanta_team_id:
+                print(f"Errore: Impossibile recuperare l'ID per il team {team_name}.")
+                return False
+
+            # 3. Elimina l'eventuale lineup già presente per evitare giocatori duplicati
+            self.supabase.table("lineup_players").delete() \
+                .eq("fanta_team_id", fanta_team_id) \
+                .eq("gameweek", gameweek) \
+                .execute()
+
+            # 4. Prepara i dati da inserire iterando sul roster
+            roster = state_data.get("roster", [])
+            lineup_data = []
+
+            for index, player in enumerate(roster):
+                # Lo slot è la posizione nell'array (partendo da 1)
+                slot_number = index + 1 
+                
+                lineup_data.append({
+                    "fanta_team_id": fanta_team_id,
+                    "gameweek": gameweek,
+                    "nba_player_id": player.get("id"),
+                    "slot": slot_number,
+                    "score": player.get("score", 0.0),
+                    "player_name": player.get("name"),
+                    "role": player.get("role"),
+                    "target_date": target_date_nba
+                })
+
+            # 5. Inserisci in batch la nuova lineup su Supabase
+            if lineup_data:
+                self.supabase.table("lineup_players").insert(lineup_data).execute()
+                print(f"Lineup di '{team_name}' caricata (GW {gameweek}, {len(lineup_data)} giocatori).")
+            else:
+                print(f"Avviso: Roster vuoto per {team_name}, nessun dato inserito.")
+
+            return True
+
+        except Exception as e:
+            print(f"Errore durante l'aggiornamento della lineup per {team_name}: {e}")
+            return False
+
+
+    def push_lineup_for_all_teams(self, data_dir: str = "data") -> None:
+        """
+        Itera su tutti i fanta_teams salvati su Supabase e compila le rispettive 
+        tabelle lineup_players leggendo i file state.json locali.
+        """
+        print("Inizio esportazione delle lineup verso Supabase per TUTTE le squadre...")
+        try:
+            # 1. Recupera la lista di tutti i team dal DB
+            teams_res = self.supabase.table("fanta_teams").select("name").execute()
+            if not teams_res.data:
+                print("Nessuna squadra trovata nel database Supabase.")
+                return
+
+            success_count = 0
+            # 2. Itera ed esegue il caricamento per ogni squadra
+            for team in teams_res.data:
+                team_name = team["name"]
+                if self.push_lineup_for_team(team_name=team_name, data_dir=data_dir):
+                    success_count += 1
+            
+            print(f"Esportazione completata: {success_count}/{len(teams_res.data)} squadre aggiornate su DB.")
+
+        except Exception as e:
+            print(f"Errore critico durante l'esportazione massiva delle lineup: {e}")
+
+    def pull_lineup_for_team(self, team_name: str, gameweek: int, data_dir: str = "data") -> bool:
+        """
+        Scarica i dati dalla tabella lineup_players per una specifica gameweek e aggiorna 
+        (o crea) il file locale <nome_team>_state.json.
+        """
+        print(f"Recupero della lineup per '{team_name}' (GW {gameweek}) da Supabase...")
+        try:
+            # 1. Recupera l'ID del fanta team
+            team_id = self.get_team_id_by_name(team_name)
+            if not team_id:
+                print(f"Errore: Team '{team_name}' non trovato su Supabase.")
+                return False
+
+            # 2. Interroga lineup_players unendo i dati di nba_players (per avere team NBA e posizione)
+            response = (
+                self.supabase.table("lineup_players")
+                .select("*, nba_players(nba_team, position)")
+                .eq("fanta_team_id", team_id)
+                .eq("gameweek", gameweek)
+                .order("slot")
+                .execute()
+            )
+
+            data = response.data
+            if not data:
+                print(f"Attenzione: Nessuna lineup trovata per '{team_name}' nella gameweek {gameweek}.")
+                return False
+
+            # 3. Costruisci il nuovo roster formattato per il JSON
+            new_roster = []
+            target_date = str(date.today().isoformat())  # Fallback
+
+            for row in data:
+                # Estrae target_date (basta prenderla dalla prima riga valida)
+                if row.get("target_date"):
+                    target_date = row["target_date"]
+
+                # Dati dalla join con la tabella nba_players
+                nba_info = row.get("nba_players") or {}
+
+                new_roster.append({
+                    "id": row.get("nba_player_id"),
+                    "name": row.get("player_name"),
+                    "team": nba_info.get("nba_team", ""),
+                    "pos": nba_info.get("position", ""),
+                    "score": float(row.get("score") or 0.0),
+                    "role": row.get("role", "RESERVE")
+                })
+
+            # 4. Leggi il file esistente per preservare total_score e lineup (modulo)
+            filename = f"{team_name.lower()}_state.json"
+            json_path = Path(data_dir) / filename
+
+            state_data = {
+                "team_name": team_name,
+                "target_date": target_date,
+                "total_score": 0.0,
+                "lineup": "2-2-1",
+                "roster": new_roster
+            }
+
+            if json_path.exists():
+                with open(json_path, "r", encoding="utf-8") as f:
+                    try:
+                        existing_data = json.load(f)
+                        # Preserva modulo e score totale attuali
+                        state_data["total_score"] = existing_data.get("total_score", 0.0)
+                        state_data["lineup"] = existing_data.get("lineup", "2-2-1")
+                    except json.JSONDecodeError:
+                        pass
+
+            # 5. Salva (o sovrascrivi) il file locale
+            json_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(state_data, f, ensure_ascii=False, indent=4)
+
+            print(f"File '{filename}' aggiornato con successo ({len(new_roster)} giocatori).")
+            return True
+
+        except Exception as e:
+            print(f"Errore durante il pull della lineup per {team_name}: {e}")
+            return False
+
+
+    def pull_lineup_for_all_teams(self, gameweek: int, data_dir: str = "data") -> None:
+        """
+        Scarica le lineup di TUTTE le squadre da Supabase per una determinata gameweek
+        e aggiorna i rispettivi file <nome_team>_state.json locali.
+        """
+        print(f"Inizio importazione delle lineup da Supabase (GW {gameweek}) per TUTTE le squadre...")
+        try:
+            # 1. Recupera la lista dei team
+            teams_res = self.supabase.table("fanta_teams").select("name").execute()
+            if not teams_res.data:
+                print("Nessuna squadra trovata nel database Supabase.")
+                return
+
+            success_count = 0
+            
+            # 2. Itera ed esegue il pull per ogni squadra
+            for team in teams_res.data:
+                team_name = team["name"]
+                if self.pull_lineup_for_team(team_name=team_name, gameweek=gameweek, data_dir=data_dir):
+                    success_count += 1
+            
+            print(f"Importazione completata: {success_count}/{len(teams_res.data)} file di stato aggiornati.")
+
+        except Exception as e:
+            print(f"Errore critico durante l'importazione massiva delle lineup: {e}")
+
+    def get_team_name_by_id(self, team_id: str) -> str | None:
+        """
+        Restituisce il nome di una fanta-squadra (team_name) a partire dal suo team_id (UUID)
+        interrogando la tabella 'fanta_teams'.
         
+        Ritorna None se l'ID non viene trovato.
+        """
+        try:
+            response = (
+                self.supabase.table("fanta_teams")
+                .select("name")
+                .eq("id", team_id)
+                .execute()
+            )
+
+            data = response.data
+            if data and len(data) > 0:
+                return data[0]["name"]
+
+            print(f"Attenzione: Nessuna squadra trovata con ID '{team_id}'.")
+            return None
+
+        except Exception as e:
+            print(f"Errore durante il recupero del nome per il team ID '{team_id}': {e}")
+            raise e
+
 
 if __name__ == "__main__":
     sync = SupabaseSync()
@@ -555,4 +825,12 @@ if __name__ == "__main__":
     # Esempio con l'ID di un team (es. "Bonaz" o "Mazen")
     team_uuid = "a4ddff3f-33cd-4ba2-b7e0-f50eb5efe9b8"
 
-    sync.sync_all_teams_state_to_json()
+    # sync.sync_all_teams_state_to_json()
+
+    # Aggiorna un singolo team...
+    # sync.push_lineup_for_team("Pit")
+    # ...oppure aggiorna tutto in blocco (ideale prima o dopo aver calcolato le API)
+    # sync.push_lineup_for_all_teams()
+
+    team_name = sync.get_team_name_by_id(team_uuid)
+    print(f"Il nome della squadra con ID {team_uuid} è: {team_name}")
