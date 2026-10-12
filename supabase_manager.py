@@ -904,6 +904,68 @@ class SupabaseSync:
             print(f"Errore durante il pull del calendario da Supabase: {e}")
             raise e
 
+    def is_first_day_of_gameweek(self, check_date: date | str, gameweek: int) -> bool:
+        """
+        Verifica se la data fornita (check_date) corrisponde al primo giorno (start_date)
+        della gameweek indicata, consultando la tabella 'matchups'.
+        
+        Ritorna True se la data corrisponde a start_date, False altrimenti.
+        """
+        # Normalizza la data nel formato ISO "YYYY-MM-DD"
+        if isinstance(check_date, date):
+            date_str = check_date.isoformat()
+        else:
+            date_str = str(check_date)
+
+        try:
+            # Recupera la start_date per la gameweek indicata
+            response = (
+                self.supabase.table("matchups")
+                .select("start_date")
+                .eq("gameweek", gameweek)
+                .limit(1)
+                .execute()
+            )
+
+            data = response.data
+            if data and len(data) > 0:
+                gw_start_date = str(data[0]["start_date"])
+                return gw_start_date == date_str
+
+            print(f"Attenzione: Nessun matchup trovato per la gameweek {gameweek}.")
+            return False
+
+        except Exception as e:
+            print(f"Errore durante la verifica del primo giorno per la GW {gameweek} e data {date_str}: {e}")
+            raise e
+
+    def reset_lineup_scores_for_gameweek(self, gameweek: int) -> bool:
+        """
+        Resetta il campo 'score' portandolo a 0.00 per tutti i giocatori 
+        schierati nella tabella lineup_players per la gameweek specificata.
+        """
+        print(f"Resettaggio punteggi nella tabella lineup_players per la gameweek {gameweek}...")
+        try:
+            response = (
+                self.supabase.table("lineup_players")
+                .update({"score": 0.00})
+                .eq("gameweek", gameweek)
+                .execute()
+            )
+
+            updated_rows = len(response.data) if response.data else 0
+            
+            if updated_rows > 0:
+                print(f"Reset completato con successo: azzerato lo score per {updated_rows} righe (GW {gameweek}).")
+                return True
+            else:
+                print(f"Attenzione: Nessuna riga trovata nella tabella lineup_players per la gameweek {gameweek}.")
+                return False
+
+        except Exception as e:
+            print(f"Errore durante il reset degli score in lineup_players per la gameweek {gameweek}: {e}")
+            raise e
+
 
 if __name__ == "__main__":
     sync = SupabaseSync()

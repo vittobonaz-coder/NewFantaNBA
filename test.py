@@ -211,6 +211,10 @@ def get_best_score_from_db(sync: SupabaseSync, gameweek: int, team_id: str, play
     
     return max(new_score, db_score)
 
+def reset_for_gameweek(gameweek: int):
+    SupabaseSync().reset_lineup_scores_for_gameweek(gameweek=gameweek)
+    SupabaseSync().pull_lineup_for_all_teams(gameweek=gameweek)
+
 def daily_update_needed(team_name: str) -> bool:
     if TimeManager.is_past_eight_am():
         print(f"Sono passate le 8, controllo l'ultimo update per {team_name}")
@@ -264,7 +268,9 @@ def main(page: ft.Page) -> None:
     page.window.height = 757
 
     def on_login_success(user_data):
+        #TODO: Se voglio aggiornamento realtime, devo ridefinire la logica per calcolare la data nba
         target_date = TimeManager().get_nba_target_date()
+        print(target_date)
         # TODO: la riga seguente va sostituita con un metodo
         team_name = user_data["username"].replace("_user", "") 
         team = Team(name=team_name)
@@ -323,6 +329,10 @@ def main(page: ft.Page) -> None:
             team.calculate_total_score(role_configs=ROLE_CONFIGS)
             team.save_to_json()
             print("Punteggi locali corretti e protetti in base ai dati salvati su Supabase.")
+
+        if SupabaseSync().is_first_day_of_gameweek(check_date=ita_date, gameweek=gw):    
+            if TimeManager().is_past_target_time(target_hour=15, target_minute=0):
+                reset_for_gameweek(gameweek=gw)
         
         if not team.is_valid_roster():
             page.add(ft.Text(f"Errore Roster: {team.name}", color="red"))

@@ -57,3 +57,13 @@ SCORCIATOIE UTILI:
 
 - Scrive automaticamente il file requirements.txt: 
         pip freeze > requirements.txt
+
+
+
+PROCEDURA INIZIO CAMPIONATO:
+- Pulisci files:
+    Cancella:
+        - 
+- Download giocatori:
+- Download immagini:
+- Setup campionato: 

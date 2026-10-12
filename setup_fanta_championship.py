@@ -55,7 +55,9 @@ def run_teams_setup():
             team.add_player(player, roles_map.get(p_info["PLAYER_NAME"], "RISERVA"))
 
         # Push struttura squadra
-        sync.push_team(team)   
+        sync.push_team(team)
+        team.save_to_json()
+        sync.pull_lineup_for_all_teams(gameweek=1)
         
     print("Setup statico completato (fanta_teams, nba_players, rosters).")
 

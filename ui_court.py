@@ -591,6 +591,89 @@ class StandingsView(ft.Column):
         ]
 
 
+class SettingsView(ft.Tabs):
+    def __init__(self):
+        super().__init__(content=None, length=0)
+        self.expand = True
+        self.length = 5
+        self.selected_index = 0
+        self.animation_duration = 300
+
+        self.profile_view = ft.Text("Gestione Profilo - Prossimamente", size=20)
+        self.rules_filepath = os.path.join("data", "rules.json")
+        self.rules_view = self._build_multi_table_view(self.rules_filepath)
+        
+        self.content = ft.Column(
+            expand=True,
+            controls=[
+                ft.TabBar(
+                    tabs=[
+                        ft.Tab(label="Gestione Profilo", icon=ft.Icons.SPORTS_BASKETBALL),
+                        ft.Tab(label="Regolamento", icon=ft.Icons.MANAGE_SEARCH)
+                    ]
+                ),
+                ft.TabBarView(
+                    expand=True,
+                    controls=[
+                        ft.Container(content=self.profile_view, padding=0),
+                        ft.Container(content=self.rules_view, padding=10)
+                    ],
+                ),
+            ],
+        )
+
+    def _load_json_rules(self, filepath: str):
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+
+    def _build_multi_table_view(self, filepath: str):
+        data = self._load_json_rules(filepath)
+        if not data:
+            return ft.Text("Errore di caricamento delle regole.", color=ft.Colors.RED)
+
+        # view_controls = [ft.Text("Regolamento e Punteggi Ufficiali", size=18, weight=ft.FontWeight.BOLD)]
+        view_controls = []
+
+        for category_name, rows in data.items():
+            view_controls.append(
+                ft.Text(category_name.replace("_", " ").upper(), size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE)
+            )
+            
+            data_rows = []
+            for item in rows:
+                score = str(item["punteggio"])
+                score_color = ft.Colors.GREEN_400 if not score.startswith("-") else ft.Colors.RED_400
+                data_rows.append(
+                    ft.DataRow(cells=[
+                        # Font leggermente ingrandito a 13
+                        ft.DataCell(ft.Text(item["azione"], size=13)),
+                        ft.DataCell(ft.Text(score, size=13, weight=ft.FontWeight.BOLD, color=score_color))
+                    ])
+                )
+
+            table = ft.DataTable(
+                border=ft.border.all(1, ft.Colors.GREY_800),
+                border_radius=6,
+                # Linee di divisione verticali e orizzontali per una griglia pulita
+                vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY_800),
+                horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_800),
+                columns=[
+                    # Diamo più spazio alla colonna di sinistra impostando una larghezza fissa (es. 190 pixel)
+                    ft.DataColumn(ft.Text("Azione", weight=ft.FontWeight.BOLD)),
+                    # Rimozione di numeric=True per evitare lo shift sull'ultima riga testuale
+                    ft.DataColumn(ft.Text("Punti", weight=ft.FontWeight.BOLD)),
+                ],
+                rows=data_rows,
+            )
+            view_controls.append(table)
+            view_controls.append(ft.Divider(height=15, color=ft.Colors.TRANSPARENT))
+
+        return ft.ListView(expand=True, padding=5, controls=view_controls)
+
+
 class MainDashboard(ft.Tabs):
     def __init__(self, team: Team):
         super().__init__(content=None, length=0)
@@ -605,7 +688,7 @@ class MainDashboard(ft.Tabs):
         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
         self.calendar_view = CalendarView()
         self.championship_view = StandingsView()
-        self.settings_view = ft.Text("Vista Impostazioni - Prossimamente", size=20)
+        self.settings_view = SettingsView()
         
         self.content=ft.Column(
             expand=True,

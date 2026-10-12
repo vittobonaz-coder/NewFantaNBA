@@ -58,5 +58,29 @@
         "GAME_DATE": "2026-10-10",
         "MATCHUP": "SA @ PHX",
         "SCORE": "98 - 102"
+    },
+    {
+        "GAME_ID": "401898400",
+        "GAME_DATE": "2026-10-11",
+        "MATCHUP": "DAL @ HOU",
+        "SCORE": "132 - 115"
+    },
+    {
+        "GAME_ID": "401898401",
+        "GAME_DATE": "2026-10-11",
+        "MATCHUP": "ORL @ CLE",
+        "SCORE": "105 - 119"
+    },
+    {
+        "GAME_ID": "401901821",
+        "GAME_DATE": "2026-10-11",
+        "MATCHUP": "MIL @ CHA",
+        "SCORE": "90 - 105"
+    },
+    {
+        "GAME_ID": "401908941",
+        "GAME_DATE": "2026-10-11",
+        "MATCHUP": "CHI @ DEN",
+        "SCORE": "128 - 133"
     }
 ]
