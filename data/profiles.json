@@ -1,52 +1,42 @@
 [
     {
-        "id": "991dce38-249b-46b8-b5ad-0de846af0e36",
+        "id": "2af7d5bd-fac1-45e6-83dd-0dff37a03256",
         "username": "Bonaz_user",
-        "password": "fanta2026"
+        "password": "1"
     },
     {
-        "id": "161e24b1-6956-4b93-a392-88f6f18a547a",
+        "id": "c573f0c2-5655-4435-80f4-0833491e4ea1",
         "username": "Mazen_user",
-        "password": "fanta2026"
+        "password": "1"
     },
     {
-        "id": "89c1ef36-a106-4ece-bb83-794a965cbd5b",
+        "id": "cccb149d-ff77-4ab8-90b3-1c87cbb2a00a",
         "username": "Gents_user",
-        "password": "fanta2026"
+        "password": "1"
     },
     {
-        "id": "fa8c9c8a-aa5b-4a5e-91a0-bcfdb8e5439d",
+        "id": "d348564c-f902-44ab-8a75-eadd6f1c8ac2",
         "username": "Cola_user",
-        "password": "fanta2026"
+        "password": "1"
     },
     {
-        "id": "e4037682-dce4-4352-ab9e-4d59f14359e7",
-        "username": "Pit_user",
-        "password": "fanta2026"
-    },
-    {
-        "id": "38f9a725-676a-4750-833c-c9600f3cdedd",
+        "id": "65d8a6b3-e91b-49b5-aba8-25cd73470060",
         "username": "Cile_user",
-        "password": "fanta2026"
+        "password": "1"
     },
     {
-        "id": "ab69a87d-a017-4d72-8a69-7d97a8bc1a3a",
-        "username": "Jack_user",
-        "password": "fanta2026"
-    },
-    {
-        "id": "7f8416c9-9307-41c7-a7db-901efcacc8d4",
+        "id": "f676db20-dd64-4e35-80f2-574604c67654",
         "username": "Testo_user",
-        "password": "fanta2026"
+        "password": "1"
     },
     {
-        "id": "330aa657-8e68-46ae-b8de-bc7e7a87ab34",
+        "id": "95347698-af39-4293-80d2-9ae9bfb7fe11",
         "username": "Freezer_user",
-        "password": "fanta2026"
+        "password": "1"
     },
     {
-        "id": "fad7eb12-9be7-45a5-ae0f-e4b26c073ace",
+        "id": "39120284-7a24-49b3-8820-ed3bc1281d29",
         "username": "Pippo_user",
-        "password": "fanta2026"
+        "password": "1"
     }
 ]

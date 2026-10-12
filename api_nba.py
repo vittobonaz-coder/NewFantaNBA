@@ -1,11 +1,24 @@
-from datetime import datetime
 import json
 import os
 import time
-from nba_api.stats.endpoints import commonplayerinfo
-from nba_api.stats.static import players
+import unicodedata
+import re
 import pandas as pd
 import requests
+from nba_api.stats.endpoints import commonplayerinfo
+from nba_api.stats.static import players
+from nba_api.stats.endpoints import commonallplayers
+
+# Dizionario delle eccezioni forzate (Nome in NBA API -> Nome in ESPN)
+manual_overrides = {
+    "Cameron Thomas": "Cam Thomas",
+    "Gabriel Vincent": "Gabe Vincent",
+    "Nicolas Batum": "Nic Batum",
+    "Xavier Tillman Sr.": "Xavier Tillman Sr",
+    "Guerschon Yabusele": "Guerschon Yabusele", # Se ci sono discrepanze di spelling
+    "Marcus Morris Sr.": "Marcus Morris Sr",
+    "Kelly Oubre Jr.": "Kelly Oubre jr."
+}
 
 
 class NbaDataManager:
@@ -80,23 +93,43 @@ class NbaDataManager:
         except Exception as e:
             print(f"Errore durante il recupero dei giocatori ESPN: {e}")
 
-        # 3. Accoppiamento basato sul Nome Normalizzato
+        def normalize_name(name):
+            # Rimuove accenti e diacritici (es. Dončić -> Doncic)
+            name = unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore').decode('utf-8')
+            name = name.lower()
+            # Rimuove apostrofi, punti e trattini
+            name = name.replace(".", "").replace("'", "").replace("-", " ")
+            # Rimuove suffissi comuni
+            name = re.sub(r'\b(jr|sr|ii|iii|iv)\b', '', name)
+            # Rimuove doppi spazi causati dalle pulizie precedenti
+            name = " ".join(name.split())
+            return name
+
+        # 3. Accoppiamento basato sul Nome Normalizzato (Migliorato)
         espn_dict = {
-            p["name"].lower().replace(".", ""): p["espn_id"]
+            normalize_name(p["name"]): p["espn_id"]
             for p in espn_players_list
         }
 
         nba_to_espn = {}
         espn_to_nba = {}
+        unmapped = []
 
         for nba_p in nba_players_list:
-            clean_name = nba_p["full_name"].lower().replace(".", "")
+            clean_name = normalize_name(nba_p["full_name"])
             nba_id = str(nba_p["id"])
+
+            if clean_name in manual_overrides:
+                clean_name = manual_overrides[clean_name]
 
             if clean_name in espn_dict:
                 espn_id = espn_dict[clean_name]
                 nba_to_espn[nba_id] = espn_id
                 espn_to_nba[espn_id] = nba_id
+            else:
+                unmapped.append(nba_p["full_name"])
+
+        print("Giocatori non mappati:", unmapped)
 
         # Salva mappa su file
         with open(self.map_file, "w", encoding="utf-8") as f:
@@ -356,6 +389,31 @@ class NbaDataManager:
             )
         except Exception as e:
             print(f"Download All Players Error: {e}")
+
+    def download_all_players_live(self):
+        """Scarica i giocatori attivi interrogando i server NBA in tempo reale."""
+        try:
+            # is_only_current_season=1 filtra solo chi ha un contratto in questa stagione
+            live_data = commonallplayers.CommonAllPlayers(is_only_current_season=1).get_data_frames()[0]
+            
+            # Filtriamo e rinominiamo le colonne per mantenere la compatibilità col tuo codice
+            df_filtered = live_data[["PERSON_ID", "DISPLAY_FIRST_LAST"]].copy()
+            df_filtered.rename(
+                columns={"PERSON_ID": "PLAYER_ID", "DISPLAY_FIRST_LAST": "PLAYER_NAME"},
+                inplace=True,
+            )
+            
+            # Salvataggio
+            df_filtered.to_json(
+                self.all_players_file, orient="records", indent=4
+            )
+            
+            print(
+                f"{len(df_filtered)} giocatori attivi scaricati in tempo reale in"
+                f" {self.all_players_file}"
+            )
+        except Exception as e:
+            print(f"Download Live Players Error: {e}")
 
     def download_all_players_espn(self):
             """Scarica i roster di tutte le 30 squadre NBA da ESPN salvandoli in all_players.json"""

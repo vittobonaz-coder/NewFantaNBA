@@ -61,9 +61,27 @@ SCORCIATOIE UTILI:
 
 
 PROCEDURA INIZIO CAMPIONATO:
-- Pulisci files:
+1. Pulisci files:
     Cancella:
-        - 
-- Download giocatori:
-- Download immagini:
-- Setup campionato: 
+        - all_players.json
+        - <nome_team>_state.json
+        - <nome_team>_info.json
+        - calendar.json
+        - historical_boxscores.json
+        - historical_games.json
+        - nba_to_espn_players.json
+        - profiles.json
+        - standings.json
+        - Tutte le immagini in aassets/players
+    Non cancellare:
+        - fanta_teams.json
+        - rules.json
+2. Pulisci database: elimina tutte le righe di tutte le tabelle
+3. Download giocatori: 
+    - python download_all_players.py
+4. Download immagini:
+    - python download_players_avatars.py
+5. Scrivo squadre:
+    - Modifica fanta_teams.json con i giocatori scelti al draft
+6. Setup campionato:
+    - python setup_fanta_championship.py

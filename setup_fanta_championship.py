@@ -4,6 +4,11 @@ from api_nba import NbaDataManager
 from fanta_obj import Team, Player
 from supabase_manager import SupabaseSync
 from datetime import datetime, timedelta
+from time_manager import TimeManager
+
+
+start_calendar_date = "2026-10-04"
+end_calendar_date = "2026-10-17"
 
 sync = SupabaseSync()
 api_manager = NbaDataManager(player_ids=[])
@@ -53,6 +58,8 @@ def run_teams_setup():
                 position=p_info["POSITION"]
             )
             team.add_player(player, roles_map.get(p_info["PLAYER_NAME"], "RISERVA"))
+
+        team.target_date = TimeManager().italian_date_to_nba_date(italian_date_str=start_calendar_date)
 
         # Push struttura squadra
         sync.push_team(team)
@@ -157,8 +164,15 @@ def run_calendar_setup(start_date: str, end_date: str):
 
     print(f"Calendario di {len(calendar)} giornate generato e salvato con successo!")
 
+def run_profiles_setup():
+    SupabaseSync().push_fanta_teams_from_json()
+    SupabaseSync().push_profiles_from_teams()
+    SupabaseSync().pull_profiles()
+
 
 if __name__ == "__main__":
+    run_profiles_setup()
     run_teams_setup()
-    run_calendar_setup(start_date="2026-10-04", end_date="2026-10-16")
+    run_calendar_setup(start_date=start_calendar_date, end_date=end_calendar_date)
     SupabaseSync().sync_standings()
+    SupabaseSync().push_lineup_for_all_teams()

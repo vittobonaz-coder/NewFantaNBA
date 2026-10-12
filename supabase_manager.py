@@ -966,6 +966,119 @@ class SupabaseSync:
             print(f"Errore durante il reset degli score in lineup_players per la gameweek {gameweek}: {e}")
             raise e
 
+    def push_fanta_teams_from_json(self, filepath: str = os.path.join("data", "fanta_teams.json")) -> bool:
+        """
+        1. Legge le chiavi (nomi delle squadre) dal file fanta_teams.json e 
+        le inserisce nella tabella 'fanta_teams' su Supabase se non esistono già.
+        """
+        print(f"Lettura delle squadre dal file {filepath}...")
+        try:
+            if not os.path.exists(filepath):
+                print(f"Errore: Il file {filepath} non esiste.")
+                return False
+
+            with open(filepath, "r", encoding="utf-8") as f:
+                teams_data = json.load(f)
+
+            # Le chiavi del JSON sono i nomi delle squadre
+            team_names = list(teams_data.keys())
+            
+            # Recupera le squadre già presenti su DB per evitare duplicati
+            existing_res = self.supabase.table("fanta_teams").select("name").execute()
+            existing_names = [row["name"] for row in existing_res.data] if existing_res.data else []
+
+            # Prepara i record solo per le squadre mancanti
+            new_teams = [{"name": name} for name in team_names if name not in existing_names]
+
+            if new_teams:
+                self.supabase.table("fanta_teams").insert(new_teams).execute()
+                print(f"Inserite {len(new_teams)} nuove squadre in 'fanta_teams'.")
+            else:
+                print("Tutte le squadre del JSON sono già presenti su Supabase.")
+
+            return True
+
+        except Exception as e:
+            print(f"Errore durante il push delle fanta_teams: {e}")
+            return False
+
+
+    def push_profiles_from_teams(self) -> bool:
+        """
+        2. Legge la tabella 'fanta_teams', crea un profilo in 'profiles' per ogni 
+        squadra (username: <nome_team>_user, password: 1) e collega l'id del profilo 
+        al campo user_id della squadra.
+        """
+        print("Generazione dei profili a partire dalla tabella fanta_teams...")
+        try:
+            # Recupera le squadre dal database (con eventuale user_id già assegnato)
+            teams_res = self.supabase.table("fanta_teams").select("id, name, user_id").execute()
+            teams = teams_res.data or []
+
+            # Recupera i profili esistenti per evitare di creare username duplicati
+            profiles_res = self.supabase.table("profiles").select("id, username").execute()
+            existing_profiles = {p["username"]: p["id"] for p in profiles_res.data} if profiles_res.data else {}
+
+            created_count = 0
+            linked_count = 0
+
+            for team in teams:
+                # Genera l'username desiderato
+                target_username = f"{team['name']}_user"
+                
+                profile_id = existing_profiles.get(target_username)
+
+                # Se il profilo non esiste, crealo
+                if not profile_id:
+                    new_profile = {
+                        "username": target_username,
+                        "password": "1"  # Come da richiesta, password impostata a "1"
+                    }
+                    insert_res = self.supabase.table("profiles").insert(new_profile).execute()
+                    
+                    if insert_res.data:
+                        profile_id = insert_res.data[0]["id"]
+                        existing_profiles[target_username] = profile_id
+                        created_count += 1
+
+                # Se la squadra non ha ancora il profilo collegato (FK user_id), aggiornala
+                if profile_id and team.get("user_id") != profile_id:
+                    self.supabase.table("fanta_teams").update({"user_id": profile_id}).eq("id", team["id"]).execute()
+                    linked_count += 1
+
+            print(f"Profili: {created_count} creati. Collegamenti FK aggiornati: {linked_count}.")
+            return True
+
+        except Exception as e:
+            print(f"Errore durante la creazione dei profili: {e}")
+            return False
+
+
+    def pull_profiles(self, filepath: str = os.path.join("data", "profiles.json")) -> list[dict]:
+        """
+        3. Scarica la tabella 'profiles' da Supabase e la salva nel file 
+        'profiles.json', includendo id, username e password.
+        """
+        print("Scaricamento dei profili da Supabase in corso...")
+        try:
+            # Recupera i dati richiesti
+            response = self.supabase.table("profiles").select("id, username, password").execute()
+            profiles_data = response.data or []
+
+            # Salva nel file JSON
+            path = Path(filepath)
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(profiles_data, f, ensure_ascii=False, indent=4)
+
+            print(f"Scaricati con successo {len(profiles_data)} profili in '{filepath}'.")
+            return profiles_data
+
+        except Exception as e:
+            print(f"Errore durante il pull della tabella profiles: {e}")
+            raise e
+
 
 if __name__ == "__main__":
     sync = SupabaseSync()

@@ -19,7 +19,7 @@
         "Brandon Ingram": "STARTER",
         "Jayson Tatum": "STARTER",
         "Luka Dončić": "STARTER",
-        "Russell Westbrook": "STARTER",
+        "Jalen Brunson": "STARTER",
         "Payton Pritchard": "SIXTH",
         "DeMar DeRozan": "BENCH",
         "Jordan Poole": "BENCH",
@@ -59,21 +59,6 @@
         "Miles Bridges": "RESERVE",
         "Myles Turner": "RESERVE"
     },
-    "Pit": {
-        "Alperen Sengun": "STARTER",
-        "Jaylen Brown": "STARTER",
-        "Cooper Flagg": "STARTER",
-        "Fred VanVleet": "STARTER",
-        "Dillon Brooks": "STARTER",
-        "James Harden": "SIXTH",
-        "Kon Knueppel": "BENCH",
-        "Amen Thompson": "BENCH",
-        "Zach Edey": "BENCH",
-        "Franz Wagner": "BENCH",
-        "Jalen Green": "RESERVE",
-        "Wendell Carter Jr.": "RESERVE",
-        "Mark Williams": "RESERVE"
-    },
     "Cile": {
         "Joel Embiid": "STARTER",
         "Kawhi Leonard": "STARTER",
@@ -89,21 +74,6 @@
         "Mikal Bridges": "RESERVE",
         "Jalen Smith": "RESERVE"
     },
-    "Jack": {
-        "Bam Adebayo": "STARTER",
-        "Victor Wembanyama": "STARTER",
-        "Kevin Durant": "STARTER",
-        "Jalen Brunson": "STARTER",
-        "Andrew Nembhard": "STARTER",
-        "Dejounte Murray": "SIXTH",
-        "Jamal Murray": "BENCH",
-        "Paul George": "BENCH",
-        "Michael Porter Jr.": "BENCH",
-        "Nikola Vučević": "BENCH",
-        "Marcus Smart": "RESERVE",
-        "Kyle Kuzma": "RESERVE",
-        "Deandre Ayton": "RESERVE"
-    },
     "Testo": {
         "Nikola Jokić": "STARTER",
         "Anthony Davis": "STARTER",
@@ -115,7 +85,7 @@
         "Matisse Thybulle": "BENCH",
         "Ausar Thompson": "BENCH",
         "Isaiah Stewart": "BENCH",
-        "Lonzo Ball": "RESERVE",
+        "Fred VanVleet": "RESERVE",
         "Jaren Jackson Jr.": "RESERVE",
         "Rudy Gobert": "RESERVE"
     },
@@ -130,7 +100,7 @@
         "Domantas Sabonis": "BENCH",
         "OG Anunoby": "BENCH",
         "Nic Claxton": "BENCH",
-        "Terry Rozier": "RESERVE",
+        "Marcus Smart": "RESERVE",
         "Jabari Smith Jr.": "RESERVE",
         "Onyeka Okongwu": "RESERVE"
     },
