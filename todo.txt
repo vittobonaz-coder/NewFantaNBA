@@ -1,4 +1,22 @@
 TO DO:
+- Test su cambio giornata
+
+- Nel calendario, se entrambe le squadre non hanno ancora giocatori che hanno giocato non segna i punteggi,
+    mentre dovrebbe segnare 0 ad entrambi appena inizia la giornata
+    --> In base all'ultima data di aggiornamento dovrei scaricare i dati per tutti i giorni di cui sono indietro
+
+- Se almeno un utente non effettua l'accesso ogni giorno i dati del giorno senza accessi vengono persi
+
+- La panca fa *0.75
+
+- Aggiungere al calendario le partite NBA
+
+- Aggiungere possibilità di mettere una formazione fissa, che viene settata all'inizio di ogni giornata
+
+
+
+
+
 - Quando il primo giocatore avvia l'app per la prima volta nel giorno (dopo le 9:00)
     vengono scaricati boxscores e risultati delle partite dall'api, vengono aggiornate le
     informazioni su supabase e vengono scritti nel locale del giocatore i json 
@@ -61,7 +79,7 @@ SCORCIATOIE UTILI:
 
 
 PROCEDURA INIZIO CAMPIONATO:
-1. Pulisci files:
+1. Pulisci files + Pulisci database: python reset_pre_setup.py
     Cancella:
         - all_players.json
         - <nome_team>_state.json
@@ -76,14 +94,14 @@ PROCEDURA INIZIO CAMPIONATO:
     NON cancellare:
         - fanta_teams.json
         - rules.json
-2. Pulisci database: elimina tutte le righe di tutte le tabelle
-3. Download giocatori: 
+    Elimina tutte le righe di tutte le tabelle
+2. Download giocatori: 
     - python download_all_players.py
-4. Download immagini:
+3. Download immagini:
     - python download_players_avatars.py
-5. Scrivo squadre:
+4. Scrivo squadre:
     - Modifica fanta_teams.json con i giocatori scelti al draft
-6. Setup campionato:
+5. Setup campionato:
     - python setup_fanta_championship.py
 
 

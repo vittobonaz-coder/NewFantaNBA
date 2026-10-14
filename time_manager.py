@@ -1,3 +1,6 @@
+import json
+import os
+from typing import List
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
@@ -103,8 +106,62 @@ class TimeManager:
             
         return target_date.strftime("%Y-%m-%d")
 
-# print(TimeManager().is_past_eight_am())
+    @staticmethod
+    def get_gameweek_dates(
+        round_number: int, 
+        calendar_path: str = os.path.join("data", "calendar.json"),
+        fmt: str = "%Y-%m-%d"
+    ) -> List[str]:
+        """
+        Legge il file calendar.json e restituisce la lista di date (stringhe)
+        che compongono il round specificato (inclusi start_date ed end_date).
 
+        Args:
+            round_number (int): Il numero della gameweek/round da cercare.
+            calendar_path (str): Percorso del file calendar.json.
+            fmt (str): Formato delle date in output (default: "%Y-%m-%d").
+
+        Returns:
+            List[str]: Lista di stringhe rappresentanti le date del round.
+                       Es: ['2026-10-04', '2026-10-05', ..., '2026-10-10']
+        """
+        if not os.path.exists(calendar_path):
+            print(f"Errore: File '{calendar_path}' non trovato.")
+            return []
+
+        try:
+            with open(calendar_path, "r", encoding="utf-8") as f:
+                calendar_data = json.load(f)
+
+            # Cerca il round specificato
+            target_round = next(
+                (r for r in calendar_data if r.get("round_number") == round_number), 
+                None
+            )
+
+            if not target_round:
+                print(f"Attenzione: Round number {round_number} non trovato nel calendario.")
+                return []
+
+            start_dt = datetime.strptime(target_round["start_date"], fmt).date()
+            end_dt = datetime.strptime(target_round["end_date"], fmt).date()
+
+            # Genera la sequenza di date da start_date a end_date inclusa
+            date_list = []
+            curr_dt = start_dt
+            while curr_dt <= end_dt:
+                date_list.append(curr_dt.strftime(fmt))
+                curr_dt += timedelta(days=1)
+
+            return date_list
+
+        except Exception as e:
+            print(f"Errore durante la lettura del calendario: {e}")
+            return []
+
+
+# dates_gw1 = TimeManager.get_gameweek_dates(round_number=1)
+# print("Date GW1:", dates_gw1)
 
 
 

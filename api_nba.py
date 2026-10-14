@@ -9,17 +9,6 @@ from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import commonallplayers
 
-# Dizionario delle eccezioni forzate (Nome in NBA API -> Nome in ESPN)
-manual_overrides = {
-    "Cameron Thomas": "Cam Thomas",
-    "Gabriel Vincent": "Gabe Vincent",
-    "Nicolas Batum": "Nic Batum",
-    "Xavier Tillman Sr.": "Xavier Tillman Sr",
-    "Guerschon Yabusele": "Guerschon Yabusele", # Se ci sono discrepanze di spelling
-    "Marcus Morris Sr.": "Marcus Morris Sr",
-    "Kelly Oubre Jr.": "Kelly Oubre jr."
-}
-
 
 class NbaDataManager:
 
@@ -118,9 +107,6 @@ class NbaDataManager:
         for nba_p in nba_players_list:
             clean_name = normalize_name(nba_p["full_name"])
             nba_id = str(nba_p["id"])
-
-            if clean_name in manual_overrides:
-                clean_name = manual_overrides[clean_name]
 
             if clean_name in espn_dict:
                 espn_id = espn_dict[clean_name]

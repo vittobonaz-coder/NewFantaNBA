@@ -1,74 +1,74 @@
 [
     {
-        "fanta_team_id": "ba5d8049-530c-4889-87e2-73a1a405a0b7",
+        "fanta_team_id": "7d3106f3-e256-4f5f-bf48-81b3d48d92af",
+        "team_name": "Cola",
+        "played": 0,
+        "wins": 1,
+        "losses": 0,
+        "total_score": 97.0,
+        "total_points_against": 46.5
+    },
+    {
+        "fanta_team_id": "ae33b3c8-5c57-4c26-b43c-27f6c8d9f28c",
         "team_name": "Pippo",
         "played": 0,
         "wins": 1,
         "losses": 0,
-        "total_score": 17.0,
-        "total_points_against": 15.0
+        "total_score": 93.5,
+        "total_points_against": 63.5
     },
     {
-        "fanta_team_id": "476aa2b7-c5e3-48ad-8f01-ad3d6c1eb9a1",
+        "fanta_team_id": "7f323d98-6d5f-4e93-8273-0c39b8205ad7",
         "team_name": "Testo",
         "played": 0,
         "wins": 1,
         "losses": 0,
-        "total_score": 15.0,
-        "total_points_against": 7.5
+        "total_score": 82.0,
+        "total_points_against": 73.0
     },
     {
-        "fanta_team_id": "d943b1a4-b072-4a78-8fe2-a7a8cc12ab04",
+        "fanta_team_id": "45d84e12-8a99-4c82-b51a-30f17c05684a",
         "team_name": "Freezer",
         "played": 0,
         "wins": 1,
         "losses": 0,
-        "total_score": 10.0,
-        "total_points_against": 2.5
+        "total_score": 78.0,
+        "total_points_against": 56.5
     },
     {
-        "fanta_team_id": "7037953a-6eed-418c-b920-a6c56e47d3c5",
-        "team_name": "Bonaz",
-        "played": 0,
-        "wins": 0,
-        "losses": 1,
-        "total_score": 15.0,
-        "total_points_against": 17.0
-    },
-    {
-        "fanta_team_id": "99682eb2-da96-4d8d-bbc4-c038b28dab7d",
+        "fanta_team_id": "835a3184-c834-4b45-b5c9-c65683574587",
         "team_name": "Gents",
         "played": 0,
         "wins": 0,
         "losses": 1,
-        "total_score": 7.5,
-        "total_points_against": 15.0
+        "total_score": 73.0,
+        "total_points_against": 82.0
     },
     {
-        "fanta_team_id": "760a9093-acea-413d-bcb6-c90fe1e27442",
+        "fanta_team_id": "685c3330-d341-4d20-9e66-5deca28549d1",
+        "team_name": "Bonaz",
+        "played": 0,
+        "wins": 0,
+        "losses": 1,
+        "total_score": 63.5,
+        "total_points_against": 93.5
+    },
+    {
+        "fanta_team_id": "04442ade-749a-421d-ae5d-0de66d0872c5",
         "team_name": "Mazen",
         "played": 0,
         "wins": 0,
         "losses": 1,
-        "total_score": 2.5,
-        "total_points_against": 10.0
+        "total_score": 56.5,
+        "total_points_against": 78.0
     },
     {
-        "fanta_team_id": "5fc5dfbd-aed1-4c6d-9241-4e18728ae316",
+        "fanta_team_id": "1691f31e-ac59-49fd-8e32-ed2a52fdceea",
         "team_name": "Cile",
         "played": 0,
         "wins": 0,
-        "losses": 0,
-        "total_score": 0.0,
-        "total_points_against": 0.0
-    },
-    {
-        "fanta_team_id": "acf457e5-83d5-465a-aeb8-e7d33e13571c",
-        "team_name": "Cola",
-        "played": 0,
-        "wins": 0,
-        "losses": 0,
-        "total_score": 0.0,
-        "total_points_against": 0.0
+        "losses": 1,
+        "total_score": 46.5,
+        "total_points_against": 97.0
     }
 ]
