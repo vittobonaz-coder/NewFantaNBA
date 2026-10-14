@@ -221,7 +221,8 @@ def daily_update_needed(team_name: str) -> bool:
         user_update_dict = SupabaseSync().get_last_updated_dates()
         last_updated_date = get_user_date(team_name=team_name, teams_dict=user_update_dict)
         print(f"La data dell'ultimo update è {last_updated_date}")
-        if TimeManager().is_date_before_today(last_updated_date):
+        # if TimeManager().is_date_before_today(last_updated_date):
+        if last_updated_date < "2026-10-05": # Simulazione
             print(f"L'ultimo update risale a prima di oggi --> Update necessario")
             return True
     else:
@@ -269,8 +270,8 @@ def main(page: ft.Page) -> None:
 
     def on_login_success(user_data):
         #TODO: Se voglio aggiornamento realtime, devo ridefinire la logica per calcolare la data nba
-        target_date = TimeManager().get_nba_target_date()
-        print(target_date)
+        # target_date = TimeManager().get_nba_target_date()
+        target_date = "2026-10-04" # Simulazione
         # TODO: la riga seguente va sostituita con un metodo
         team_name = user_data["username"].replace("_user", "") 
         team = Team(name=team_name)

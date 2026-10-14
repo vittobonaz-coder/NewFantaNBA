@@ -1,1 +1,20 @@
-[]
+[
+    {
+        "GAME_ID": "401902644",
+        "GAME_DATE": "2026-10-03",
+        "MATCHUP": "MIA @ TOR",
+        "SCORE": "129 - 105"
+    },
+    {
+        "GAME_ID": "401914127",
+        "GAME_DATE": "2026-10-04",
+        "MATCHUP": "UTAH @ DEN",
+        "SCORE": "109 - 97"
+    },
+    {
+        "GAME_ID": "401918010",
+        "GAME_DATE": "2026-10-04",
+        "MATCHUP": "GS @ LAC",
+        "SCORE": "101 - 104"
+    }
+]

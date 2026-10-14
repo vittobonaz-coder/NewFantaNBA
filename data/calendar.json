@@ -7,29 +7,11 @@
             {
                 "home_team": "Bonaz",
                 "away_team": "Pippo",
-                "home_score": 0.0,
-                "away_score": 0.0,
+                "home_score": 15.0,
+                "away_score": 17.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
-            },
-            {
-                "home_team": "Mazen",
-                "away_team": "Freezer",
-                "home_score": 0.0,
-                "away_score": 0.0,
-                "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
-            },
-            {
-                "home_team": "Gents",
-                "away_team": "Testo",
-                "home_score": 0.0,
-                "away_score": 0.0,
-                "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
                 "home_team": "Cola",
@@ -37,8 +19,26 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Testo",
+                "home_score": 7.5,
+                "away_score": 15.0,
+                "was_played": false,
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Freezer",
+                "home_score": 2.5,
+                "away_score": 10.0,
+                "was_played": false,
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             }
         ]
     },
@@ -53,8 +53,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
                 "home_team": "Testo",
@@ -62,8 +62,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
                 "home_team": "Cile",
@@ -71,8 +71,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
                 "home_team": "Cola",
@@ -80,8 +80,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             }
         ]
     }

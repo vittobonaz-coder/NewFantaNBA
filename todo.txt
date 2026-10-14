@@ -72,8 +72,8 @@ PROCEDURA INIZIO CAMPIONATO:
         - nba_to_espn_players.json
         - profiles.json
         - standings.json
-        - Tutte le immagini in aassets/players
-    Non cancellare:
+        - Tutte le immagini in assets/players
+    NON cancellare:
         - fanta_teams.json
         - rules.json
 2. Pulisci database: elimina tutte le righe di tutte le tabelle
@@ -85,3 +85,7 @@ PROCEDURA INIZIO CAMPIONATO:
     - Modifica fanta_teams.json con i giocatori scelti al draft
 6. Setup campionato:
     - python setup_fanta_championship.py
+
+
+Testing:
+https://wikihoops.com/games/2026-10-04/?ref=calendar
