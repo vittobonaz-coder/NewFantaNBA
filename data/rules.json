@@ -10,6 +10,7 @@
     { "azione": "Doppia Doppia", "punteggio": "+5" },
     { "azione": "Tripla Doppia", "punteggio": "+10" },
     { "azione": "Quadrupla Doppia", "punteggio": "+40" },
+    { "azione": "Quintupla Doppia", "punteggio": "+100" },
     { "azione": "Tiro sbagliato", "punteggio": "-1" },
     { "azione": "Tiro libero sbagliato", "punteggio": "-1" },
     { "azione": "Palla persa", "punteggio": "-1.5" },

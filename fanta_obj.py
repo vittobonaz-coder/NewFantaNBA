@@ -145,41 +145,58 @@ class Player:
             pf = game.get("PF", 0)
             fgm = game.get("FGM", 0)
             fga = game.get("FGA", 0)
+            fg3m = game.get("FG3M", 0)
             ftm = game.get("FTM", 0)
             fta = game.get("FTA", 0)
             pm = game.get("PLUS_MINUS", 0)
             wl_str = game.get("WL", 0)
 
-            wl = 3 if wl_str == "W" else (-3 if wl_str == "L" else 0)
-
             # Algoritmo di base
             current_score = float(pts)
             # current_score = (
-            #     pts * 1.0 +         
-            #     dreb * 1.0 +
-            #     oreb * 1.25 +
-            #     ast * 1.5 +         
-            #     stl * 2.0 +         
-            #     blk * 2.0 +         
-            #     tov * -1.5 +        
-            #     (fgm - fga) * 1.0 + 
-            #     (ftm - fta) * 1.0 + 
-            #     pm * 0.0 +
-            #     wl         
+            #     pts * 1.0 +                     # Punto realizzato (+1)
+            #     dreb * 1.0 +                    # Rimbalzo difensivo (+1)
+            #     oreb * 1.25 +                   # Rimbalzo offensivo (+1.25)
+            #     ast * 1.5 +                     # Assist (+1.5)
+            #     stl * 2.5 +                     # Steal (+2.5)
+            #     blk * 2.5 +                     # Stoppata (+2.5)
+            #     tov * -1.5 +                    # Palla persa (-1.5)
+            #     (fgm - fga) * 1.0 +             # Tiro sbagliato (-1 per ogni errore)
+            #     (ftm - fta) * 1.0 +             # Tiro libero sbagliato (-1 per ogni errore)
+            #     (pm / 5.0)                      # Plus/Minus (PM/5)
             # )
 
-            # 2. Bonus Multi-Doppia
-            stats_to_check = [pts, reb, ast, stl, blk]
-            double_digits_count = sum(1 for s in stats_to_check if s >= 10)
+            # # 3. Bonus scalare Triple segnate (da 3 in poi, es. 3->3, 4->4, 6->6)
+            # if fg3m >= 3:
+            #     current_score += fg3m
+
+            # # 4. Bonus scalare Punti segnati (da 30 in poi, ogni 10 punti aggiunge il blocco corrispondente o proporzionale)
+            # # Regola: 30 punti = +3, 40 punti = +4, 50 punti = +5, 60 punti = +6, ecc.
+            # if pts >= 30:
+            #     current_score += (pts // 10)
+
+            # # 5. Bonus soglia Rimbalzi e Assist (20+)
+            # if reb >= 20:
+            #     current_score += 5
+            # if ast >= 20:
+            #     current_score += 5
+
+            # # 6. Bonus Multi-Doppia (Doppia, Tripla, Quadrupla, Quintupla)
+            # stats_to_check = [pts, reb, ast, stl, blk]
+            # double_digits_count = sum(1 for s in stats_to_check if s >= 10)
 
             # if double_digits_count == 2:
-            #     current_score += 5   # Doppia Doppia
+            #     current_score += 5    # Doppia Doppia
             # elif double_digits_count == 3:
-            #     current_score += 10  # Tripla Doppia
+            #     current_score += 10   # Tripla Doppia
             # elif double_digits_count == 4:
-            #     current_score += 40  # Quadrupla Doppia (Rarissima)
-            # elif double_digits_count == 5:
-            #     current_score += 100 # Quintupla Doppia (Leggendaria)
+            #     current_score += 40   # Quadrupla Doppia
+            # elif double_digits_count >= 5:
+            #     current_score += 100  # Quintupla Doppia
+
+            # # 7. Vittoria squadra (+5% sul punteggio totale del giocatore)
+            # if wl_str == "W":
+            #     current_score *= 1.05
 
             total_scores.append(current_score)
 

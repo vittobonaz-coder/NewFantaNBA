@@ -338,7 +338,7 @@ class NbaDataManager:
                                 "AST": int(get_val(stats, "AST")),
                                 "STL": int(get_val(stats, "STL")),
                                 "BLK": int(get_val(stats, "BLK")),
-                                "TOV": int(get_val(stats, "TOV")),
+                                "TOV": int(get_val(stats, "TO")),
                                 "PF": int(get_val(stats, "PF")),
                                 "PTS": int(get_val(stats, "PTS")),
                                 "PLUS_MINUS": get_val(stats, "+/-"),
