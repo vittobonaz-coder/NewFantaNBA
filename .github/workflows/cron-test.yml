@@ -21,4 +21,4 @@ jobs:
           python-version: '3.10'
 
       - name: Esecuzione dello script Python
-        run: python script.py
+        run: python cron_test_script.py
