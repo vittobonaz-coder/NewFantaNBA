@@ -5,56 +5,47 @@
         "end_date": "2026-10-10",
         "matchups": [
             {
-                "home_team": "Bonaz",
-                "away_team": "Pippo",
-                "home_score": 0.0,
-                "away_score": 0.0,
+                "home_team": "Cola",
+                "away_team": "Cile",
+                "home_score": 97.0,
+                "away_score": 46.5,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
-            },
-            {
-                "home_team": "Mazen",
-                "away_team": "Freezer",
-                "home_score": 0.0,
-                "away_score": 0.0,
-                "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
                 "home_team": "Gents",
                 "away_team": "Testo",
-                "home_score": 0.0,
-                "away_score": 0.0,
+                "home_score": 73.0,
+                "away_score": 82.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
-                "home_team": "Cola",
-                "away_team": "Jack",
-                "home_score": 0.0,
-                "away_score": 0.0,
+                "home_team": "Mazen",
+                "away_team": "Freezer",
+                "home_score": 56.5,
+                "away_score": 78.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
-                "home_team": "Pit",
-                "away_team": "Cile",
-                "home_score": 0.0,
-                "away_score": 0.0,
+                "home_team": "Bonaz",
+                "away_team": "Pippo",
+                "home_score": 63.5,
+                "away_score": 93.5,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             }
         ]
     },
     {
         "round_number": 2,
         "start_date": "2026-10-11",
-        "end_date": "2026-10-16",
+        "end_date": "2026-10-17",
         "matchups": [
             {
                 "home_team": "Freezer",
@@ -62,8 +53,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
                 "home_team": "Testo",
@@ -71,35 +62,26 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
-                "home_team": "Jack",
+                "home_team": "Cile",
                 "away_team": "Mazen",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             },
             {
-                "home_team": "Cile",
+                "home_team": "Cola",
                 "away_team": "Gents",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
-            },
-            {
-                "home_team": "Pit",
-                "away_team": "Cola",
-                "home_score": 0.0,
-                "away_score": 0.0,
-                "was_played": false,
-                "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "home_lineup": "NULL",
+                "away_lineup": "NULL"
             }
         ]
     }

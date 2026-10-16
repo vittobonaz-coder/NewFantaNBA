@@ -1,0 +1,3614 @@
+[
+    {
+        "PLAYER_ID": 1630173,
+        "PLAYER_NAME": "Precious Achiuwa",
+        "TEAM": "SAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643411,
+        "PLAYER_NAME": "Darius Acuff Jr.",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203500,
+        "PLAYER_NAME": "Steven Adams",
+        "TEAM": "HOU",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1628389,
+        "PLAYER_NAME": "Bam Adebayo",
+        "TEAM": "MIA",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1630534,
+        "PLAYER_NAME": "Ochai Agbaji",
+        "TEAM": "BKN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643772,
+        "PLAYER_NAME": "Rashaun Agee",
+        "TEAM": "CLE",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1643265,
+        "PLAYER_NAME": "Jonas Aidoo",
+        "TEAM": "UTA",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642369,
+        "PLAYER_NAME": "Michael Ajayi",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643022,
+        "PLAYER_NAME": "Jaden Akins",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630583,
+        "PLAYER_NAME": "Santi Aldama",
+        "TEAM": "DAL",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1641725,
+        "PLAYER_NAME": "Trey Alexander",
+        "TEAM": "UTA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629638,
+        "PLAYER_NAME": "Nickeil Alexander-Walker",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628960,
+        "PLAYER_NAME": "Grayson Allen",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628386,
+        "PLAYER_NAME": "Jarrett Allen",
+        "TEAM": "CLE",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630631,
+        "PLAYER_NAME": "Jose Alvarado",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643417,
+        "PLAYER_NAME": "Nate Ament",
+        "TEAM": "MIL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643515,
+        "PLAYER_NAME": "Christian Anderson",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203937,
+        "PLAYER_NAME": "Kyle Anderson",
+        "TEAM": "TOR",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 203507,
+        "PLAYER_NAME": "Giannis Antetokounmpo",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628384,
+        "PLAYER_NAME": "OG Anunoby",
+        "TEAM": "NYK",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1643113,
+        "PLAYER_NAME": "Zack Austin",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630166,
+        "PLAYER_NAME": "Deni Avdija",
+        "TEAM": "POR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643591,
+        "PLAYER_NAME": "Tobe Awaka",
+        "TEAM": "CHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629028,
+        "PLAYER_NAME": "Deandre Ayton",
+        "TEAM": "WAS",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1628963,
+        "PLAYER_NAME": "Marvin Bagley III",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642846,
+        "PLAYER_NAME": "Ace Bailey",
+        "TEAM": "UTA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630163,
+        "PLAYER_NAME": "LaMelo Ball",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628964,
+        "PLAYER_NAME": "Mo Bamba",
+        "TEAM": "UTA",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631094,
+        "PLAYER_NAME": "Paolo Banchero",
+        "TEAM": "ORL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630217,
+        "PLAYER_NAME": "Desmond Bane",
+        "TEAM": "ORL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631230,
+        "PLAYER_NAME": "Dominick Barlow",
+        "TEAM": "PHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 203084,
+        "PLAYER_NAME": "Harrison Barnes",
+        "TEAM": "SAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630567,
+        "PLAYER_NAME": "Scottie Barnes",
+        "TEAM": "TOR",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1642964,
+        "PLAYER_NAME": "Brooks Barnhizer",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629628,
+        "PLAYER_NAME": "RJ Barrett",
+        "TEAM": "TOR",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1629646,
+        "PLAYER_NAME": "Charles Bassey",
+        "TEAM": "GSW",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1642926,
+        "PLAYER_NAME": "Tamar Bates",
+        "TEAM": "UTA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642419,
+        "PLAYER_NAME": "Jamison Battle",
+        "TEAM": "TOR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 203078,
+        "PLAYER_NAME": "Bradley Beal",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641736,
+        "PLAYER_NAME": "Reece Beekman",
+        "TEAM": "WAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642866,
+        "PLAYER_NAME": "Joan Beringer",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630180,
+        "PLAYER_NAME": "Saddiq Bey",
+        "TEAM": "NOP",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630793,
+        "PLAYER_NAME": "Giorgi Bezhanishvili",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1641844,
+        "PLAYER_NAME": "Tarik Biberovic",
+        "TEAM": "DAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643548,
+        "PLAYER_NAME": "Tyler Bilodeau",
+        "TEAM": "BKN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629048,
+        "PLAYER_NAME": "Goga Bitadze",
+        "TEAM": "ORL",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1642927,
+        "PLAYER_NAME": "Nate Bittle",
+        "TEAM": "TOR",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641710,
+        "PLAYER_NAME": "Anthony Black",
+        "TEAM": "ORL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641778,
+        "PLAYER_NAME": "Leaky Black",
+        "TEAM": "SAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 203992,
+        "PLAYER_NAME": "Bogdan Bogdanović",
+        "TEAM": "HOU",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641737,
+        "PLAYER_NAME": "Adem Bona",
+        "TEAM": "PHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1626164,
+        "PLAYER_NAME": "Devin Booker",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643409,
+        "PLAYER_NAME": "Cameron Boozer",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630527,
+        "PLAYER_NAME": "Brandon Boston",
+        "TEAM": "CHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643573,
+        "PLAYER_NAME": "Kylan Boswell",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631123,
+        "PLAYER_NAME": "Jamaree Bouyea",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643558,
+        "PLAYER_NAME": "Jaden Bradley",
+        "TEAM": "TOR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628396,
+        "PLAYER_NAME": "Tony Bradley",
+        "TEAM": "ATL",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1631103,
+        "PLAYER_NAME": "Malaki Branham",
+        "TEAM": "ORL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631128,
+        "PLAYER_NAME": "Christian Braun",
+        "TEAM": "DEN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642350,
+        "PLAYER_NAME": "Trevon Brazile",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642886,
+        "PLAYER_NAME": "Koby Brea",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641779,
+        "PLAYER_NAME": "Jalen Bridges",
+        "TEAM": "CHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628969,
+        "PLAYER_NAME": "Mikal Bridges",
+        "TEAM": "NYK",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1628970,
+        "PLAYER_NAME": "Miles Bridges",
+        "TEAM": "PHX",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628415,
+        "PLAYER_NAME": "Dillon Brooks",
+        "TEAM": "PHX",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1641780,
+        "PLAYER_NAME": "Johni Broome",
+        "TEAM": "MIL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628971,
+        "PLAYER_NAME": "Bruce Brown",
+        "TEAM": "NYK",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1627759,
+        "PLAYER_NAME": "Jaylen Brown",
+        "TEAM": "PHI",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1631112,
+        "PLAYER_NAME": "Kendall Brown",
+        "TEAM": "SAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641738,
+        "PLAYER_NAME": "Kobe Brown",
+        "TEAM": "IND",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643576,
+        "PLAYER_NAME": "Maliq Brown",
+        "TEAM": "SAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643414,
+        "PLAYER_NAME": "Mikel Brown Jr.",
+        "TEAM": "BKN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628973,
+        "PLAYER_NAME": "Jalen Brunson",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642868,
+        "PLAYER_NAME": "Carter Bryant",
+        "TEAM": "SAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628418,
+        "PLAYER_NAME": "Thomas Bryant",
+        "TEAM": "CLE",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1641723,
+        "PLAYER_NAME": "Kobe Bufkin",
+        "TEAM": "NOP",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643718,
+        "PLAYER_NAME": "Nimari Burnett",
+        "TEAM": "TOR",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1643415,
+        "PLAYER_NAME": "Brayden Burries",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631174,
+        "PLAYER_NAME": "Tyler Burton",
+        "TEAM": "GSW",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 202710,
+        "PLAYER_NAME": "Jimmy Butler III",
+        "TEAM": "GSW",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641824,
+        "PLAYER_NAME": "Matas Buzelis",
+        "TEAM": "CHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631288,
+        "PLAYER_NAME": "Jamal Cain",
+        "TEAM": "ORL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 203484,
+        "PLAYER_NAME": "Kentavious Caldwell-Pope",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641739,
+        "PLAYER_NAME": "Toumani Camara",
+        "TEAM": "POR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 203991,
+        "PLAYER_NAME": "Clint Capela",
+        "TEAM": "HOU",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642928,
+        "PLAYER_NAME": "Dylan Cardwell",
+        "TEAM": "SAC",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642382,
+        "PLAYER_NAME": "Branden Carlson",
+        "TEAM": "POR",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1643418,
+        "PLAYER_NAME": "Cameron Carr",
+        "TEAM": "LAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642267,
+        "PLAYER_NAME": "Bub Carrington",
+        "TEAM": "WAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642269,
+        "PLAYER_NAME": "Devin Carter",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628975,
+        "PLAYER_NAME": "Jevon Carter",
+        "TEAM": "ORL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628976,
+        "PLAYER_NAME": "Wendell Carter Jr.",
+        "TEAM": "ORL",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1627936,
+        "PLAYER_NAME": "Alex Caruso",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642264,
+        "PLAYER_NAME": "Stephon Castle",
+        "TEAM": "SAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630658,
+        "PLAYER_NAME": "Colin Castleton",
+        "TEAM": "ORL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1643572,
+        "PLAYER_NAME": "Rafael Castro",
+        "TEAM": "LAL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1643416,
+        "PLAYER_NAME": "Chris Cenac Jr.",
+        "TEAM": "BOS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630577,
+        "PLAYER_NAME": "Julian Champagnie",
+        "TEAM": "SAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630551,
+        "PLAYER_NAME": "Justin Champagnie",
+        "TEAM": "WAS",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1631113,
+        "PLAYER_NAME": "Kennedy Chandler",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631108,
+        "PLAYER_NAME": "Max Christie",
+        "TEAM": "DAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630619,
+        "PLAYER_NAME": "Moussa Cisse",
+        "TEAM": "DAL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631321,
+        "PLAYER_NAME": "Sidy Cissoko",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641740,
+        "PLAYER_NAME": "Jaylen Clark",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203903,
+        "PLAYER_NAME": "Jordan Clarkson",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629651,
+        "PLAYER_NAME": "Nic Claxton",
+        "TEAM": "CHI",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642383,
+        "PLAYER_NAME": "Walter Clayton Jr.",
+        "TEAM": "MEM",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643617,
+        "PLAYER_NAME": "Zach Cleveland",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642363,
+        "PLAYER_NAME": "Nique Clifford",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642270,
+        "PLAYER_NAME": "Donovan Clingan",
+        "TEAM": "POR",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641730,
+        "PLAYER_NAME": "Noah Clowney",
+        "TEAM": "BKN",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1642268,
+        "PLAYER_NAME": "Isaiah Collier",
+        "TEAM": "UTA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628381,
+        "PLAYER_NAME": "John Collins",
+        "TEAM": "DET",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1628380,
+        "PLAYER_NAME": "Zach Collins",
+        "TEAM": "CHI",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 201144,
+        "PLAYER_NAME": "Mike Conley",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1626192,
+        "PLAYER_NAME": "Pat Connaughton",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643553,
+        "PLAYER_NAME": "Ryan Conwell",
+        "TEAM": "MIA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643721,
+        "PLAYER_NAME": "Carson Cooper",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643595,
+        "PLAYER_NAME": "Quadir Copeland",
+        "TEAM": "HOU",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643723,
+        "PLAYER_NAME": "Cameron Corhen",
+        "TEAM": "ATL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641731,
+        "PLAYER_NAME": "Bilal Coulibaly",
+        "TEAM": "WAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642907,
+        "PLAYER_NAME": "Cedric Coward",
+        "TEAM": "MEM",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642384,
+        "PLAYER_NAME": "Isaiah Crawford",
+        "TEAM": "HOU",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643018,
+        "PLAYER_NAME": "LJ Cryer",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630595,
+        "PLAYER_NAME": "Cade Cunningham",
+        "TEAM": "DET",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 201939,
+        "PLAYER_NAME": "Stephen Curry",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642359,
+        "PLAYER_NAME": "Pacôme Dadiet",
+        "TEAM": "NYK",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630700,
+        "PLAYER_NAME": "Dyson Daniels",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203076,
+        "PLAYER_NAME": "Anthony Davis",
+        "TEAM": "WAS",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1631120,
+        "PLAYER_NAME": "JD Davison",
+        "TEAM": "ORL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 201942,
+        "PLAYER_NAME": "DeMar DeRozan",
+        "TEAM": "DEN",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1643620,
+        "PLAYER_NAME": "Tucker DeVries",
+        "TEAM": "BOS",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1643091,
+        "PLAYER_NAME": "Tyson Degenhart",
+        "TEAM": "TOR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642484,
+        "PLAYER_NAME": "RayJ Dennis",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628978,
+        "PLAYER_NAME": "Donte DiVincenzo",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643738,
+        "PLAYER_NAME": "Malik Dia",
+        "TEAM": "NOP",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631217,
+        "PLAYER_NAME": "Moussa Diabaté",
+        "TEAM": "CHA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643813,
+        "PLAYER_NAME": "Alpha Diallo",
+        "TEAM": "DEN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642885,
+        "PLAYER_NAME": "Mohamed Diawara",
+        "TEAM": "NYK",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643679,
+        "PLAYER_NAME": "Jorge Diaz-Graham",
+        "TEAM": "DAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641711,
+        "PLAYER_NAME": "Gradey Dick",
+        "TEAM": "LAC",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1630621,
+        "PLAYER_NAME": "Hunter Dickinson",
+        "TEAM": "NOP",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631172,
+        "PLAYER_NAME": "Ousmane Dieng",
+        "TEAM": "MIL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631215,
+        "PLAYER_NAME": "Khalifa Diop",
+        "TEAM": "CLE",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1643717,
+        "PLAYER_NAME": "Josh Dix",
+        "TEAM": "OKC",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1643621,
+        "PLAYER_NAME": "Tre Donaldson",
+        "TEAM": "MIA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629029,
+        "PLAYER_NAME": "Luka Dončić",
+        "TEAM": "LAL",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1629652,
+        "PLAYER_NAME": "Luguentz Dort",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630245,
+        "PLAYER_NAME": "Ayo Dosunmu",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203083,
+        "PLAYER_NAME": "Andre Drummond",
+        "TEAM": "NYK",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1627739,
+        "PLAYER_NAME": "Kris Dunn",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642346,
+        "PLAYER_NAME": "Ryan Dunn",
+        "TEAM": "PHX",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 201142,
+        "PLAYER_NAME": "Kevin Durant",
+        "TEAM": "HOU",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631105,
+        "PLAYER_NAME": "Jalen Duren",
+        "TEAM": "DET",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1643407,
+        "PLAYER_NAME": "AJ Dybantsa",
+        "TEAM": "WAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642856,
+        "PLAYER_NAME": "Egor Dëmin",
+        "TEAM": "BKN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631106,
+        "PLAYER_NAME": "Tari Eason",
+        "TEAM": "HOU",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641744,
+        "PLAYER_NAME": "Zach Edey",
+        "TEAM": "MEM",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642845,
+        "PLAYER_NAME": "VJ Edgecombe",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630162,
+        "PLAYER_NAME": "Anthony Edwards",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642348,
+        "PLAYER_NAME": "Justin Edwards",
+        "TEAM": "PHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643544,
+        "PLAYER_NAME": "Zuby Ejiofor",
+        "TEAM": "ATL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631165,
+        "PLAYER_NAME": "Keon Ellis",
+        "TEAM": "BKN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631399,
+        "PLAYER_NAME": "Jon Elmore",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 203954,
+        "PLAYER_NAME": "Joel Embiid",
+        "TEAM": "PHI",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1642400,
+        "PLAYER_NAME": "Tristan Enaruna",
+        "TEAM": "CLE",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642855,
+        "PLAYER_NAME": "Noa Essengue",
+        "TEAM": "CHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629234,
+        "PLAYER_NAME": "Drew Eubanks",
+        "TEAM": "SAC",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1642912,
+        "PLAYER_NAME": "Isaiah Evans",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629605,
+        "PLAYER_NAME": "Tacko Fall",
+        "TEAM": "PHI",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642847,
+        "PLAYER_NAME": "Jeremiah Fears",
+        "TEAM": "NOP",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642271,
+        "PLAYER_NAME": "Kyle Filipowski",
+        "TEAM": "UTA",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1627827,
+        "PLAYER_NAME": "Dorian Finney-Smith",
+        "TEAM": "ATL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642843,
+        "PLAYER_NAME": "Cooper Flagg",
+        "TEAM": "DAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641745,
+        "PLAYER_NAME": "Adam Flagler",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642853,
+        "PLAYER_NAME": "Rasheer Fleming",
+        "TEAM": "PHX",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643412,
+        "PLAYER_NAME": "Kingston Flemings",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631323,
+        "PLAYER_NAME": "Simone Fontecchio",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628368,
+        "PLAYER_NAME": "De'Aaron Fox",
+        "TEAM": "SAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642402,
+        "PLAYER_NAME": "Enrique Freeman",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643769,
+        "PLAYER_NAME": "Wyatt Fricks",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1641917,
+        "PLAYER_NAME": "Taylor Funk",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1642277,
+        "PLAYER_NAME": "Johnny Furphy",
+        "TEAM": "IND",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629655,
+        "PLAYER_NAME": "Daniel Gafford",
+        "TEAM": "DAL",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1642066,
+        "PLAYER_NAME": "Myron Gardner",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629636,
+        "PLAYER_NAME": "Darius Garland",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630568,
+        "PLAYER_NAME": "Luka Garza",
+        "TEAM": "BOS",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641718,
+        "PLAYER_NAME": "Keyonte George",
+        "TEAM": "UTA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642273,
+        "PLAYER_NAME": "Kyshawn George",
+        "TEAM": "WAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 202331,
+        "PLAYER_NAME": "Paul George",
+        "TEAM": "BOS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630581,
+        "PLAYER_NAME": "Josh Giddey",
+        "TEAM": "CHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642933,
+        "PLAYER_NAME": "Keshon Gilbert",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628983,
+        "PLAYER_NAME": "Shai Gilgeous-Alexander",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630264,
+        "PLAYER_NAME": "Anthony Gill",
+        "TEAM": "WAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631221,
+        "PLAYER_NAME": "Collin Gillespie",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643551,
+        "PLAYER_NAME": "Ja'Kobi Gillespie",
+        "TEAM": "SAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203497,
+        "PLAYER_NAME": "Rudy Gobert",
+        "TEAM": "MIN",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642884,
+        "PLAYER_NAME": "Vladislav Goldin",
+        "TEAM": "MIA",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642864,
+        "PLAYER_NAME": "Hugo González",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641863,
+        "PLAYER_NAME": "Dane Goodwin",
+        "TEAM": "DEN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630692,
+        "PLAYER_NAME": "Jordan Goodwin",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203932,
+        "PLAYER_NAME": "Aaron Gordon",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642547,
+        "PLAYER_NAME": "DaJuan Gordon",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 203924,
+        "PLAYER_NAME": "Jerami Grant",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643512,
+        "PLAYER_NAME": "Allen Graves",
+        "TEAM": "TOR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643060,
+        "PLAYER_NAME": "Hayden Gray",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631260,
+        "PLAYER_NAME": "AJ Green",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203110,
+        "PLAYER_NAME": "Draymond Green",
+        "TEAM": "GSW",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1630224,
+        "PLAYER_NAME": "Jalen Green",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629750,
+        "PLAYER_NAME": "Javonte Green",
+        "TEAM": "DET",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630182,
+        "PLAYER_NAME": "Josh Green",
+        "TEAM": "UTA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629656,
+        "PLAYER_NAME": "Quentin Grimes",
+        "TEAM": "LAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631243,
+        "PLAYER_NAME": "Mouhamed Gueye",
+        "TEAM": "ATL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629060,
+        "PLAYER_NAME": "Rui Hachimura",
+        "TEAM": "LAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630169,
+        "PLAYER_NAME": "Tyrese Haliburton",
+        "TEAM": "IND",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641790,
+        "PLAYER_NAME": "PJ Hall",
+        "TEAM": "CHA",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 203501,
+        "PLAYER_NAME": "Tim Hardaway Jr.",
+        "TEAM": "MIA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 201935,
+        "PLAYER_NAME": "James Harden",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630702,
+        "PLAYER_NAME": "Jaden Hardy",
+        "TEAM": "LAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641989,
+        "PLAYER_NAME": "Elijah Harkless",
+        "TEAM": "DET",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642844,
+        "PLAYER_NAME": "Dylan Harper",
+        "TEAM": "SAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631199,
+        "PLAYER_NAME": "Ron Harper Jr.",
+        "TEAM": "BOS",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 202699,
+        "PLAYER_NAME": "Tobias Harris",
+        "TEAM": "SAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628404,
+        "PLAYER_NAME": "Josh Hart",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628392,
+        "PLAYER_NAME": "Isaiah Hartenstein",
+        "TEAM": "OKC",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1630573,
+        "PLAYER_NAME": "Sam Hauser",
+        "TEAM": "BOS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641746,
+        "PLAYER_NAME": "Coleman Hawkins",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641722,
+        "PLAYER_NAME": "Jordan Hawkins",
+        "TEAM": "CHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629637,
+        "PLAYER_NAME": "Jaxson Hayes",
+        "TEAM": "UTA",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1630703,
+        "PLAYER_NAME": "Scoot Henderson",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641707,
+        "PLAYER_NAME": "Taylor Hendricks",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629639,
+        "PLAYER_NAME": "Tyler Herro",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1626209,
+        "PLAYER_NAME": "Mario Hezonja",
+        "TEAM": "CLE",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1627741,
+        "PLAYER_NAME": "Buddy Hield",
+        "TEAM": "CHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629312,
+        "PLAYER_NAME": "Haywood Highsmith",
+        "TEAM": "PHX",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642396,
+        "PLAYER_NAME": "Blake Hinson",
+        "TEAM": "UTA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 201950,
+        "PLAYER_NAME": "Jrue Holiday",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643808,
+        "PLAYER_NAME": "Andrew Holifield",
+        "TEAM": "OKC",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1641842,
+        "PLAYER_NAME": "Ronald Holland II",
+        "TEAM": "DET",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641747,
+        "PLAYER_NAME": "DaRon Holmes II",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631096,
+        "PLAYER_NAME": "Chet Holmgren",
+        "TEAM": "OKC",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1643624,
+        "PLAYER_NAME": "Bryce Hopkins",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 201143,
+        "PLAYER_NAME": "Al Horford",
+        "TEAM": "GSW",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631216,
+        "PLAYER_NAME": "Caleb Houstan",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641724,
+        "PLAYER_NAME": "Jett Howard",
+        "TEAM": "DAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628989,
+        "PLAYER_NAME": "Kevin Huerter",
+        "TEAM": "DET",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1630643,
+        "PLAYER_NAME": "Jay Huff",
+        "TEAM": "IND",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630574,
+        "PLAYER_NAME": "Ariel Hukporti",
+        "TEAM": "PHI",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1643750,
+        "PLAYER_NAME": "Ben Humrichous",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1629631,
+        "PLAYER_NAME": "De'Andre Hunter",
+        "TEAM": "SAC",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1643047,
+        "PLAYER_NAME": "CJ Huntley",
+        "TEAM": "PHX",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630538,
+        "PLAYER_NAME": "Bones Hyland",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642345,
+        "PLAYER_NAME": "Oso Ighodaro",
+        "TEAM": "PHX",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643633,
+        "PLAYER_NAME": "Graham Ike",
+        "TEAM": "GSW",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1627742,
+        "PLAYER_NAME": "Brandon Ingram",
+        "TEAM": "LAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631127,
+        "PLAYER_NAME": "Harrison Ingram",
+        "TEAM": "UTA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 202681,
+        "PLAYER_NAME": "Kyrie Irving",
+        "TEAM": "DAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628371,
+        "PLAYER_NAME": "Jonathan Isaac",
+        "TEAM": "ORL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641713,
+        "PLAYER_NAME": "GG Jackson",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630543,
+        "PLAYER_NAME": "Isaiah Jackson",
+        "TEAM": "LAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631245,
+        "PLAYER_NAME": "Quenton Jackson",
+        "TEAM": "IND",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628991,
+        "PLAYER_NAME": "Jaren Jackson Jr.",
+        "TEAM": "UTA",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1631218,
+        "PLAYER_NAME": "Trayce Jackson-Davis",
+        "TEAM": "TOR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642857,
+        "PLAYER_NAME": "Kasparas Jakučionis",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642355,
+        "PLAYER_NAME": "Bronny James",
+        "TEAM": "LAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 2544,
+        "PLAYER_NAME": "LeBron James",
+        "TEAM": "PHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642883,
+        "PLAYER_NAME": "Sion James",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631170,
+        "PLAYER_NAME": "Jaime Jaquez Jr.",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643538,
+        "PLAYER_NAME": "Joshua Jefferson",
+        "TEAM": "BKN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642450,
+        "PLAYER_NAME": "Daniss Jenkins",
+        "TEAM": "DET",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629660,
+        "PLAYER_NAME": "Ty Jerome",
+        "TEAM": "MEM",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1630198,
+        "PLAYER_NAME": "Isaiah Joe",
+        "TEAM": "DET",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642358,
+        "PLAYER_NAME": "AJ Johnson",
+        "TEAM": "NOP",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629661,
+        "PLAYER_NAME": "Cameron Johnson",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643052,
+        "PLAYER_NAME": "Chaney Johnson",
+        "TEAM": "BKN",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1630552,
+        "PLAYER_NAME": "Jalen Johnson",
+        "TEAM": "ATL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 201949,
+        "PLAYER_NAME": "James Johnson",
+        "TEAM": "IND",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629640,
+        "PLAYER_NAME": "Keldon Johnson",
+        "TEAM": "SAS",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1642352,
+        "PLAYER_NAME": "Keshad Johnson",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642937,
+        "PLAYER_NAME": "Kobe Johnson",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642848,
+        "PLAYER_NAME": "Tre Johnson",
+        "TEAM": "WAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643516,
+        "PLAYER_NAME": "Morez Johnson Jr.",
+        "TEAM": "DAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641935,
+        "PLAYER_NAME": "Jarkel Joiner",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203999,
+        "PLAYER_NAME": "Nikola Jokić",
+        "TEAM": "DEN",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641794,
+        "PLAYER_NAME": "Dillon Jones",
+        "TEAM": "PHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630529,
+        "PLAYER_NAME": "Herbert Jones",
+        "TEAM": "NOP",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642403,
+        "PLAYER_NAME": "Isaac Jones",
+        "TEAM": "DET",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642880,
+        "PLAYER_NAME": "Kam Jones",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642461,
+        "PLAYER_NAME": "Spencer Jones",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630200,
+        "PLAYER_NAME": "Tre Jones",
+        "TEAM": "CHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1626145,
+        "PLAYER_NAME": "Tyus Jones",
+        "TEAM": "DEN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642357,
+        "PLAYER_NAME": "David Jones Garcia",
+        "TEAM": "SAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627884,
+        "PLAYER_NAME": "Derrick Jones Jr.",
+        "TEAM": "LAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 201599,
+        "PLAYER_NAME": "DeAndre Jordan",
+        "TEAM": "NOP",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631107,
+        "PLAYER_NAME": "Nikola Jović",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641750,
+        "PLAYER_NAME": "Ryan Kalkbrenner",
+        "TEAM": "CHA",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641751,
+        "PLAYER_NAME": "Arthur Kaluma",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642284,
+        "PLAYER_NAME": "Alex Karaban",
+        "TEAM": "SAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631211,
+        "PLAYER_NAME": "Trevor Keels",
+        "TEAM": "WAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643627,
+        "PLAYER_NAME": "Keba Keita",
+        "TEAM": "IND",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630283,
+        "PLAYER_NAME": "Kylor Kelley",
+        "TEAM": "MIA",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1628379,
+        "PLAYER_NAME": "Luke Kennard",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643257,
+        "PLAYER_NAME": "Jayson Kent",
+        "TEAM": "POR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631117,
+        "PLAYER_NAME": "Walker Kessler",
+        "TEAM": "LAL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642615,
+        "PLAYER_NAME": "Tyreke Key",
+        "TEAM": "TOR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630557,
+        "PLAYER_NAME": "Corey Kispert",
+        "TEAM": "ATL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642261,
+        "PLAYER_NAME": "Dalton Knecht",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628995,
+        "PLAYER_NAME": "Kevin Knox II",
+        "TEAM": "ORL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642851,
+        "PLAYER_NAME": "Kon Knueppel",
+        "TEAM": "CHA",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1642278,
+        "PLAYER_NAME": "Tyler Kolek",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628436,
+        "PLAYER_NAME": "Luke Kornet",
+        "TEAM": "SAS",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1630249,
+        "PLAYER_NAME": "Vít Krejčí",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630228,
+        "PLAYER_NAME": "Jonathan Kuminga",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628398,
+        "PLAYER_NAME": "Kyle Kuzma",
+        "TEAM": "MIL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631222,
+        "PLAYER_NAME": "Jake LaRavia",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 203897,
+        "PLAYER_NAME": "Zach LaVine",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642940,
+        "PLAYER_NAME": "Viktor Lakhin",
+        "TEAM": "SAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629111,
+        "PLAYER_NAME": "Jock Landale",
+        "TEAM": "ATL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642404,
+        "PLAYER_NAME": "Chaz Lanier",
+        "TEAM": "DET",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641796,
+        "PLAYER_NAME": "Pelle Larsson",
+        "TEAM": "MIA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643588,
+        "PLAYER_NAME": "Tobi Lawal",
+        "TEAM": "DAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1627747,
+        "PLAYER_NAME": "Caris LeVert",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642865,
+        "PLAYER_NAME": "Yaxel Lendeborg",
+        "TEAM": "GSW",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 202695,
+        "PLAYER_NAME": "Kawhi Leonard",
+        "TEAM": "TOR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642502,
+        "PLAYER_NAME": "Malevy Leons",
+        "TEAM": "GSW",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 203081,
+        "PLAYER_NAME": "Damian Lillard",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641726,
+        "PLAYER_NAME": "Dereck Lively II",
+        "TEAM": "DAL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641753,
+        "PLAYER_NAME": "Chris Livingston",
+        "TEAM": "WAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1626172,
+        "PLAYER_NAME": "Kevon Looney",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 201572,
+        "PLAYER_NAME": "Brook Lopez",
+        "TEAM": "LAC",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1643510,
+        "PLAYER_NAME": "Karim Lopez",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631126,
+        "PLAYER_NAME": "Caleb Love",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643630,
+        "PLAYER_NAME": "Fletcher Loyer",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1641754,
+        "PLAYER_NAME": "Seth Lundy",
+        "TEAM": "DAL",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1626168,
+        "PLAYER_NAME": "Trey Lyles",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643019,
+        "PLAYER_NAME": "Gabe Madsen",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642863,
+        "PLAYER_NAME": "Khaman Maluach",
+        "TEAM": "PHX",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630572,
+        "PLAYER_NAME": "Sandro Mamukelashvili",
+        "TEAM": "LAL",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1629611,
+        "PLAYER_NAME": "Terance Mann",
+        "TEAM": "BKN",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1630544,
+        "PLAYER_NAME": "Tre Mann",
+        "TEAM": "WAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643530,
+        "PLAYER_NAME": "Aday Mara",
+        "TEAM": "OKC",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1628374,
+        "PLAYER_NAME": "Lauri Markkanen",
+        "TEAM": "UTA",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1642881,
+        "PLAYER_NAME": "Bogoljub Marković",
+        "TEAM": "MIL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630230,
+        "PLAYER_NAME": "Naji Marshall",
+        "TEAM": "DAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642918,
+        "PLAYER_NAME": "Alijah Martin",
+        "TEAM": "TOR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628997,
+        "PLAYER_NAME": "Caleb Martin",
+        "TEAM": "DAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630231,
+        "PLAYER_NAME": "KJ Martin",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643568,
+        "PLAYER_NAME": "Nick Martinelli",
+        "TEAM": "LAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642942,
+        "PLAYER_NAME": "Jahmai Mashack",
+        "TEAM": "MEM",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643792,
+        "PLAYER_NAME": "Rienk Mast",
+        "TEAM": "IND",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631097,
+        "PLAYER_NAME": "Bennedict Mathurin",
+        "TEAM": "NOP",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1631255,
+        "PLAYER_NAME": "Karlo Matković",
+        "TEAM": "NOP",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1643069,
+        "PLAYER_NAME": "Cameron Matthews",
+        "TEAM": "HOU",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630178,
+        "PLAYER_NAME": "Tyrese Maxey",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643024,
+        "PLAYER_NAME": "Chris Mañon",
+        "TEAM": "LAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643016,
+        "PLAYER_NAME": "Bez Mbeng",
+        "TEAM": "MIA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630540,
+        "PLAYER_NAME": "Miles McBride",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642272,
+        "PLAYER_NAME": "Jared McCain",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203468,
+        "PLAYER_NAME": "CJ McCollum",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 204456,
+        "PLAYER_NAME": "T.J. McConnell",
+        "TEAM": "IND",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641755,
+        "PLAYER_NAME": "Kevin McCullar Jr.",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630183,
+        "PLAYER_NAME": "Jaden McDaniels",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642440,
+        "PLAYER_NAME": "Gabe McGlothan",
+        "TEAM": "BOS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631121,
+        "PLAYER_NAME": "Bryce McGowens",
+        "TEAM": "NOP",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629162,
+        "PLAYER_NAME": "Jordan McLaughlin",
+        "TEAM": "SAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642862,
+        "PLAYER_NAME": "Liam McNeeley",
+        "TEAM": "CHA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629001,
+        "PLAYER_NAME": "De'Anthony Melton",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630241,
+        "PLAYER_NAME": "Sam Merrill",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203114,
+        "PLAYER_NAME": "Khris Middleton",
+        "TEAM": "WAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643575,
+        "PLAYER_NAME": "Duke Miles",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1642394,
+        "PLAYER_NAME": "Baba Miller",
+        "TEAM": "LAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641706,
+        "PLAYER_NAME": "Brandon Miller",
+        "TEAM": "CHA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641801,
+        "PLAYER_NAME": "Emanuel Miller",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641757,
+        "PLAYER_NAME": "Jordan Miller",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631159,
+        "PLAYER_NAME": "Leonard Miller",
+        "TEAM": "CHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642434,
+        "PLAYER_NAME": "Riley Minix",
+        "TEAM": "CLE",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631169,
+        "PLAYER_NAME": "Josh Minott",
+        "TEAM": "BKN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642274,
+        "PLAYER_NAME": "Yves Missi",
+        "TEAM": "NOP",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642349,
+        "PLAYER_NAME": "Ajay Mitchell",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630558,
+        "PLAYER_NAME": "Davion Mitchell",
+        "TEAM": "MIA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641759,
+        "PLAYER_NAME": "Dillon Mitchell",
+        "TEAM": "BOS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628378,
+        "PLAYER_NAME": "Donovan Mitchell",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630596,
+        "PLAYER_NAME": "Evan Mobley",
+        "TEAM": "CLE",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642367,
+        "PLAYER_NAME": "Jonathan Mogbo",
+        "TEAM": "SAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628370,
+        "PLAYER_NAME": "Malik Monk",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630541,
+        "PLAYER_NAME": "Moses Moody",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643869,
+        "PLAYER_NAME": "Chance Moore",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1642922,
+        "PLAYER_NAME": "Jalon Moore",
+        "TEAM": "NOP",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631457,
+        "PLAYER_NAME": "Alex Morales",
+        "TEAM": "ORL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629630,
+        "PLAYER_NAME": "Ja Morant",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641987,
+        "PLAYER_NAME": "David Muoka",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1630530,
+        "PLAYER_NAME": "Trey Murphy III",
+        "TEAM": "NOP",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1627749,
+        "PLAYER_NAME": "Dejounte Murray",
+        "TEAM": "NOP",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627750,
+        "PLAYER_NAME": "Jamal Murray",
+        "TEAM": "DEN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631099,
+        "PLAYER_NAME": "Keegan Murray",
+        "TEAM": "SAC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631200,
+        "PLAYER_NAME": "Kris Murray",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642867,
+        "PLAYER_NAME": "Collin Murray-Boyles",
+        "TEAM": "TOR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629004,
+        "PLAYER_NAME": "Svi Mykhailiuk",
+        "TEAM": "UTA",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1631250,
+        "PLAYER_NAME": "Pete Nance",
+        "TEAM": "MIL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1626204,
+        "PLAYER_NAME": "Larry Nance Jr.",
+        "TEAM": "IND",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1641761,
+        "PLAYER_NAME": "Grant Nelson",
+        "TEAM": "BKN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643593,
+        "PLAYER_NAME": "Izaiyah Nelson",
+        "TEAM": "ORL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642392,
+        "PLAYER_NAME": "Jameer Nelson Jr.",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629614,
+        "PLAYER_NAME": "Andrew Nembhard",
+        "TEAM": "IND",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1642948,
+        "PLAYER_NAME": "Ryan Nembhard",
+        "TEAM": "DEN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630174,
+        "PLAYER_NAME": "Aaron Nesmith",
+        "TEAM": "IND",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1642854,
+        "PLAYER_NAME": "Asa Newell",
+        "TEAM": "ATL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641803,
+        "PLAYER_NAME": "Tristen Newton",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627777,
+        "PLAYER_NAME": "Georges Niang",
+        "TEAM": "GSW",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643589,
+        "PLAYER_NAME": "Tyler Nickel",
+        "TEAM": "NYK",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642949,
+        "PLAYER_NAME": "Yanic Konan Niederhäuser",
+        "TEAM": "LAC",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630192,
+        "PLAYER_NAME": "Zeke Nnaji",
+        "TEAM": "DEN",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 203994,
+        "PLAYER_NAME": "Jusuf Nurkić",
+        "TEAM": "UTA",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1626220,
+        "PLAYER_NAME": "Royce O'Neale",
+        "TEAM": "CHA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643758,
+        "PLAYER_NAME": "AK Okereke",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629006,
+        "PLAYER_NAME": "Josh Okogie",
+        "TEAM": "UTA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630168,
+        "PLAYER_NAME": "Onyeka Okongwu",
+        "TEAM": "ATL",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1643536,
+        "PLAYER_NAME": "Ebuka Okorie",
+        "TEAM": "DET",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630171,
+        "PLAYER_NAME": "Isaac Okoro",
+        "TEAM": "CHI",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1643590,
+        "PLAYER_NAME": "Felix Okpara",
+        "TEAM": "WAS",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641807,
+        "PLAYER_NAME": "Norchad Omier",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642391,
+        "PLAYER_NAME": "Ugonna Onyenso",
+        "TEAM": "DET",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1626162,
+        "PLAYER_NAME": "Kelly Oubre Jr.",
+        "TEAM": "IND",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1642923,
+        "PLAYER_NAME": "Otega Oweh",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203901,
+        "PLAYER_NAME": "Elfrid Payton",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627780,
+        "PLAYER_NAME": "Gary Payton II",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643520,
+        "PLAYER_NAME": "Koa Peat",
+        "TEAM": "PHX",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642877,
+        "PLAYER_NAME": "Micah Peavy",
+        "TEAM": "MEM",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1642951,
+        "PLAYER_NAME": "Sean Pedulla",
+        "TEAM": "HOU",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642869,
+        "PLAYER_NAME": "Noah Penda",
+        "TEAM": "ORL",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1643408,
+        "PLAYER_NAME": "Darryn Peterson",
+        "TEAM": "UTA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641809,
+        "PLAYER_NAME": "Drew Peterson",
+        "TEAM": "CHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641763,
+        "PLAYER_NAME": "Julian Phillips",
+        "TEAM": "HOU",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642889,
+        "PLAYER_NAME": "Labaron Philon",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629618,
+        "PLAYER_NAME": "Jalen Pickett",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643555,
+        "PLAYER_NAME": "Jaron Pierre Jr.",
+        "TEAM": "NOP",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630590,
+        "PLAYER_NAME": "Scotty Pippen Jr.",
+        "TEAM": "MEM",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631342,
+        "PLAYER_NAME": "Daeqwon Plowden",
+        "TEAM": "SAC",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1641764,
+        "PLAYER_NAME": "Brandin Podziemski",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627751,
+        "PLAYER_NAME": "Jakob Poeltl",
+        "TEAM": "TOR",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1629673,
+        "PLAYER_NAME": "Jordan Poole",
+        "TEAM": "NOP",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641854,
+        "PLAYER_NAME": "Craig Porter Jr.",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629645,
+        "PLAYER_NAME": "Kevin Porter Jr.",
+        "TEAM": "MIL",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1629008,
+        "PLAYER_NAME": "Michael Porter Jr.",
+        "TEAM": "BKN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1626171,
+        "PLAYER_NAME": "Bobby Portis Jr.",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 204001,
+        "PLAYER_NAME": "Kristaps Porziņģis",
+        "TEAM": "GSW",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1642366,
+        "PLAYER_NAME": "Quinten Post",
+        "TEAM": "MEM",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630695,
+        "PLAYER_NAME": "Micah Potter",
+        "TEAM": "POR",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642967,
+        "PLAYER_NAME": "John Poulakidas",
+        "TEAM": "DAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642962,
+        "PLAYER_NAME": "Drake Powell",
+        "TEAM": "BKN",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 203939,
+        "PLAYER_NAME": "Dwight Powell",
+        "TEAM": "DAL",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1626181,
+        "PLAYER_NAME": "Norman Powell",
+        "TEAM": "CHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627752,
+        "PLAYER_NAME": "Taurean Prince",
+        "TEAM": "DET",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643208,
+        "PLAYER_NAME": "Anthony Pritchard",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630202,
+        "PLAYER_NAME": "Payton Pritchard",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642878,
+        "PLAYER_NAME": "Tyrese Proctor",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641765,
+        "PLAYER_NAME": "Olivier-Maxence Prosper",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642389,
+        "PLAYER_NAME": "Zyon Pullin",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643519,
+        "PLAYER_NAME": "Jayden Quaintance",
+        "TEAM": "SAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642852,
+        "PLAYER_NAME": "Derik Queen",
+        "TEAM": "NOP",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1629674,
+        "PLAYER_NAME": "Neemias Queta",
+        "TEAM": "BOS",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630193,
+        "PLAYER_NAME": "Immanuel Quickley",
+        "TEAM": "TOR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203944,
+        "PLAYER_NAME": "Julius Randle",
+        "TEAM": "BKN",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1642875,
+        "PLAYER_NAME": "Maxime Raynaud",
+        "TEAM": "SAC",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641871,
+        "PLAYER_NAME": "Duop Reath",
+        "TEAM": "PHX",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630559,
+        "PLAYER_NAME": "Austin Reaves",
+        "TEAM": "LAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630194,
+        "PLAYER_NAME": "Paul Reed",
+        "TEAM": "DET",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643542,
+        "PLAYER_NAME": "Tarris Reed Jr.",
+        "TEAM": "SAS",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642882,
+        "PLAYER_NAME": "Julian Reese",
+        "TEAM": "NOP",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641810,
+        "PLAYER_NAME": "Antonio Reeves",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629675,
+        "PLAYER_NAME": "Naz Reid",
+        "TEAM": "CHA",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1642954,
+        "PLAYER_NAME": "Will Richard",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630208,
+        "PLAYER_NAME": "Nick Richards",
+        "TEAM": "MIA",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642859,
+        "PLAYER_NAME": "Jase Richardson",
+        "TEAM": "ORL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642860,
+        "PLAYER_NAME": "Will Riley",
+        "TEAM": "WAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642258,
+        "PLAYER_NAME": "Zaccharie Risacher",
+        "TEAM": "DAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629130,
+        "PLAYER_NAME": "Duncan Robinson",
+        "TEAM": "DET",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629011,
+        "PLAYER_NAME": "Mitchell Robinson",
+        "TEAM": "BOS",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1631115,
+        "PLAYER_NAME": "Orlando Robinson",
+        "TEAM": "CHI",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631157,
+        "PLAYER_NAME": "Ryan Rollins",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641712,
+        "PLAYER_NAME": "Rayan Rupert",
+        "TEAM": "PHI",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1642504,
+        "PLAYER_NAME": "Cormac Ryan",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627734,
+        "PLAYER_NAME": "Domantas Sabonis",
+        "TEAM": "SAC",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1642275,
+        "PLAYER_NAME": "Tidjane Salaün",
+        "TEAM": "CHA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642920,
+        "PLAYER_NAME": "Kobe Sanders",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630611,
+        "PLAYER_NAME": "Gui Santos",
+        "TEAM": "GSW",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642879,
+        "PLAYER_NAME": "Ben Saraf",
+        "TEAM": "BKN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642259,
+        "PLAYER_NAME": "Alex Sarr",
+        "TEAM": "WAS",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631204,
+        "PLAYER_NAME": "Marcus Sasser",
+        "TEAM": "DAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631248,
+        "PLAYER_NAME": "Baylor Scheierman",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643867,
+        "PLAYER_NAME": "Ian Schieffelin",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 203471,
+        "PLAYER_NAME": "Dennis Schröder",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643637,
+        "PLAYER_NAME": "Jaylin Sellers",
+        "TEAM": "CHI",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1630578,
+        "PLAYER_NAME": "Alperen Sengun",
+        "TEAM": "HOU",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641729,
+        "PLAYER_NAME": "Brice Sensabaugh",
+        "TEAM": "UTA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629012,
+        "PLAYER_NAME": "Collin Sexton",
+        "TEAM": "LAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629013,
+        "PLAYER_NAME": "Landry Shamet",
+        "TEAM": "NYK",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630545,
+        "PLAYER_NAME": "Terrence Shannon Jr",
+        "TEAM": "MIN",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1643567,
+        "PLAYER_NAME": "Emanuel Sharp",
+        "TEAM": "SAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642481,
+        "PLAYER_NAME": "Jamarion Sharp",
+        "TEAM": "TOR",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630549,
+        "PLAYER_NAME": "Day'Ron Sharpe",
+        "TEAM": "BKN",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1631101,
+        "PLAYER_NAME": "Shaedon Sharpe",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642347,
+        "PLAYER_NAME": "Jamal Shead",
+        "TEAM": "TOR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641767,
+        "PLAYER_NAME": "Ben Sheppard",
+        "TEAM": "IND",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642263,
+        "PLAYER_NAME": "Reed Sheppard",
+        "TEAM": "HOU",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627783,
+        "PLAYER_NAME": "Pascal Siakam",
+        "TEAM": "IND",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1627732,
+        "PLAYER_NAME": "Ben Simmons",
+        "TEAM": "SAC",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1629014,
+        "PLAYER_NAME": "Anfernee Simons",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630579,
+        "PLAYER_NAME": "Jericho Sims",
+        "TEAM": "MIL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641771,
+        "PLAYER_NAME": "Jalen Slawson",
+        "TEAM": "IND",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642914,
+        "PLAYER_NAME": "Javon Small",
+        "TEAM": "MEM",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203935,
+        "PLAYER_NAME": "Marcus Smart",
+        "TEAM": "HOU",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643552,
+        "PLAYER_NAME": "Braden Smith",
+        "TEAM": "IND",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630696,
+        "PLAYER_NAME": "Dru Smith",
+        "TEAM": "MIA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630188,
+        "PLAYER_NAME": "Jalen Smith",
+        "TEAM": "CHI",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1641869,
+        "PLAYER_NAME": "Malachi Smith",
+        "TEAM": "TOR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642449,
+        "PLAYER_NAME": "Tolu Smith",
+        "TEAM": "DET",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629015,
+        "PLAYER_NAME": "Zhaire Smith",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631095,
+        "PLAYER_NAME": "Jabari Smith Jr.",
+        "TEAM": "HOU",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631110,
+        "PLAYER_NAME": "Jeremy Sochan",
+        "TEAM": "POR",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642850,
+        "PLAYER_NAME": "Thomas Sorber",
+        "TEAM": "OKC",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642285,
+        "PLAYER_NAME": "Cam Spencer",
+        "TEAM": "MEM",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630311,
+        "PLAYER_NAME": "Pat Spencer",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643419,
+        "PLAYER_NAME": "Hannes Steinbach",
+        "TEAM": "CHA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641868,
+        "PLAYER_NAME": "Jake Stephens",
+        "TEAM": "MIL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630191,
+        "PLAYER_NAME": "Isaiah Stewart",
+        "TEAM": "MEM",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1642892,
+        "PLAYER_NAME": "Bennett Stirtz",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631124,
+        "PLAYER_NAME": "Julian Strawther",
+        "TEAM": "DEN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629622,
+        "PLAYER_NAME": "Max Strus",
+        "TEAM": "LAC",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1630591,
+        "PLAYER_NAME": "Jalen Suggs",
+        "TEAM": "ORL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643517,
+        "PLAYER_NAME": "Dailyn Swain",
+        "TEAM": "CHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1643092,
+        "PLAYER_NAME": "Niwa Tait-Jones",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630256,
+        "PLAYER_NAME": "Jae'Sean Tate",
+        "TEAM": "HOU",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1628369,
+        "PLAYER_NAME": "Jayson Tatum",
+        "TEAM": "BOS",
+        "POSITION": "Forward-Guard"
+    },
+    {
+        "PLAYER_ID": 1643141,
+        "PLAYER_NAME": "Jahmyl Telfort",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631207,
+        "PLAYER_NAME": "Dalen Terry",
+        "TEAM": "GSW",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642876,
+        "PLAYER_NAME": "Adou Thiero",
+        "TEAM": "LAL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643509,
+        "PLAYER_NAME": "Meleek Thomas",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1643148,
+        "PLAYER_NAME": "Saint Thomas",
+        "TEAM": "",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1641708,
+        "PLAYER_NAME": "Amen Thompson",
+        "TEAM": "HOU",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1641709,
+        "PLAYER_NAME": "Ausar Thompson",
+        "TEAM": "DET",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 202691,
+        "PLAYER_NAME": "Klay Thompson",
+        "TEAM": "MIA",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1643570,
+        "PLAYER_NAME": "Bruce Thornton",
+        "TEAM": "HOU",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629680,
+        "PLAYER_NAME": "Matisse Thybulle",
+        "TEAM": "LAL",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1643754,
+        "PLAYER_NAME": "Christoph Tilly",
+        "TEAM": "OKC",
+        "POSITION": ""
+    },
+    {
+        "PLAYER_ID": 1631166,
+        "PLAYER_NAME": "Drew Timme",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641772,
+        "PLAYER_NAME": "Nae'Qwan Tomlin",
+        "TEAM": "CLE",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642910,
+        "PLAYER_NAME": "John Tonje",
+        "TEAM": "POR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642893,
+        "PLAYER_NAME": "Alex Toohey",
+        "TEAM": "GSW",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642260,
+        "PLAYER_NAME": "Nikola Topić",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630167,
+        "PLAYER_NAME": "Obi Toppin",
+        "TEAM": "IND",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1626157,
+        "PLAYER_NAME": "Karl-Anthony Towns",
+        "TEAM": "NYK",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1642849,
+        "PLAYER_NAME": "Nolan Traore",
+        "TEAM": "BKN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629018,
+        "PLAYER_NAME": "Gary Trent Jr.",
+        "TEAM": "MIL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1631131,
+        "PLAYER_NAME": "Oscar Tshiebwe",
+        "TEAM": "HOU",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1626167,
+        "PLAYER_NAME": "Myles Turner",
+        "TEAM": "MIL",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1642281,
+        "PLAYER_NAME": "Jaylon Tyson",
+        "TEAM": "CLE",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1643640,
+        "PLAYER_NAME": "Ernest Udeh, Jr.",
+        "TEAM": "CLE",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642578,
+        "PLAYER_NAME": "John Ukomadu",
+        "TEAM": "DET",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1642870,
+        "PLAYER_NAME": "Milos Uzan",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1627832,
+        "PLAYER_NAME": "Fred VanVleet",
+        "TEAM": "HOU",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1629020,
+        "PLAYER_NAME": "Jarred Vanderbilt",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630170,
+        "PLAYER_NAME": "Devin Vassell",
+        "TEAM": "SAS",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1643539,
+        "PLAYER_NAME": "Henri Veesaar",
+        "TEAM": "ATL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1641774,
+        "PLAYER_NAME": "Tristan Vukcevic",
+        "TEAM": "WAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 202696,
+        "PLAYER_NAME": "Nikola Vučević",
+        "TEAM": "ORL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1629731,
+        "PLAYER_NAME": "Dean Wade",
+        "TEAM": "PHI",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1643413,
+        "PLAYER_NAME": "Keaton Wagler",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630532,
+        "PLAYER_NAME": "Franz Wagner",
+        "TEAM": "ORL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629021,
+        "PLAYER_NAME": "Moritz Wagner",
+        "TEAM": "BKN",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1631133,
+        "PLAYER_NAME": "Jabari Walker",
+        "TEAM": "PHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641716,
+        "PLAYER_NAME": "Jarace Walker",
+        "TEAM": "IND",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641717,
+        "PLAYER_NAME": "Cason Wallace",
+        "TEAM": "OKC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641775,
+        "PLAYER_NAME": "Jordan Walsh",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642266,
+        "PLAYER_NAME": "Ja'Kobe Walter",
+        "TEAM": "TOR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642276,
+        "PLAYER_NAME": "Kel'el Ware",
+        "TEAM": "MIL",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1629023,
+        "PLAYER_NAME": "P.J. Washington",
+        "TEAM": "DAL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630570,
+        "PLAYER_NAME": "Trendon Watford",
+        "TEAM": "NOP",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1642364,
+        "PLAYER_NAME": "Jamir Watkins",
+        "TEAM": "WAS",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631212,
+        "PLAYER_NAME": "Peyton Watson",
+        "TEAM": "CLE",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642377,
+        "PLAYER_NAME": "Jaylen Wells",
+        "TEAM": "MEM",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1641705,
+        "PLAYER_NAME": "Victor Wembanyama",
+        "TEAM": "SAS",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1631104,
+        "PLAYER_NAME": "Blake Wesley",
+        "TEAM": "LAC",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630762,
+        "PLAYER_NAME": "Phillip Wheeler",
+        "TEAM": "PHX",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629632,
+        "PLAYER_NAME": "Coby White",
+        "TEAM": "CHA",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628401,
+        "PLAYER_NAME": "Derrick White",
+        "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1641715,
+        "PLAYER_NAME": "Cam Whitmore",
+        "TEAM": "DEN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630598,
+        "PLAYER_NAME": "Aaron Wiggins",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 203952,
+        "PLAYER_NAME": "Andrew Wiggins",
+        "TEAM": "MIA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631214,
+        "PLAYER_NAME": "Alondes Williams",
+        "TEAM": "WAS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642873,
+        "PLAYER_NAME": "Amari Williams",
+        "TEAM": "BOS",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1630314,
+        "PLAYER_NAME": "Brandon Williams",
+        "TEAM": "GSW",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1642924,
+        "PLAYER_NAME": "Brice Williams",
+        "TEAM": "DET",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1642262,
+        "PLAYER_NAME": "Cody Williams",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629684,
+        "PLAYER_NAME": "Grant Williams",
+        "TEAM": "CHA",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1631114,
+        "PLAYER_NAME": "Jalen Williams",
+        "TEAM": "OKC",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1631119,
+        "PLAYER_NAME": "Jaylin Williams",
+        "TEAM": "OKC",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1629026,
+        "PLAYER_NAME": "Kenrich Williams",
+        "TEAM": "OKC",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1631109,
+        "PLAYER_NAME": "Mark Williams",
+        "TEAM": "PHX",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630172,
+        "PLAYER_NAME": "Patrick Williams",
+        "TEAM": "CHI",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630533,
+        "PLAYER_NAME": "Ziaire Williams",
+        "TEAM": "LAL",
+        "POSITION": "Forward"
+    }
+]

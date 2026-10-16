@@ -1,4 +1,24 @@
 TO DO:
+- Test su cambio giornata
+
+- Nel calendario, se entrambe le squadre non hanno ancora giocatori che hanno giocato non segna i punteggi,
+    mentre dovrebbe segnare 0 ad entrambi appena inizia la giornata
+    --> In base all'ultima data di aggiornamento dovrei scaricare i dati per tutti i giorni di cui sono indietro
+
+- Se almeno un utente non effettua l'accesso ogni giorno i dati del giorno senza accessi vengono persi
+
+- La panca fa *0.75
+
+- Aggiungere al calendario le partite NBA
+
+- Aggiungere possibilità di mettere una formazione fissa, che viene settata all'inizio di ogni giornata
+
+- 2 numeri dopo la virgola per visualizzazione punteggi
+
+
+
+
+
 - Quando il primo giocatore avvia l'app per la prima volta nel giorno (dopo le 9:00)
     vengono scaricati boxscores e risultati delle partite dall'api, vengono aggiornate le
     informazioni su supabase e vengono scritti nel locale del giocatore i json 
@@ -57,3 +77,35 @@ SCORCIATOIE UTILI:
 
 - Scrive automaticamente il file requirements.txt: 
         pip freeze > requirements.txt
+
+
+
+PROCEDURA INIZIO CAMPIONATO:
+1. Pulisci files + Pulisci database: python reset_pre_setup.py
+    Cancella:
+        - all_players.json
+        - <nome_team>_state.json
+        - <nome_team>_info.json
+        - calendar.json
+        - historical_boxscores.json
+        - historical_games.json
+        - nba_to_espn_players.json
+        - profiles.json
+        - standings.json
+        - Tutte le immagini in assets/players
+    NON cancella:
+        - fanta_teams.json
+        - rules.json
+    Elimina tutte le righe di tutte le tabelle
+2. Download giocatori: 
+    - python download_all_players.py
+3. Download immagini:
+    - python download_players_avatars.py
+4. Scrivo squadre:
+    - Modifica fanta_teams.json con i giocatori scelti al draft
+5. Setup campionato:
+    - python setup_fanta_championship.py
+
+
+Testing:
+https://wikihoops.com/games/2026-10-04/?ref=calendar

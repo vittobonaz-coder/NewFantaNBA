@@ -1,0 +1,23 @@
+{
+  "punteggi": [
+    { "azione": "Punto realizzato", "punteggio": "+1" },
+    { "azione": "Rimbalzo difensivo", "punteggio": "+1" },
+    { "azione": "Rimbalzo offensivo", "punteggio": "+1.25" },
+    { "azione": "Assist", "punteggio": "+1.5" },
+    { "azione": "Steal", "punteggio": "+2.5" },
+    { "azione": "Stoppata", "punteggio": "+2.5" },
+    { "azione": "Triple segnate: 3/4/5...", "punteggio": "+3/4/5..." },
+    { "azione": "Doppia Doppia", "punteggio": "+5" },
+    { "azione": "Tripla Doppia", "punteggio": "+10" },
+    { "azione": "Quadrupla Doppia", "punteggio": "+40" },
+    { "azione": "Quintupla Doppia", "punteggio": "+100" },
+    { "azione": "Tiro sbagliato", "punteggio": "-1" },
+    { "azione": "Tiro libero sbagliato", "punteggio": "-1" },
+    { "azione": "Palla persa", "punteggio": "-1.5" },
+    { "azione": "Punti segnati: 30/40/50...", "punteggio": "+3/4/5..." },
+    { "azione": "Plus/Minus (PM)", "punteggio": "+PM/5" },
+    { "azione": "20+ Rimbalzi", "punteggio": "+5" },
+    { "azione": "20+ Assist", "punteggio": "+5" },
+    { "azione": "Vittoria squadra", "punteggio": "+5% Punteggio giocatore" }
+  ]
+}

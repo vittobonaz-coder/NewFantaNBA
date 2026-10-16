@@ -1,9 +1,14 @@
 import json
+import os
 from api_nba import NbaDataManager
 from fanta_obj import Team, Player
 from supabase_manager import SupabaseSync
-import os
 from datetime import datetime, timedelta
+from time_manager import TimeManager
+
+
+start_calendar_date = "2026-10-04"
+end_calendar_date = "2026-10-17"
 
 sync = SupabaseSync()
 api_manager = NbaDataManager(player_ids=[])
@@ -16,8 +21,25 @@ else:
     teams_data = {}
 
 
+def ensure_history_files():
+    """Crea i file storici se non esistono."""
+    data_dir = "data"
+    files = ["historical_boxscores.json", "historical_games.json"]
+    
+    for filename in files:
+        filepath = os.path.join(data_dir, filename)
+        if not os.path.exists(filepath):
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump([], f)
+            print(f"File {filename} creato.")
+        else:
+            print(f"File {filename} già presente.")
+
+
 def run_teams_setup():
     # --- SETUP DELLE SQUADRE E DEI ROSTER ---
+    ensure_history_files()
+    
     for team_name, roles_map in teams_data.items():
         team = Team(name=team_name)
         # Scarica anagrafiche NBA
@@ -37,8 +59,12 @@ def run_teams_setup():
             )
             team.add_player(player, roles_map.get(p_info["PLAYER_NAME"], "RISERVA"))
 
+        team.target_date = TimeManager().italian_date_to_nba_date(italian_date_str=start_calendar_date)
+
         # Push struttura squadra
-        sync.push_team(team)   
+        sync.push_team(team)
+        team.save_to_json()
+        sync.pull_lineup_for_all_teams(gameweek=1)
         
     print("Setup statico completato (fanta_teams, nba_players, rosters).")
 
@@ -138,7 +164,15 @@ def run_calendar_setup(start_date: str, end_date: str):
 
     print(f"Calendario di {len(calendar)} giornate generato e salvato con successo!")
 
+def run_profiles_setup():
+    SupabaseSync().push_fanta_teams_from_json()
+    SupabaseSync().push_profiles_from_teams()
+    SupabaseSync().pull_profiles()
+
 
 if __name__ == "__main__":
+    run_profiles_setup()
     run_teams_setup()
-    run_calendar_setup(start_date="2026-10-04", end_date="2026-10-16")
+    run_calendar_setup(start_date=start_calendar_date, end_date=end_calendar_date)
+    SupabaseSync().sync_standings()
+    SupabaseSync().push_lineup_for_all_teams()

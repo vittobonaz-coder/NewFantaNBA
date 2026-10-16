@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from itertools import product
 from api_nba import NbaDataManager
+from datetime import datetime
 import os
 import json
 
@@ -132,55 +133,84 @@ class Player:
         total_scores = []
 
         for game in player_games:
-            # 1. Punteggio Base (Statistiche grezze)
-            pts = game.get("PTS", 0)
-            reb = game.get("REB", 0)
-            dreb = game.get("DREB", 0)
-            oreb = game.get("OREB", 0)
-            ast = game.get("AST", 0)
-            stl = game.get("STL", 0)
-            blk = game.get("BLK", 0)
-            tov = game.get("TOV", 0)
-            pf = game.get("PF", 0)
-            fgm = game.get("FGM", 0)
-            fga = game.get("FGA", 0)
-            ftm = game.get("FTM", 0)
-            fta = game.get("FTA", 0)
-            pm = game.get("PLUS_MINUS", 0)
-            wl_str = game.get("WL", 0)
+            try:
+                # Funzione interna di supporto per convertire in modo sicuro qualsiasi statistica in numero
+                def get_num(key, default=0, is_float=False):
+                    val = game.get(key, default)
+                    if val is None or val == "":
+                        return float(default) if is_float else int(default)
+                    try:
+                        return float(val) if is_float else int(float(val))
+                    except (ValueError, TypeError):
+                        return float(default) if is_float else int(default)
 
-            wl = 3 if wl_str == "W" else (-3 if wl_str == "L" else 0)
+                # 1. Punteggio Base (Statistiche grezze estratte in sicurezza)
+                pts = get_num("PTS", 0)
+                reb = get_num("REB", 0)
+                dreb = get_num("DREB", 0)
+                oreb = get_num("OREB", 0)
+                ast = get_num("AST", 0)
+                stl = get_num("STL", 0)
+                blk = get_num("BLK", 0)
+                tov = get_num("TOV", 0)
+                pf = get_num("PF", 0)
+                fgm = get_num("FGM", 0)
+                fga = get_num("FGA", 0)
+                fg3m = get_num("FG3M", 0)
+                ftm = get_num("FTM", 0)
+                fta = get_num("FTA", 0)
+                pm = get_num("PLUS_MINUS", 0.0, is_float=True)
+                wl_str = game.get("WL", "L")
 
-            # Algoritmo di base
-            current_score = float(pts)
-            # current_score = (
-            #     pts * 1.0 +         
-            #     dreb * 1.0 +
-            #     oreb * 1.25 +
-            #     ast * 1.5 +         
-            #     stl * 2.0 +         
-            #     blk * 2.0 +         
-            #     tov * -1.5 +        
-            #     (fgm - fga) * 1.0 + 
-            #     (ftm - fta) * 1.0 + 
-            #     pm * 0.0 +
-            #     wl         
-            # )
+                # Algoritmo di base
+                current_score = (
+                    pts * 1.0 +                     # Punto realizzato (+1)
+                    dreb * 1.0 +                    # Rimbalzo difensivo (+1)
+                    oreb * 1.25 +                   # Rimbalzo offensivo (+1.25)
+                    ast * 1.5 +                     # Assist (+1.5)
+                    stl * 2.5 +                     # Steal (+2.5)
+                    blk * 2.5 +                     # Stoppata (+2.5)
+                    tov * -1.5 +                    # Palla persa (-1.5)
+                    (fgm - fga) * 1.0 +             # Tiro sbagliato (-1 per ogni errore)
+                    (ftm - fta) * 1.0 +             # Tiro libero sbagliato (-1 per ogni errore)
+                    (pm / 5.0)                      # Plus/Minus (PM/5) - ora protetto da TypeError
+                )
 
-            # 2. Bonus Multi-Doppia
-            stats_to_check = [pts, reb, ast, stl, blk]
-            double_digits_count = sum(1 for s in stats_to_check if s >= 10)
+                # 3. Bonus scalare Triple segnate (da 3 in poi)
+                if fg3m >= 3:
+                    current_score += fg3m
 
-            # if double_digits_count == 2:
-            #     current_score += 5   # Doppia Doppia
-            # elif double_digits_count == 3:
-            #     current_score += 10  # Tripla Doppia
-            # elif double_digits_count == 4:
-            #     current_score += 40  # Quadrupla Doppia (Rarissima)
-            # elif double_digits_count == 5:
-            #     current_score += 100 # Quintupla Doppia (Leggendaria)
+                # 4. Bonus scalare Punti segnati (da 30 in poi)
+                if pts >= 30:
+                    current_score += (pts // 10)
 
-            total_scores.append(current_score)
+                # 5. Bonus soglia Rimbalzi e Assist (20+)
+                if reb >= 20:
+                    current_score += 5
+                if ast >= 20:
+                    current_score += 5
+
+                # 6. Bonus Multi-Doppia
+                stats_to_check = [pts, reb, ast, stl, blk]
+                double_digits_count = sum(1 for s in stats_to_check if s >= 10)
+
+                if double_digits_count == 2:
+                    current_score += 5    # Doppia Doppia
+                elif double_digits_count == 3:
+                    current_score += 10   # Tripla Doppia
+                elif double_digits_count == 4:
+                    current_score += 40   # Quadrupla Doppia
+                elif double_digits_count >= 5:
+                    current_score += 100  # Quintupla Doppia
+
+                # 7. Vittoria squadra (+5%)
+                if wl_str == "W":
+                    current_score *= 1.05
+
+                total_scores.append(current_score)
+            except Exception:
+                # Salta eventuali partite corrotte senza bloccare l'esecuzione globale
+                continue
 
         # Se richiesto esplicitamente fa la media (es. per historical_boxscores / statistiche generali)
         if average:
@@ -203,12 +233,14 @@ class Team:
         self.roles_map: dict[int, str] = {}
         self.score: float = 0.0
         self.lineup = "2-2-1"
+        self.target_date = ""
         self.filename = os.path.join("data", f"{self.name.replace(' ', '_').lower()}_state.json")
     
     def save_to_json(self):
         """Salva l'intero stato del team, inclusi i dati dei giocatori e il punteggio totale."""
         data = {
             "team_name": self.name,
+            "target_date": self.target_date,
             "total_score": self.score,
             "lineup": self.lineup,
             "roster": self.to_ui_format() # Usiamo il formato UI che è già un dizionario pulito
@@ -229,6 +261,7 @@ class Team:
                 data = json.load(f)
             
             self.name = data["team_name"]
+            self.target_date = data.get("target_date", "")
             self.score = data["total_score"]
             self.lineup = data.get("lineup", "2-2-1")
             self.players = []
@@ -284,26 +317,31 @@ class Team:
         players_raw_info = api_manager.fetch_players_info(p_ids, filename=os.path.join("data", f"{self.name}_info.json"))
         _, daily_boxscores = api_manager.fetch_and_sync(target_date)
         
-        # 3. Creazione oggetti Player
-        for info in players_raw_info:
-            p_obj = Player(
-                id=info["PLAYER_ID"],
-                name=info["PLAYER_NAME"],
-                team_abbreviation=info["TEAM"],
-                position=info["POSITION"]
-            )
-            p_obj.position = p_obj.get_clean_position()
-            print(f"{p_obj.name}: {p_obj.position}")
-            p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
-            
-            # Recuperiamo il ruolo dal dizionario passato in input usando il nome
-            role = roles_dict.get(p_obj.name, "RESERVE")
-            self.add_player(p_obj, role)
+        # 3. Creazione oggetti Player rispettando l'ordine di names_list
+        info_by_name = {info["PLAYER_NAME"].lower(): info for info in players_raw_info}
+        
+        self.players = []
+        self.roles_map = {}
+
+        for name in names_list:
+            info = info_by_name.get(name.lower())
+            if info:
+                p_obj = Player(
+                    id=info["PLAYER_ID"],
+                    name=info["PLAYER_NAME"],
+                    team_abbreviation=info["TEAM"],
+                    position=info["POSITION"]
+                )
+                print(f"{p_obj.name}: {p_obj.position}")
+                p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
+                
+                role = roles_dict.get(p_obj.name, "RESERVE")
+                self.add_player(p_obj, role)
 
     def get_ordered_roster(self) -> list[Player]:
         """Restituisce i giocatori ordinati per importanza di ruolo (utile per la UI Court)."""
-        if len(self.players) == 13:
-            return self.players
+        # if len(self.players) == 13:
+        #     return self.players
         return sorted(self.players, key=lambda p: self.ROLE_ORDER.get(self.roles_map[p.id], 99))
 
     def to_ui_format(self) -> list[dict]:
@@ -321,8 +359,24 @@ class Team:
             })
         return ui_list
 
-    def update_team_scores_for_date(self, api_manager: NbaDataManager, target_date: str, names_list: list[str], roles_dict: dict[str, str]):
-        """Carica l'anagrafica dai file JSON locali e aggiorna i punteggi scaricando solo i boxscores."""
+    def update_team_scores_for_date(self, api_manager: NbaDataManager, target_date: str, names_list: list[str], roles_dict: dict[str, str], role_configs: dict):
+        """Carica l'anagrafica dai file JSON locali e aggiorna i punteggi. Usa la cache se la data coincide."""
+        
+        # 0. Controllo Cache State: se il file esiste e ha la stessa target_date, salta il ricalcolo
+        if os.path.exists(self.filename):
+            try:
+                with open(self.filename, "r", encoding="utf-8") as f:
+                    saved_data = json.load(f)
+                
+                if saved_data.get("target_date") == target_date:
+                    print(f"Stato locale aggiornato trovato per {target_date}. Lettura da cache: {self.filename}")
+                    self.load_from_json()
+                    return  # Termina qui, i punteggi sono stati caricati in memoria
+            except Exception as e:
+                print(f"Impossibile leggere lo stato locale, procedo con il calcolo: {e}")
+        else:
+            print(f"Il file {self.filename} non esiste --> Calcolo da API")
+        
         # 1. Recupero gli ID dei giocatori
         p_ids = api_manager.get_players_ids_by_name(names_list)
         api_manager.player_ids = p_ids
@@ -341,18 +395,32 @@ class Team:
             players_raw_info = api_manager.fetch_players_info(p_ids, filename=info_path)
         
         # 4. Ricostruisce la lista giocatori e calcola i punteggi sui boxscores aggiornati
+        # Creiamo un dizionario per cercare velocemente i dati per nome (ignorando maiuscole/minuscole per sicurezza)
+        info_by_name = {info["PLAYER_NAME"].lower(): info for info in players_raw_info}
         self.players = []
-        for info in players_raw_info:
-            p_obj = Player(
-                id=info["PLAYER_ID"],
-                name=info["PLAYER_NAME"],
-                team_abbreviation=info["TEAM"],
-                position=info["POSITION"]
-            )
-            p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
-            
-            role = roles_dict.get(p_obj.name, "RESERVE")
-            self.add_player(p_obj, role)
+        self.roles_map = {}
+        for name in names_list:
+            info = info_by_name.get(name.lower())
+            if info:
+                p_obj = Player(
+                    id=info["PLAYER_ID"],
+                    name=info["PLAYER_NAME"],
+                    team_abbreviation=info["TEAM"],
+                    position=info["POSITION"]
+                )
+                # Calcola il punteggio aggiornato
+                p_obj.calculate_score(daily_boxscores, target_date=target_date, average=False)
+                
+                # Recupera il ruolo (o fallback a RESERVE)
+                role = roles_dict.get(p_obj.name, "RESERVE")
+                self.add_player(p_obj, role)
+            else:
+                print(f"Attenzione: Dati anagrafici non trovati nel file info per il giocatore '{name}'")
+
+        # 5. Salva il nuovo stato appena calcolato 
+        self.target_date = target_date
+        self.calculate_total_score(role_configs)
+        self.save_to_json()
 
 
 # from api_nba import NbaDataManager

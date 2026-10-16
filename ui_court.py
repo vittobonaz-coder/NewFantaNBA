@@ -100,7 +100,8 @@ class Court(ft.Column):
 
         # CARDS
         self.cards = []
-        ordered_players = self.team.get_ordered_roster()
+        # ordered_players = self.team.get_ordered_roster()
+        ordered_players = self.team.players
         for i, p in enumerate(ordered_players):
             card = PlayerCard(
                 player=p,
@@ -454,12 +455,29 @@ class CalendarView(ft.Tabs):
                 )
             )
             for m in round_data["matchups"]:
+                # Formattiamo i punteggi a 1 decimale
+                h_score = m.get('home_score', 0.0)
+                a_score = m.get('away_score', 0.0)
+                
+                # Se la partita non è stata ancora giocata o ha punteggio a 0, possiamo mostrare uno stato diverso
+                # (Opzionale: se vuoi mantenere lo 0.0 o mostrare "vs" quando non è stata giocata)
+                score_text = f"{h_score:.1f} - {a_score:.1f}" if m.get('was_played', False) or h_score > 0 or a_score > 0 else " vs "
+
                 round_col[-1].controls.append(
                     ft.Container(
                         content=ft.Row([
-                            ft.Text(f"{m['home_team']}", expand=True, text_align="right"),
-                            ft.Text("vs", weight="bold"),
-                            ft.Text(f"{m['away_team']}", expand=True, text_align="left"),
+                            # Squadra di casa
+                            ft.Text(f"{m['home_team']}", expand=True, text_align="right", size=14),
+                            
+                            # Punteggio centrale
+                            ft.Container(
+                                content=ft.Text(score_text, weight="bold", color="amber"),
+                                width=80, 
+                                alignment=ft.alignment.Alignment.CENTER
+                            ),
+                            
+                            # Squadra in trasferta
+                            ft.Text(f"{m['away_team']}", expand=True, text_align="left", size=14),
                         ]),
                         padding=10,
                         bgcolor=ft.Colors.GREY_900,
@@ -487,6 +505,175 @@ class CalendarView(ft.Tabs):
         )
 
 
+class StandingsView(ft.Column):
+    def __init__(self, json_path: str = os.path.join("data", "standings.json")):
+        super().__init__()
+        self.json_path = json_path
+        self.expand = True
+        self.scroll = ft.ScrollMode.AUTO
+        self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+        
+        self.setup_ui()
+
+    def load_standings_data(self) -> list:
+        """Carica la classifica dal file JSON e la ordina per vittorie descrescenti."""
+        if not os.path.exists(self.json_path):
+            return []
+
+        try:
+            with open(self.json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            # Ordina: prima per vittorie (Wins), in caso di parità per Punti Fatti (total_score)
+            data.sort(key=lambda x: (x.get("wins", 0), x.get("total_score", 0.0)), reverse=True)
+            return data
+        except Exception as err:
+            print(f"Errore durante il caricamento della classifica: {err}")
+            return []
+
+    def setup_ui(self):
+        standings_data = self.load_standings_data()
+
+        if not standings_data:
+            self.controls = [
+                ft.Container(
+                    content=ft.Text("Nessun dato classifica disponibile.", size=16, color="grey"),
+                    padding=20
+                )
+            ]
+            return
+
+        # Costruzione righe della DataTable (Posizione + Campi JSON filtrati)
+        data_rows = []
+        for pos, team in enumerate(standings_data, start=1):
+            data_rows.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(f"{pos}", weight="bold", color="amber" if pos <= 3 else "white")),
+                        ft.DataCell(ft.Text(team.get("team_name", "-"), weight="bold")),
+                        ft.DataCell(ft.Text(str(team.get("wins", 0)), color="green_400")),
+                        ft.DataCell(ft.Text(str(team.get("losses", 0)), color="red_400")),
+                        ft.DataCell(ft.Text(f"{team.get('total_score', 0.0):.1f}")),
+                        ft.DataCell(ft.Text(f"{team.get('total_points_against', 0.0):.1f}")),
+                    ]
+                )
+            )
+
+        # Tabella reattiva Flet
+        standings_table = ft.DataTable(
+            bgcolor=ft.Colors.GREY_900,
+            border_radius=10,
+            column_spacing=18,
+            heading_row_height=45,
+            columns=[
+                ft.DataColumn(ft.Text("#", weight="bold")),
+                ft.DataColumn(ft.Text("Squadra", weight="bold")),
+                ft.DataColumn(ft.Text("V", weight="bold", color="green_400")),
+                ft.DataColumn(ft.Text("P", weight="bold", color="red_400")),
+                ft.DataColumn(ft.Text("PF", weight="bold"), numeric=True),
+                ft.DataColumn(ft.Text("PS", weight="bold"), numeric=True),
+            ],
+            rows=data_rows
+        )
+
+        self.controls = [
+            ft.Container(
+                content=ft.Column(
+                    controls=[
+                        ft.Text("Classifica Campionato", size=20, weight="bold", color="amber"),
+                        ft.Divider(color="grey_800"),
+                        ft.Row([standings_table], alignment=ft.MainAxisAlignment.CENTER)
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                padding=10
+            )
+        ]
+
+
+class SettingsView(ft.Tabs):
+    def __init__(self):
+        super().__init__(content=None, length=0)
+        self.expand = True
+        self.length = 5
+        self.selected_index = 0
+        self.animation_duration = 300
+
+        self.profile_view = ft.Text("Gestione Profilo - Prossimamente", size=20)
+        self.rules_filepath = os.path.join("data", "rules.json")
+        self.rules_view = self._build_multi_table_view(self.rules_filepath)
+        
+        self.content = ft.Column(
+            expand=True,
+            controls=[
+                ft.TabBar(
+                    tabs=[
+                        ft.Tab(label="Gestione Profilo", icon=ft.Icons.SPORTS_BASKETBALL),
+                        ft.Tab(label="Regolamento", icon=ft.Icons.MANAGE_SEARCH)
+                    ]
+                ),
+                ft.TabBarView(
+                    expand=True,
+                    controls=[
+                        ft.Container(content=self.profile_view, padding=0),
+                        ft.Container(content=self.rules_view, padding=10)
+                    ],
+                ),
+            ],
+        )
+
+    def _load_json_rules(self, filepath: str):
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+
+    def _build_multi_table_view(self, filepath: str):
+        data = self._load_json_rules(filepath)
+        if not data:
+            return ft.Text("Errore di caricamento delle regole.", color=ft.Colors.RED)
+
+        # view_controls = [ft.Text("Regolamento e Punteggi Ufficiali", size=18, weight=ft.FontWeight.BOLD)]
+        view_controls = []
+
+        for category_name, rows in data.items():
+            view_controls.append(
+                ft.Text(category_name.replace("_", " ").upper(), size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ORANGE)
+            )
+            
+            data_rows = []
+            for item in rows:
+                score = str(item["punteggio"])
+                score_color = ft.Colors.GREEN_400 if not score.startswith("-") else ft.Colors.RED_400
+                data_rows.append(
+                    ft.DataRow(cells=[
+                        # Font leggermente ingrandito a 13
+                        ft.DataCell(ft.Text(item["azione"], size=13)),
+                        ft.DataCell(ft.Text(score, size=13, weight=ft.FontWeight.BOLD, color=score_color))
+                    ])
+                )
+
+            table = ft.DataTable(
+                border=ft.border.all(1, ft.Colors.GREY_800),
+                border_radius=6,
+                # Linee di divisione verticali e orizzontali per una griglia pulita
+                vertical_lines=ft.border.BorderSide(1, ft.Colors.GREY_800),
+                horizontal_lines=ft.border.BorderSide(1, ft.Colors.GREY_800),
+                columns=[
+                    # Diamo più spazio alla colonna di sinistra impostando una larghezza fissa (es. 190 pixel)
+                    ft.DataColumn(ft.Text("Azione", weight=ft.FontWeight.BOLD)),
+                    # Rimozione di numeric=True per evitare lo shift sull'ultima riga testuale
+                    ft.DataColumn(ft.Text("Punti", weight=ft.FontWeight.BOLD)),
+                ],
+                rows=data_rows,
+            )
+            view_controls.append(table)
+            view_controls.append(ft.Divider(height=15, color=ft.Colors.TRANSPARENT))
+
+        return ft.ListView(expand=True, padding=5, controls=view_controls)
+
+
 class MainDashboard(ft.Tabs):
     def __init__(self, team: Team):
         super().__init__(content=None, length=0)
@@ -500,8 +687,8 @@ class MainDashboard(ft.Tabs):
         self.team_view = Court(self.team)
         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
         self.calendar_view = CalendarView()
-        self.championship_view = ft.Text("Vista Campionato - Prossimamente", size=20)
-        self.settings_view = ft.Text("Vista Impostazioni - Prossimamente", size=20)
+        self.championship_view = StandingsView()
+        self.settings_view = SettingsView()
         
         self.content=ft.Column(
             expand=True,
