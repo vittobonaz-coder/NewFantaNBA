@@ -80,6 +80,7 @@ SCORCIATOIE UTILI:
 
 
 
+
 PROCEDURA INIZIO CAMPIONATO:
 1. Pulisci files + Pulisci database: python reset_pre_setup.py
     Cancella:
