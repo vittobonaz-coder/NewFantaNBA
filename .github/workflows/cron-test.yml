@@ -4,7 +4,7 @@ name: Test Python Cron Job
 # 2. Trigger manuale per test immediato (fondamentale!)
 on:
   schedule:
-    - cron: '42 22 * * *'
+    - cron: '23 11 * * *'
   workflow_dispatch:
 
 jobs:
