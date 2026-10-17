@@ -114,7 +114,9 @@ Testing:
 https://wikihoops.com/games/2026-10-04/?ref=calendar
 
 
---- Codice SQL per creare cron-job per eseguire il file New_FantaNBA\.github\workflows\cron-test.yml:
+
+===========================================================================================================
+-------- Codice SQL per creare cron-job per eseguire il file New_FantaNBA\.github\workflows\cron-test.yml:
 select cron.schedule(
   'github-cron-test-wiggins',
   '0 15 17 10 *',   -- 15:00 UTC del 17 ottobre = 17:00 in Italia
@@ -131,5 +133,6 @@ select cron.schedule(
   );
   $$
 );
---- Codice SQL per cancellare il job:
+-------------------------------------------------------------------------------
+------- Codice SQL per cancellare il job:
   select cron.unschedule('github-cron-test-wiggins');

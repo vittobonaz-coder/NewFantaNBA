@@ -21,7 +21,7 @@ jobs:
           python-version: '3.10'
 
       - name: Installazione dipendenze
-        run: pip install requests pandas nba_api
+        run: pip install requests pandas nba_api supabase
 
       - name: Esecuzione dello script Python
         run: python cron_test_script.py
