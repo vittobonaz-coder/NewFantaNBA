@@ -1,4 +1,6 @@
 TO DO:
+- Aggiungere formazioni 3-1-1, 1-3-1, 1-1-3
+
 - Test su cambio giornata
 
 - Nel calendario, se entrambe le squadre non hanno ancora giocatori che hanno giocato non segna i punteggi,
@@ -110,3 +112,24 @@ PROCEDURA INIZIO CAMPIONATO:
 
 Testing:
 https://wikihoops.com/games/2026-10-04/?ref=calendar
+
+
+--- Codice SQL per creare cron-job per eseguire il file New_FantaNBA\.github\workflows\cron-test.yml:
+select cron.schedule(
+  'github-cron-test-wiggins',
+  '0 15 17 10 *',   -- 15:00 UTC del 17 ottobre = 17:00 in Italia
+  $$
+  select net.http_post(
+    url     := 'https://api.github.com/repos/vittobonaz-coder/NewFantaNBA/actions/workflows/cron-test.yml/dispatches',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'github_token'),
+      'Accept', 'application/vnd.github+json',
+      'X-GitHub-Api-Version', '2022-11-28',
+      'User-Agent', 'supabase-pg-cron'
+    ),
+    body    := jsonb_build_object('ref', 'main')
+  );
+  $$
+);
+--- Codice SQL per cancellare il job:
+  select cron.unschedule('github-cron-test-wiggins');

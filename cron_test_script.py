@@ -3,6 +3,7 @@ import io
 
 from api_nba import NbaDataManager
 from fanta_obj import Player
+from supabase_manager import SupabaseSync
 
 # --- Parametri del test ---
 PLAYER_NAME = "Andrew Wiggins"
@@ -36,6 +37,18 @@ def main():
     score = player.calculate_score(boxscores, target_date=GAME_DATE)
 
     print(f"Fanta-punteggio {PLAYER_NAME}: {score:.2f}")
+
+    # 5. Scrittura del punteggio nella colonna score di lineup_players
+    db = SupabaseSync()
+    # gameweek = db.get_gameweek_by_date(GAME_DATE)
+    gameweek = 1
+    if gameweek is None:
+        raise SystemExit(f"Nessuna gameweek trovata per il {GAME_DATE}: score non salvato.")
+
+    if db.update_lineup_player_score(gameweek, round(score, 2), nba_player_id=player_id):
+        print(f"Score salvato in lineup_players (GW {gameweek}).")
+    else:
+        raise SystemExit(f"{PLAYER_NAME} non e' schierato in lineup_players per la GW {gameweek}: score non salvato.")
 
 
 if __name__ == "__main__":
