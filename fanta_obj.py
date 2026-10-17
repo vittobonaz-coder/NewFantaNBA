@@ -5,13 +5,23 @@ from datetime import datetime
 import os
 import json
 
+
+# Score di un giocatore la cui squadra non ha ancora giocato nella data target
+NOT_PLAYED_SCORE = None
+
+def has_played(score) -> bool:
+    """True se lo score rappresenta una partita già giocata (anche con 0 punti o DNP)."""
+    return score is not None
+
+
+
 @dataclass
 class Player:
     id: int = 0
     name: str = ""
     team_abbreviation: str = ""
     position: str = ""
-    score: float = 0.0
+    score: float | None = 0.0
 
     def __post_init__(self):
         # Ogni volta che l'oggetto viene istanziato, pulisce la posizione
@@ -219,6 +229,19 @@ class Player:
             # Per il singolo giorno prende il punteggio della gara
             self.score = float(sum(total_scores)) if total_scores else 0.0
         return self.score
+
+    @classmethod
+    def calculate_scores(cls, player_ids: list[int], boxscores: list[dict], target_date: str = None, average: bool = False) -> dict[int, float]:
+        """
+        Calcola il fanta-punteggio di una lista di giocatori a partire dagli stessi boxscores.
+        Restituisce un dizionario {player_id: score}.
+        I giocatori senza partite nei boxscores (o nella target_date) hanno score 0.0.
+        """
+        scores = {}
+        for p_id in player_ids:
+            player = cls(id=int(p_id))
+            scores[int(p_id)] = player.calculate_score(boxscores, target_date=target_date, average=average)
+        return scores
     
 
 class Team:
@@ -279,13 +302,16 @@ class Team:
             return False
     
     def calculate_total_score(self, role_configs: dict) -> float:
-        """Calcola il punteggio totale del team pesato sui ruoli."""
+        """Calcola il punteggio totale del team pesato sui ruoli.
+        I giocatori la cui squadra non ha ancora giocato non vengono conteggiati."""
         total = 0.0
         for p in self.players:
+            if not has_played(p.score):
+                continue
             role = self.roles_map.get(p.id, "RESERVE")
             multiplier = role_configs.get(role, {}).get("mult", 0.0)
             total += p.score * multiplier
-        
+
         self.score = float(total) # Aggiorna il campo della classe
         return self.score
         

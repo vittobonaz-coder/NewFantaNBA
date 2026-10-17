@@ -1,7 +1,7 @@
 import os
 import json
 from supabase import create_client, Client
-from fanta_obj import Player, Team
+from fanta_obj import Player, Team, NOT_PLAYED_SCORE
 from pathlib import Path
 from datetime import date
 from time_manager import TimeManager
@@ -518,7 +518,7 @@ class SupabaseSync:
                             # Salva gli score attuali dei giocatori mappati per ID
                             for p in existing_data.get("roster", []):
                                 if "id" in p:
-                                    existing_scores[p["id"]] = p.get("score", 0.0)
+                                    existing_scores[p["id"]] = p.get("score", NOT_PLAYED_SCORE)
                         except json.JSONDecodeError:
                             print(f"Avviso: Il file {filename} era corrotto. Verrà ricreato.")
 
@@ -533,7 +533,7 @@ class SupabaseSync:
                         "name": player_info.get("full_name", r_entry.get("player_name", "Sconosciuto")),
                         "team": player_info.get("nba_team", ""),
                         "pos": player_info.get("position", ""),
-                        "score": existing_scores.get(nba_id, 0.0), # Ripristina il vecchio score se presente
+                        "score": existing_scores.get(nba_id, NOT_PLAYED_SCORE),
                         "role": r_entry.get("assigned_position", "RESERVE")
                     })
                 
@@ -549,7 +549,7 @@ class SupabaseSync:
             print(f"Errore critico durante la sincronizzazione massiva dei team state: {e}")
             raise e
 
-    def update_lineup_player_score(self, gameweek: int, score: float, nba_player_id: int = None, player_name: str = None) -> bool:
+    def update_lineup_player_score(self, gameweek: int, score: float | None, nba_player_id: int = None, player_name: str = None) -> bool:
         """
         Aggiorna il campo 'score' nella tabella lineup_players per un giocatore in una determinata gameweek.
         Utilizza nba_player_id (consigliato) o player_name per identificare il giocatore.
@@ -582,9 +582,10 @@ class SupabaseSync:
             print(f"Errore durante l'aggiornamento del punteggio in lineup_players per {nba_player_id or player_name} (GW: {gameweek}): {e}")
             return False
 
-    def get_lineup_player_score(self, gameweek: int, fanta_team_id: str, nba_player_id: int) -> float:
+    def get_lineup_player_score(self, gameweek: int, fanta_team_id: str, nba_player_id: int) -> float | None:
         """
         Recupera lo score attuale di un giocatore dalla tabella lineup_players su Supabase.
+        Restituisce None se la squadra NBA del giocatore non ha ancora giocato (score NULL).
         """
         try:
             response = self.supabase.table('lineup_players') \
@@ -596,7 +597,7 @@ class SupabaseSync:
             
             if response.data and len(response.data) > 0:
                 raw_score = response.data[0].get('score')
-                return float(raw_score) if raw_score is not None else 0.0
+                return float(raw_score) if raw_score is not None else NOT_PLAYED_SCORE
         except Exception as e:
             print(f"Errore recupero score per player {nba_player_id} da supabase: {e}")
             
@@ -657,7 +658,7 @@ class SupabaseSync:
                     "gameweek": gameweek,
                     "nba_player_id": player.get("id"),
                     "slot": slot_number,
-                    "score": player.get("score", 0.0),
+                    "score": player.get("score", NOT_PLAYED_SCORE),
                     "player_name": player.get("name"),
                     "role": player.get("role"),
                     "target_date": target_date_nba
@@ -747,7 +748,7 @@ class SupabaseSync:
                     "name": row.get("player_name"),
                     "team": nba_info.get("nba_team", ""),
                     "pos": nba_info.get("position", ""),
-                    "score": float(row.get("score") or 0.0),
+                    "score": float(row["score"]) if row.get("score") is not None else NOT_PLAYED_SCORE,
                     "role": row.get("role", "RESERVE")
                 })
 
@@ -941,14 +942,14 @@ class SupabaseSync:
 
     def reset_lineup_scores_for_gameweek(self, gameweek: int) -> bool:
         """
-        Resetta il campo 'score' portandolo a 0.00 per tutti i giocatori 
-        schierati nella tabella lineup_players per la gameweek specificata.
+        Resetta il campo 'score' a NULL (= squadra NBA non ancora scesa in campo)
+        per tutti i giocatori schierati nella tabella lineup_players per la gameweek specificata.
         """
         print(f"Resettaggio punteggi nella tabella lineup_players per la gameweek {gameweek}...")
         try:
             response = (
                 self.supabase.table("lineup_players")
-                .update({"score": 0.00})
+                .update({"score": NOT_PLAYED_SCORE})
                 .eq("gameweek", gameweek)
                 .execute()
             )
@@ -956,7 +957,7 @@ class SupabaseSync:
             updated_rows = len(response.data) if response.data else 0
             
             if updated_rows > 0:
-                print(f"Reset completato con successo: azzerato lo score per {updated_rows} righe (GW {gameweek}).")
+                print(f"Reset completato con successo: score impostato a NULL per {updated_rows} righe (GW {gameweek}).")
                 return True
             else:
                 print(f"Attenzione: Nessuna riga trovata nella tabella lineup_players per la gameweek {gameweek}.")
@@ -1079,6 +1080,34 @@ class SupabaseSync:
             print(f"Errore durante il pull della tabella profiles: {e}")
             raise e
 
+    def get_nba_player_ids(self, player_names: list[str] = None) -> list[int]:
+        """
+        Restituisce gli ID NBA ufficiali presenti nella tabella 'nba_players'.
+        Se player_names è None restituisce tutti gli ID, altrimenti solo quelli
+        dei giocatori il cui full_name corrisponde esattamente ai nomi forniti.
+        """
+        try:
+            query = self.supabase.table("nba_players").select("id, full_name")
+
+            if player_names is not None:
+                if not player_names:
+                    return []
+                query = query.in_("full_name", player_names)
+
+            data = query.execute().data or []
+
+            if player_names is not None:
+                found_names = {row["full_name"] for row in data}
+                for name in player_names:
+                    if name not in found_names:
+                        print(f"Attenzione: Giocatore '{name}' non trovato in nba_players.")
+
+            return [int(row["id"]) for row in data]
+
+        except Exception as e:
+            print(f"Errore durante il recupero degli ID da nba_players: {e}")
+            raise e
+
 
 if __name__ == "__main__":
     sync = SupabaseSync()
@@ -1093,5 +1122,6 @@ if __name__ == "__main__":
     # ...oppure aggiorna tutto in blocco (ideale prima o dopo aver calcolato le API)
     # sync.push_lineup_for_all_teams()
 
-    team_name = sync.get_team_name_by_id(team_uuid)
-    print(f"Il nome della squadra con ID {team_uuid} è: {team_name}")
+    # team_name = sync.get_team_name_by_id(team_uuid)
+    # print(f"Il nome della squadra con ID {team_uuid} è: {team_name}")
+    print(len(sync.get_nba_player_ids()))

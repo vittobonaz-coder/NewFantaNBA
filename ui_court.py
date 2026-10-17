@@ -1,7 +1,7 @@
 import flet as ft
 import os
 import json
-from fanta_obj import Player, Team
+from fanta_obj import Player, Team, has_played
 
 
 ROLE_CONFIGS = {
@@ -14,7 +14,7 @@ ROLE_CONFIGS = {
 class PlayerCard(ft.Container):
     """Classe per le cards dei giocatori"""
 
-    def __init__(self, player: Player, score: float, role_type: str, slot_index: int):
+    def __init__(self, player: Player, score: float | None, role_type: str, slot_index: int):
         super().__init__()
         self.player = player
         self.score = score
@@ -46,7 +46,7 @@ class PlayerCard(ft.Container):
         name_parts = self.player.name.split()
         first_initial = name_parts[0][0]
         surname = ' '.join(name_parts[1:])
-        final_score = self.score * conf["mult"]
+        score_text = f"{self.score * conf['mult']:.1f}" if has_played(self.score) else "-"
             
         btn_container = ft.Container(
             content=self.swap_button,
@@ -63,14 +63,14 @@ class PlayerCard(ft.Container):
                         ft.Image(src=self.player.get_avatar_img(), width=conf["avatar"], height=conf["avatar"]),
                         ft.Text(f"{first_initial}. {surname}", size=conf["font"], weight="bold", no_wrap=True),
                         ft.Text(f"{self.player.team_abbreviation} | {self.player.position}", size=9, color="grey"),
-                        ft.Text(f"{final_score:.1f}", size=conf["font"], weight="bold"),
+                        ft.Text(score_text, size=conf["font"], weight="bold"),
                     ]
                 ),
                 btn_container
             ]
         )
     
-    def update_data(self, new_player: Player, new_score: float):
+    def update_data(self, new_player: Player, new_score: float | None):
         """Aggiorna i dati della card e rinfresca solo questa"""
         self.player = new_player
         self.score = new_score
