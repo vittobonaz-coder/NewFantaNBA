@@ -1,51 +1,39 @@
 [
     {
-        "PLAYER_ID": 1642259,
-        "PLAYER_NAME": "Alex Sarr",
-        "TEAM": "WAS",
-        "POSITION": "Center"
+        "PLAYER_ID": 1626157,
+        "PLAYER_NAME": "Karl-Anthony Towns",
+        "TEAM": "NYK",
+        "POSITION": "Center-Forward"
     },
     {
-        "PLAYER_ID": 1630166,
-        "PLAYER_NAME": "Deni Avdija",
-        "TEAM": "POR",
-        "POSITION": "Forward"
-    },
-    {
-        "PLAYER_ID": 2544,
-        "PLAYER_NAME": "LeBron James",
+        "PLAYER_ID": 203954,
+        "PLAYER_NAME": "Joel Embiid",
         "TEAM": "PHI",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 202710,
+        "PLAYER_NAME": "Jimmy Butler III",
+        "TEAM": "GSW",
         "POSITION": "Forward"
     },
     {
-        "PLAYER_ID": 201939,
-        "PLAYER_NAME": "Stephen Curry",
-        "TEAM": "GSW",
+        "PLAYER_ID": 1629645,
+        "PLAYER_NAME": "Kevin Porter Jr.",
+        "TEAM": "MIL",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1628983,
+        "PLAYER_NAME": "Shai Gilgeous-Alexander",
+        "TEAM": "OKC",
         "POSITION": "Guard"
     },
     {
-        "PLAYER_ID": 202681,
-        "PLAYER_NAME": "Kyrie Irving",
-        "TEAM": "DAL",
-        "POSITION": "Guard"
-    },
-    {
-        "PLAYER_ID": 1630163,
-        "PLAYER_NAME": "LaMelo Ball",
-        "TEAM": "MIN",
-        "POSITION": "Guard"
-    },
-    {
-        "PLAYER_ID": 1629638,
-        "PLAYER_NAME": "Nickeil Alexander-Walker",
+        "PLAYER_ID": 1630700,
+        "PLAYER_NAME": "Dyson Daniels",
         "TEAM": "ATL",
         "POSITION": "Guard"
-    },
-    {
-        "PLAYER_ID": 1627734,
-        "PLAYER_NAME": "Domantas Sabonis",
-        "TEAM": "SAC",
-        "POSITION": "Forward-Center"
     },
     {
         "PLAYER_ID": 1628384,
@@ -54,27 +42,51 @@
         "POSITION": "Forward-Guard"
     },
     {
-        "PLAYER_ID": 1629651,
-        "PLAYER_NAME": "Nic Claxton",
-        "TEAM": "CHI",
-        "POSITION": "Center"
+        "PLAYER_ID": 1631114,
+        "PLAYER_NAME": "Jalen Williams",
+        "TEAM": "OKC",
+        "POSITION": "Guard-Forward"
     },
     {
-        "PLAYER_ID": 203935,
-        "PLAYER_NAME": "Marcus Smart",
-        "TEAM": "HOU",
+        "PLAYER_ID": 1629630,
+        "PLAYER_NAME": "Ja Morant",
+        "TEAM": "POR",
         "POSITION": "Guard"
     },
     {
-        "PLAYER_ID": 1631095,
-        "PLAYER_NAME": "Jabari Smith Jr.",
-        "TEAM": "HOU",
+        "PLAYER_ID": 1642259,
+        "PLAYER_NAME": "Alex Sarr",
+        "TEAM": "WAS",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1642845,
+        "PLAYER_NAME": "VJ Edgecombe",
+        "TEAM": "PHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628970,
+        "PLAYER_NAME": "Miles Bridges",
+        "TEAM": "PHX",
         "POSITION": "Forward"
     },
     {
-        "PLAYER_ID": 1630168,
-        "PLAYER_NAME": "Onyeka Okongwu",
-        "TEAM": "ATL",
-        "POSITION": "Forward-Center"
+        "PLAYER_ID": 1629028,
+        "PLAYER_NAME": "Deandre Ayton",
+        "TEAM": "WAS",
+        "POSITION": "Center"
+    },
+    {
+        "PLAYER_ID": 1630200,
+        "PLAYER_NAME": "Tre Jones",
+        "TEAM": "CHI",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630183,
+        "PLAYER_NAME": "Jaden McDaniels",
+        "TEAM": "MIN",
+        "POSITION": "Forward"
     }
 ]

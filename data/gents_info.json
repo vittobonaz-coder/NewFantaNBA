@@ -1,26 +1,26 @@
 [
     {
-        "PLAYER_ID": 1627751,
-        "PLAYER_NAME": "Jakob Poeltl",
-        "TEAM": "TOR",
+        "PLAYER_ID": 203999,
+        "PLAYER_NAME": "Nikola Jokić",
+        "TEAM": "DEN",
         "POSITION": "Center"
     },
     {
-        "PLAYER_ID": 203507,
-        "PLAYER_NAME": "Giannis Antetokounmpo",
-        "TEAM": "MIA",
+        "PLAYER_ID": 201142,
+        "PLAYER_NAME": "Kevin Durant",
+        "TEAM": "HOU",
         "POSITION": "Forward"
     },
     {
-        "PLAYER_ID": 204001,
-        "PLAYER_NAME": "Kristaps Porziņģis",
-        "TEAM": "GSW",
-        "POSITION": "Forward-Center"
+        "PLAYER_ID": 1641708,
+        "PLAYER_NAME": "Amen Thompson",
+        "TEAM": "HOU",
+        "POSITION": "Guard-Forward"
     },
     {
-        "PLAYER_ID": 1629027,
-        "PLAYER_NAME": "Trae Young",
-        "TEAM": "WAS",
+        "PLAYER_ID": 1627750,
+        "PLAYER_NAME": "Jamal Murray",
+        "TEAM": "DEN",
         "POSITION": "Guard"
     },
     {
@@ -30,27 +30,27 @@
         "POSITION": "Guard"
     },
     {
-        "PLAYER_ID": 1631096,
-        "PLAYER_NAME": "Chet Holmgren",
-        "TEAM": "OKC",
-        "POSITION": "Center-Forward"
+        "PLAYER_ID": 1628386,
+        "PLAYER_NAME": "Jarrett Allen",
+        "TEAM": "CLE",
+        "POSITION": "Center"
     },
     {
-        "PLAYER_ID": 1630200,
-        "PLAYER_NAME": "Tre Jones",
-        "TEAM": "CHI",
+        "PLAYER_ID": 202681,
+        "PLAYER_NAME": "Kyrie Irving",
+        "TEAM": "DAL",
         "POSITION": "Guard"
     },
     {
-        "PLAYER_ID": 1629636,
-        "PLAYER_NAME": "Darius Garland",
+        "PLAYER_ID": 1642851,
+        "PLAYER_NAME": "Kon Knueppel",
+        "TEAM": "CHA",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1627742,
+        "PLAYER_NAME": "Brandon Ingram",
         "TEAM": "LAC",
-        "POSITION": "Guard"
-    },
-    {
-        "PLAYER_ID": 1627783,
-        "PLAYER_NAME": "Pascal Siakam",
-        "TEAM": "IND",
         "POSITION": "Forward"
     },
     {
@@ -60,9 +60,9 @@
         "POSITION": "Forward-Guard"
     },
     {
-        "PLAYER_ID": 1630591,
-        "PLAYER_NAME": "Jalen Suggs",
-        "TEAM": "ORL",
+        "PLAYER_ID": 1629639,
+        "PLAYER_NAME": "Tyler Herro",
+        "TEAM": "MIL",
         "POSITION": "Guard"
     },
     {
@@ -72,9 +72,21 @@
         "POSITION": "Forward"
     },
     {
-        "PLAYER_ID": 203500,
-        "PLAYER_NAME": "Steven Adams",
-        "TEAM": "HOU",
-        "POSITION": "Center"
+        "PLAYER_ID": 203468,
+        "PLAYER_NAME": "CJ McCollum",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628392,
+        "PLAYER_NAME": "Isaiah Hartenstein",
+        "TEAM": "OKC",
+        "POSITION": "Center-Forward"
+    },
+    {
+        "PLAYER_ID": 1643412,
+        "PLAYER_NAME": "Kingston Flemings",
+        "TEAM": "ATL",
+        "POSITION": "Guard"
     }
 ]

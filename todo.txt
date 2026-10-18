@@ -1,6 +1,10 @@
 TO DO:
 - Aggiungere formazioni 3-1-1, 1-3-1, 1-1-3
 
+x Mettere 5 riserve
+
+x Togliere limitazioni squadra 5-5-3 e 13 giocatori
+
 - Il setup dovrebbe mettere NULL su tutti i punteggi dei giocatori e dovrebbe già inserire 
     tutte le righe per tutte le giornate della stagione
 
@@ -13,6 +17,11 @@ TO DO:
 - Se almeno un utente non effettua l'accesso ogni giorno i dati del giorno senza accessi vengono persi
 
 - La panca fa *0.75
+
+- Con le righe già inserite per tutte le giornate, il ruolo e lo slot delle giornate future restano quelli 
+    iniziali. Oggi nessun codice aggiorna lineup_players quando un utente salva la formazione: handle_save 
+    → push_team aggiorna solo la tabella rosters. Quindi all’inizio della giornata 2 pull_lineup_for_team 
+    riporterebbe la formazione del setup, non quella salvata dall’utente.
 
 - Aggiungere al calendario le partite NBA
 

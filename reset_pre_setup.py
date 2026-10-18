@@ -26,17 +26,17 @@ def clean_local_files():
         print("   La cartella 'data' non esiste.")
 
     # """2. Pulisce la cartella assets/players."""
-    # print("🧹 Pulizia della cartella 'assets/players'...")
-    # if PLAYERS_DIR.exists() and PLAYERS_DIR.is_dir():
-    #     for file_path in PLAYERS_DIR.iterdir():
-    #         if file_path.is_file():
-    #             try:
-    #                 file_path.unlink()
-    #                 print(f"   [Eliminato] {file_path}")
-    #             except Exception as e:
-    #                 print(f"   [Errore] Impossibile eliminare {file_path}: {e}")
-    # else:
-    #     print("   La cartella 'assets/players' non esiste.")
+    print("🧹 Pulizia della cartella 'assets/players'...")
+    if PLAYERS_DIR.exists() and PLAYERS_DIR.is_dir():
+        for file_path in PLAYERS_DIR.iterdir():
+            if file_path.is_file():
+                try:
+                    file_path.unlink()
+                    print(f"   [Eliminato] {file_path}")
+                except Exception as e:
+                    print(f"   [Errore] Impossibile eliminare {file_path}: {e}")
+    else:
+        print("   La cartella 'assets/players' non esiste.")
 
 def clean_database():
     """3. Cancella tutte le righe dalle tabelle di Supabase rispettando i vincoli di foreign key."""

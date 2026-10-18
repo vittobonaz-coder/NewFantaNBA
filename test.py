@@ -10,8 +10,8 @@ from time_manager import TimeManager
 from supabase_manager import SupabaseSync
 
 
-SIM_DATE = "2026-10-13"
-SIM_NBA_DATE = "2026-10-12"
+SIM_DATE = "2026-10-21"
+SIM_NBA_DATE = "2026-10-20"
 
 
 def get_user_date(team_name: str, teams_dict: Optional[Dict[str, str]] = None, as_date_object: bool = False, output_format: Optional[str] = None) -> Union[str, date, None]:
@@ -215,6 +215,9 @@ def get_best_score_from_db(sync: SupabaseSync, gameweek: int, team_id: str, play
         nba_player_id=player_id
     )
     print(f"###### Database score = {db_score}")
+
+    if new_score == None:
+        return None
     
     return max(new_score, db_score)
 
@@ -336,7 +339,9 @@ def main(page: ft.Page) -> None:
             )
             
             # Se il DB aveva un punteggio più alto, sovrascriviamo quello locale
-            if best_score > player.score:
+            if best_score == None:
+                scores_modified = False
+            elif best_score > player.score:
                 player.score = best_score
                 scores_modified = True
 

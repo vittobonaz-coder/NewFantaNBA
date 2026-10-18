@@ -9,6 +9,11 @@ from ui_court import ROLE_CONFIGS, MainDashboard, LoginView
 from time_manager import TimeManager
 from supabase_manager import SupabaseSync
 
+
+SIM_DATE = "2026-10-21"
+SIM_NBA_DATE = "2026-10-20"
+
+
 def get_user_date(team_name: str, teams_dict: Optional[Dict[str, str]] = None, as_date_object: bool = False, output_format: Optional[str] = None) -> Union[str, date, None]:
     """
     Restituisce la data associata a un username presente nel dizionario.
@@ -149,6 +154,7 @@ def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_
             
             # PRENDIAMO IL PUNTEGGIO MIGLIORE
             new_calculated_score = player.score
+            print(f"###### Calculated score (api) fro {player.name} = {new_calculated_score}")
             best_score = get_best_player_score(
                 team_name=team_name,
                 player_id=player.id,
@@ -208,8 +214,16 @@ def get_best_score_from_db(sync: SupabaseSync, gameweek: int, team_id: str, play
         fanta_team_id=team_id, 
         nba_player_id=player_id
     )
+    print(f"###### Database score = {db_score}")
+
+    if new_score == None:
+        return None
     
     return max(new_score, db_score)
+
+def reset_for_gameweek(gameweek: int):
+    SupabaseSync().reset_lineup_scores_for_gameweek(gameweek=gameweek)
+    SupabaseSync().pull_lineup_for_all_teams(gameweek=gameweek)
 
 def daily_update_needed(team_name: str) -> bool:
     if TimeManager.is_past_eight_am():
@@ -217,7 +231,8 @@ def daily_update_needed(team_name: str) -> bool:
         user_update_dict = SupabaseSync().get_last_updated_dates()
         last_updated_date = get_user_date(team_name=team_name, teams_dict=user_update_dict)
         print(f"La data dell'ultimo update è {last_updated_date}")
-        if TimeManager().is_date_before_today(last_updated_date):
+        # if TimeManager().is_date_before_today(last_updated_date):
+        if last_updated_date < SIM_DATE: # Simulazione
             print(f"L'ultimo update risale a prima di oggi --> Update necessario")
             return True
     else:
@@ -233,16 +248,16 @@ def run_daily_update(team_id: str, new_date: date | str):
     ita_date = TimeManager().nba_date_to_italian_date(nba_date_str=date_str)
     gw = SupabaseSync().get_gameweek_by_date(target_date=ita_date)
 
-    # 1. Aggiorno last_updated_dates in fanta_teams (supabase)
-    SupabaseSync().update_team_last_updated_date(team_id=team_id, new_date=ita_date)
     # 2. Controllo se il database è già stato aggiornato da un altro utente
     last_updated_dates = SupabaseSync().get_last_updated_dates()
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    # today_str = datetime.now().strftime("%Y-%m-%d")
+    today_str = SIM_DATE # Simulazione
     if today_str in last_updated_dates.values():
         # Leggo il punteggio della squadra direttamente da matchups (supabase)
         # team_score = SupabaseSync().get_team_score_for_gameweek(team_id=team_id, gameweek=gw)
         pass # matchups e v-standings sono già aggiornate
     else:
+        print("##### Faccio update completo")
         SupabaseSync().sync_team_positions_to_json(team_id=team_id)
         SupabaseSync().sync_all_teams_state_to_json()
         update_all_teams_scores_via_api(target_date=date_str)
@@ -254,6 +269,8 @@ def run_daily_update(team_id: str, new_date: date | str):
     SupabaseSync().pull_lineup_for_team(team_name=team_name, gameweek=gw)
     # Pull e salvo calendario in locale
     SupabaseSync().pull_calendar()
+    # Aggiorno last_updated_dates in fanta_teams (supabase)
+    SupabaseSync().update_team_last_updated_date(team_id=team_id, new_date=ita_date)
 
 
 def main(page: ft.Page) -> None:
@@ -264,12 +281,21 @@ def main(page: ft.Page) -> None:
     page.window.height = 757
 
     def on_login_success(user_data):
-        target_date = TimeManager().get_nba_target_date()
+        #TODO: Se voglio aggiornamento realtime, devo ridefinire la logica per calcolare la data nba
+        # target_date = TimeManager().get_nba_target_date()
+        target_date = SIM_NBA_DATE # Simulazione
+        ita_date = TimeManager().nba_date_to_italian_date(nba_date_str=target_date)
+        sync = SupabaseSync()
+        gw = sync.get_gameweek_by_date(target_date=ita_date)
         # TODO: la riga seguente va sostituita con un metodo
         team_name = user_data["username"].replace("_user", "") 
         team = Team(name=team_name)
 
-        sync = SupabaseSync()
+        if SupabaseSync().is_first_day_of_gameweek(check_date=ita_date, gameweek=gw):
+            print("##### Primo giorno gameweek") 
+            if TimeManager().is_past_target_time(target_hour=17, target_minute=0):
+                reset_for_gameweek(gameweek=gw)
+
         team_id = sync.get_team_id_by_name(team_name=team_name)
         # username = user_data["username"] 
         if daily_update_needed(team_name=team_name):
@@ -296,14 +322,13 @@ def main(page: ft.Page) -> None:
             role_configs=ROLE_CONFIGS
         )
         # 2. Recupera info per il DB
-        ita_date = TimeManager().nba_date_to_italian_date(nba_date_str=target_date)
-        gw = sync.get_gameweek_by_date(target_date=ita_date)
         games_are_live = False # TODO: Implementare calcolo games_are_live
 
         # 3. Confronta i punteggi con il DB e aggiorna l'oggetto team
         scores_modified = False
 
         for player in team.players:
+            print(f"###### Calculated score (login) for {player.name} = {player.score}")
             best_score = get_best_score_from_db(
                 sync=sync,
                 gameweek=gw,
@@ -314,7 +339,9 @@ def main(page: ft.Page) -> None:
             )
             
             # Se il DB aveva un punteggio più alto, sovrascriviamo quello locale
-            if best_score > player.score:
+            if best_score == None:
+                scores_modified = False
+            elif best_score > player.score:
                 player.score = best_score
                 scores_modified = True
 
@@ -340,8 +367,8 @@ if __name__ == "__main__":
     # Render usa la variabile d'ambiente PORT
     port = int(os.environ.get("PORT", 8080))
     
-    ft.run(main=main, 
-        port=port, 
-        host="0.0.0.0", 
+    ft.run(main=main,
+        port=port,
+        host="0.0.0.0",
         assets_dir="assets",
     )

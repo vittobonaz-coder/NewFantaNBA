@@ -1,51 +1,51 @@
 [
     {
         "round_number": 1,
-        "start_date": "2026-10-04",
-        "end_date": "2026-10-10",
+        "start_date": "2026-10-21",
+        "end_date": "2026-10-27",
         "matchups": [
             {
-                "home_team": "Cola",
-                "away_team": "Cile",
-                "home_score": 97.0,
-                "away_score": 46.5,
+                "home_team": "Bonaz",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
-            },
-            {
-                "home_team": "Gents",
-                "away_team": "Testo",
-                "home_score": 73.0,
-                "away_score": 82.0,
-                "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
                 "away_team": "Freezer",
-                "home_score": 56.5,
-                "away_score": 78.0,
+                "home_score": 0.0,
+                "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
-                "home_team": "Bonaz",
-                "away_team": "Pippo",
-                "home_score": 63.5,
-                "away_score": 93.5,
+                "home_team": "Gents",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ]
     },
     {
         "round_number": 2,
-        "start_date": "2026-10-11",
-        "end_date": "2026-10-17",
+        "start_date": "2026-10-28",
+        "end_date": "2026-11-03",
         "matchups": [
             {
                 "home_team": "Freezer",
@@ -53,8 +53,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Testo",
@@ -62,8 +62,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -71,8 +71,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -80,8 +80,997 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 3,
+        "start_date": "2026-11-04",
+        "end_date": "2026-11-10",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Pippo",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 4,
+        "start_date": "2026-11-11",
+        "end_date": "2026-11-17",
+        "matchups": [
+            {
+                "home_team": "Cile",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 5,
+        "start_date": "2026-11-18",
+        "end_date": "2026-11-24",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Testo",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 6,
+        "start_date": "2026-11-25",
+        "end_date": "2026-12-01",
+        "matchups": [
+            {
+                "home_team": "Gents",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Pippo",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 7,
+        "start_date": "2026-12-02",
+        "end_date": "2026-12-08",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 8,
+        "start_date": "2026-12-09",
+        "end_date": "2026-12-15",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 9,
+        "start_date": "2026-12-16",
+        "end_date": "2026-12-22",
+        "matchups": [
+            {
+                "home_team": "Freezer",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Testo",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 10,
+        "start_date": "2026-12-23",
+        "end_date": "2026-12-29",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Pippo",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 11,
+        "start_date": "2026-12-30",
+        "end_date": "2027-01-05",
+        "matchups": [
+            {
+                "home_team": "Cile",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 12,
+        "start_date": "2027-01-06",
+        "end_date": "2027-01-12",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Testo",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 13,
+        "start_date": "2027-01-13",
+        "end_date": "2027-01-19",
+        "matchups": [
+            {
+                "home_team": "Gents",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Pippo",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 14,
+        "start_date": "2027-01-20",
+        "end_date": "2027-01-26",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 15,
+        "start_date": "2027-01-27",
+        "end_date": "2027-02-02",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 16,
+        "start_date": "2027-02-03",
+        "end_date": "2027-02-09",
+        "matchups": [
+            {
+                "home_team": "Freezer",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Testo",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 17,
+        "start_date": "2027-02-10",
+        "end_date": "2027-02-16",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Pippo",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 18,
+        "start_date": "2027-02-17",
+        "end_date": "2027-02-23",
+        "matchups": [
+            {
+                "home_team": "Cile",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 19,
+        "start_date": "2027-02-24",
+        "end_date": "2027-03-02",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Testo",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 20,
+        "start_date": "2027-03-03",
+        "end_date": "2027-03-09",
+        "matchups": [
+            {
+                "home_team": "Gents",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Pippo",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 21,
+        "start_date": "2027-03-10",
+        "end_date": "2027-03-16",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 22,
+        "start_date": "2027-03-17",
+        "end_date": "2027-03-23",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 23,
+        "start_date": "2027-03-24",
+        "end_date": "2027-03-30",
+        "matchups": [
+            {
+                "home_team": "Freezer",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Testo",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cile",
+                "away_team": "Mazen",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 24,
+        "start_date": "2027-03-31",
+        "end_date": "2027-04-06",
+        "matchups": [
+            {
+                "home_team": "Bonaz",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Freezer",
+                "away_team": "Cile",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Pippo",
+                "away_team": "Cola",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Gents",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            }
+        ]
+    },
+    {
+        "round_number": 25,
+        "start_date": "2027-04-07",
+        "end_date": "2027-04-12",
+        "matchups": [
+            {
+                "home_team": "Cile",
+                "away_team": "Bonaz",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Cola",
+                "away_team": "Testo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Gents",
+                "away_team": "Freezer",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
+            },
+            {
+                "home_team": "Mazen",
+                "away_team": "Pippo",
+                "home_score": 0.0,
+                "away_score": 0.0,
+                "was_played": false,
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ]
     }

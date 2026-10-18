@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from itertools import product
 from api_nba import NbaDataManager
 from datetime import datetime
 import os
@@ -8,6 +7,9 @@ import json
 
 # Score di un giocatore la cui squadra non ha ancora giocato nella data target
 NOT_PLAYED_SCORE = None
+
+# Numero di giocatori di ogni rosa: 5 titolari + 1 sesto uomo + 4 panchina + 5 riserve
+ROSTER_SIZE = 15
 
 def has_played(score) -> bool:
     """True se lo score rappresenta una partita già giocata (anche con 0 punti o DNP)."""
@@ -321,17 +323,8 @@ class Team:
         self.roles_map[player.id] = role
 
     def is_valid_roster(self) -> bool:
-        """Verifica che la squadra sia composta esattamente da 5G, 5A, 3C."""
-        if len(self.players) != 13:
-            return False
-            
-        options = [p.position.split('/') for p in self.players]
-        return any(
-            c.count('G') == 5 and 
-            c.count('A') == 5 and 
-            c.count('C') == 3 
-            for c in product(*options)
-        )
+        """Verifica che la squadra sia composta esattamente da ROSTER_SIZE giocatori."""
+        return len(self.players) == ROSTER_SIZE
 
     def load_data_from_api(self, api_manager: NbaDataManager, target_date: str, names_list: list[str], roles_dict: dict[str, str]):
         """Scarica i dati tramite l'API Manager e popola il Team."""

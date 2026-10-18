@@ -1,38 +1,74 @@
 [
     {
-        "PLAYER_ID": 1631105,
-        "PLAYER_NAME": "Jalen Duren",
-        "TEAM": "DET",
-        "POSITION": "Center"
+        "PLAYER_ID": 1641705,
+        "PLAYER_NAME": "Victor Wembanyama",
+        "TEAM": "SAS",
+        "POSITION": "Forward-Center"
     },
     {
-        "PLAYER_ID": 1627742,
-        "PLAYER_NAME": "Brandon Ingram",
-        "TEAM": "LAC",
+        "PLAYER_ID": 1627759,
+        "PLAYER_NAME": "Jaylen Brown",
+        "TEAM": "PHI",
+        "POSITION": "Guard-Forward"
+    },
+    {
+        "PLAYER_ID": 1627783,
+        "PLAYER_NAME": "Pascal Siakam",
+        "TEAM": "IND",
         "POSITION": "Forward"
     },
     {
-        "PLAYER_ID": 1628369,
-        "PLAYER_NAME": "Jayson Tatum",
-        "TEAM": "BOS",
-        "POSITION": "Forward-Guard"
-    },
-    {
-        "PLAYER_ID": 1629029,
-        "PLAYER_NAME": "Luka Dončić",
-        "TEAM": "LAL",
-        "POSITION": "Forward-Guard"
-    },
-    {
-        "PLAYER_ID": 1628973,
-        "PLAYER_NAME": "Jalen Brunson",
-        "TEAM": "NYK",
+        "PLAYER_ID": 201935,
+        "PLAYER_NAME": "James Harden",
+        "TEAM": "CLE",
         "POSITION": "Guard"
     },
     {
-        "PLAYER_ID": 1630202,
-        "PLAYER_NAME": "Payton Pritchard",
+        "PLAYER_ID": 1630162,
+        "PLAYER_NAME": "Anthony Edwards",
+        "TEAM": "MIN",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1626164,
+        "PLAYER_NAME": "Devin Booker",
+        "TEAM": "PHX",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1628401,
+        "PLAYER_NAME": "Derrick White",
         "TEAM": "BOS",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630168,
+        "PLAYER_NAME": "Onyeka Okongwu",
+        "TEAM": "ATL",
+        "POSITION": "Forward-Center"
+    },
+    {
+        "PLAYER_ID": 1629627,
+        "PLAYER_NAME": "Zion Williamson",
+        "TEAM": "NOP",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630532,
+        "PLAYER_NAME": "Franz Wagner",
+        "TEAM": "ORL",
+        "POSITION": "Forward"
+    },
+    {
+        "PLAYER_ID": 1630193,
+        "PLAYER_NAME": "Immanuel Quickley",
+        "TEAM": "TOR",
+        "POSITION": "Guard"
+    },
+    {
+        "PLAYER_ID": 1630217,
+        "PLAYER_NAME": "Desmond Bane",
+        "TEAM": "ORL",
         "POSITION": "Guard"
     },
     {
@@ -42,33 +78,9 @@
         "POSITION": "Guard-Forward"
     },
     {
-        "PLAYER_ID": 1629673,
-        "PLAYER_NAME": "Jordan Poole",
-        "TEAM": "NOP",
-        "POSITION": "Guard"
-    },
-    {
-        "PLAYER_ID": 1641824,
-        "PLAYER_NAME": "Matas Buzelis",
-        "TEAM": "CHI",
-        "POSITION": "Forward"
-    },
-    {
-        "PLAYER_ID": 1628386,
-        "PLAYER_NAME": "Jarrett Allen",
-        "TEAM": "CLE",
-        "POSITION": "Center"
-    },
-    {
-        "PLAYER_ID": 201950,
-        "PLAYER_NAME": "Jrue Holiday",
-        "TEAM": "POR",
-        "POSITION": "Guard"
-    },
-    {
-        "PLAYER_ID": 1630180,
-        "PLAYER_NAME": "Saddiq Bey",
-        "TEAM": "NOP",
+        "PLAYER_ID": 1631323,
+        "PLAYER_NAME": "Simone Fontecchio",
+        "TEAM": "MIA",
         "POSITION": "Forward"
     },
     {

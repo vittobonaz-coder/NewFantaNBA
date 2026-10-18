@@ -11,6 +11,37 @@ ROLE_CONFIGS = {
     "RESERVE": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 0.6, "mult": 0.0, "button_size": 15, "button_left": -8, "button_top": -8},
 }
 
+# Posizioni richieste dagli slot titolari (0-4) per ogni modulo
+LINEUP_ROLES = {
+    "2-2-1": ['C', 'A', 'A', 'G', 'G'],
+    "2-1-2": ['C', 'C', 'A', 'G', 'G'],
+    "1-2-2": ['C', 'C', 'A', 'A', 'G'],
+}
+
+def find_starter_assignment(roles: list[str], players: list[Player]) -> list[int] | None:
+    """
+    Cerca giocatori distinti che coprano le posizioni richieste dagli slot titolari.
+    Restituisce, per ogni slot, l'indice del giocatore scelto; None se il modulo è impossibile.
+    Per fare meno scambi possibili preferisce chi è già nello slot, poi gli altri titolari,
+    poi sesto uomo, panchina e riserve.
+    """
+    n_starters = len(roles)
+
+    def candidates(k):
+        return [k] + [i for i in range(n_starters) if i != k] + list(range(n_starters, len(players)))
+
+    def assign(k, used):
+        if k == n_starters:
+            return []
+        for idx in candidates(k):
+            if idx not in used and roles[k] in players[idx].position.split('/'):
+                rest = assign(k + 1, used | {idx})
+                if rest is not None:
+                    return [idx] + rest
+        return None
+
+    return assign(0, frozenset())
+
 class PlayerCard(ft.Container):
     """Classe per le cards dei giocatori"""
 
@@ -111,6 +142,15 @@ class Court(ft.Column):
             )
             self.cards.append(card)
 
+        # MODULI DISPONIBILI: solo quelli che la rosa riesce a schierare
+        # (calcolati una volta sola: gli scambi non cambiano i giocatori della rosa)
+        self.available_lineups = [
+            l for l in LINEUP_ROLES
+            if find_starter_assignment(LINEUP_ROLES[l], self.team.players) is not None
+        ] or [self.lineup]  # nessun modulo possibile: lasciamo quello salvato
+        if self.lineup not in self.available_lineups:
+            self.lineup = self.available_lineups[0]
+
         # VALIDAZIONE AUTOMATICA ALL'AVVIO
         # Se i giocatori caricati non rispettano il modulo attuale, li scambiamo subito
         self.auto_fix_starters(self.lineup)
@@ -121,7 +161,7 @@ class Court(ft.Column):
         # DROPDOWN FORMAZIONE
         self.lineup_dd = ft.Dropdown(
             width=110, height=50, text_size=12, value=self.lineup,
-            options=[ft.dropdown.Option(x) for x in ["2-2-1", "2-1-2", "1-2-2"]],
+            options=[ft.dropdown.Option(x) for x in self.available_lineups],
             filled=True, fill_color="#1a1a1a", border_color="grey",
             on_select=self.change_lineup
         )
@@ -262,7 +302,10 @@ class Court(ft.Column):
             # Riserve
             ft.Container(
                 content=ft.Column(
-                    controls=ft.Row(controls=[self.cards[10], self.cards[11], self.cards[12]], alignment="center")
+                    controls=[
+                        ft.Row(controls=[self.cards[10], self.cards[11], self.cards[12]], alignment="center"),
+                        ft.Row(controls=[self.cards[13], self.cards[14]], alignment="center"),
+                    ]
                 )
             )
         ]
@@ -292,50 +335,34 @@ class Court(ft.Column):
     
     def get_starter_roles(self, lineup_str):
         """Restituisce solo la mappa dei ruoli per i primi 5 slot (Titolari)"""
-        if lineup_str == "2-2-1":
-            return ['C', 'A', 'A', 'G', 'G']
-        elif lineup_str == "2-1-2":
-            return ['C', 'C', 'A', 'G', 'G']
-        else: # 1-2-2
-            return ['C', 'C', 'A', 'A', 'G']
-        
+        return LINEUP_ROLES[lineup_str]
+
     def auto_fix_starters(self, new_lineup):
         """
-        Controlla i titolari e scambia quelli incompatibili con la panchina.
-        Ottimizzato per fare il minor numero di scambi possibili.
+        Riorganizza i titolari perché rispettino il nuovo modulo, cercando
+        i sostituti tra sesto uomo, panchina e riserve con il minor numero di scambi.
         """
-        new_roles = self.get_starter_roles(new_lineup)
-        invalid_starters = []
-        # 1. Troviamo quali titolari (indici 0-4) sono illegali nel nuovo modulo
-        for i in range(5):
-            req_role = new_roles[i]
-            if req_role not in self.cards[i].player.position.split('/'):
-                invalid_starters.append((i, req_role)) # Salviamo indice e ruolo richiesto
+        roles = self.get_starter_roles(new_lineup)
+        current = [(c.player, c.score) for c in self.cards]
+        players = [p for p, _ in current]
 
-        if not invalid_starters:
-            return # Nessun giocatore fuori posizione, usciamo subito!
+        assignment = find_starter_assignment(roles, players)
+        if assignment is None:
+            return  # Modulo impossibile (non dovrebbe succedere: il dropdown li esclude)
 
-        # 2. Cerchiamo i sostituti dalla panchina (indici 5-9)
-        used_bench_indexes = set() # Per non scambiare due volte lo stesso panchinaro
-        for starter_idx, req_role in invalid_starters:
-            for bench_idx in range(5, 10):
-                if bench_idx in used_bench_indexes:
-                    continue
-                
-                # Se il panchinaro ha il ruolo che ci serve per tappare il buco
-                if req_role in self.cards[bench_idx].player.position.split('/'):
-                    # Facciamo uno scambio silente dei dati (stessa logica di handle_swap)
-                    # TO DO: Non posso riutilizzare il metodo handle_swap
-                    starter_card = self.cards[starter_idx]
-                    bench_card = self.cards[bench_idx]
-                    old_player = starter_card.player
-                    old_score = starter_card.score
-                    # update_data aggiorna i dati e ricalcola anche il moltiplicatore in base al fatto che uno diventa STARTER e l'altro BENCH
-                    starter_card.update_data(bench_card.player, bench_card.score)
-                    bench_card.update_data(old_player, old_score)
-                    # Segniamo il panchinaro come usato e passiamo al prossimo titolare illegale
-                    used_bench_indexes.add(bench_idx)
-                    break
+        new_state = list(current)
+        # I titolari scelti vanno negli slot 0-4
+        for slot, src in enumerate(assignment):
+            new_state[slot] = current[src]
+        # I titolari esclusi prendono i posti lasciati liberi in panchina/riserve
+        displaced = [i for i in range(len(roles)) if i not in assignment]
+        vacated = [i for i in assignment if i >= len(roles)]
+        for slot, src in zip(vacated, displaced):
+            new_state[slot] = current[src]
+
+        for card, (p, s) in zip(self.cards, new_state):
+            if card.player is not p:
+                card.update_data(p, s)
 
     def handle_swap(self, origin_idx: int, target_idx: int):
         """Logica di scambio"""
@@ -355,65 +382,28 @@ class Court(ft.Column):
         self.refresh_menus()
         self.update()
     
-    def is_group_valid(self, players_subset, req_g, req_a, req_c):
-        """Verifica se un blocco di giocatori può soddisfare esattamente i ruoli richiesti"""
-        from itertools import product
-        options = [p.position.split('/') for p in players_subset]
-        return any(
-            c.count('G') == req_g and 
-            c.count('A') == req_a and 
-            c.count('C') == req_c 
-            for c in product(*options)
-        )
-
     def refresh_menus(self):
         """
-        Rigenera i menu di scambio applicando:
-        1. Vincolo di Slot (Righe Titolari: C, A, G)
-        2. Vincolo di Roster Attivo (0-9): Sempre 2C, 4A, 4G
-        3. Vincolo di Riserve (10-12): Sempre 1C, 1A, 1G
+        Rigenera i menu di scambio applicando solo il vincolo di slot
+        dei titolari (le posizioni richieste dal modulo per gli slot 0-4).
         """
-        if self.lineup == "2-2-1":
-            slot_map = ['C', 'A', 'A', 'G', 'G', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY']
-        elif self.lineup == "2-1-2":
-            slot_map = ['C', 'C', 'A', 'G', 'G', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY']
-        else:
-            slot_map = ['C', 'C', 'A', 'A', 'G', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY', 'ANY']
+        starter_roles = self.get_starter_roles(self.lineup)
 
         for i, card in enumerate(self.cards):
             valid_items = []
-            
+
             for j, other_card in enumerate(self.cards):
                 if i == j: continue
-                
-                # 1. Simuliamo lo scambio
+
+                # Simuliamo lo scambio
                 temp_players = [c.player for c in self.cards]
                 temp_players[i], temp_players[j] = temp_players[j], temp_players[i]
-                
-                # --- CONTROLLO A: Vincolo di Posizione Individuale (Solo per i Titolari 0-4) ---
-                # Verifichiamo che i giocatori nei primi 5 slot abbiano il ruolo richiesto dalla riga
-                illegal_position = False
-                for idx in range(5):
-                    required_role = slot_map[idx]
-                    # Se il giocatore in quello slot non ha il ruolo richiesto tra i suoi possibili ruoli
-                    if required_role not in temp_players[idx].position.split('/'):
-                        illegal_position = True
-                        break
-                
-                if illegal_position:
+
+                # Vincolo di Posizione Individuale (Solo per i Titolari 0-4)
+                if any(starter_roles[idx] not in temp_players[idx].position.split('/') for idx in range(5)):
                     continue
 
-                # --- CONTROLLO B: Integrità del Roster Attivo (Slot 0-9) ---
-                # Titolari + Panchina devono SEMPRE poter garantire 2C, 4A, 4G
-                if not self.is_group_valid(temp_players[0:10], req_g=4, req_a=4, req_c=2):
-                    continue
-                    
-                # --- CONTROLLO C: Integrità delle Riserve (Slot 10-12) ---
-                # Le 3 riserve devono SEMPRE poter garantire 1C, 1A, 1G
-                if not self.is_group_valid(temp_players[10:13], req_g=1, req_a=1, req_c=1):
-                    continue
-
-                # Se passa tutti i test, lo scambio è legale
+                # Se passa il test, lo scambio è legale
                 valid_items.append(
                     ft.PopupMenuItem(
                         content=ft.Text(other_card.player.name.split()[-1]),

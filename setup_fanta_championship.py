@@ -1,14 +1,14 @@
 import json
 import os
 from api_nba import NbaDataManager
-from fanta_obj import Team, Player
+from fanta_obj import Team, Player, NOT_PLAYED_SCORE
 from supabase_manager import SupabaseSync
 from datetime import datetime, timedelta
 from time_manager import TimeManager
 
 
-start_calendar_date = "2026-10-04"
-end_calendar_date = "2026-10-17"
+start_calendar_date = "2026-10-21"
+end_calendar_date = "2027-04-12"
 
 sync = SupabaseSync()
 api_manager = NbaDataManager(player_ids=[])
@@ -49,23 +49,29 @@ def run_teams_setup():
         
         with open(info_path, "r", encoding="utf-8") as f:
             players_info = json.load(f)
-            
-        for p_info in players_info:
+        info_by_name = {p_info["PLAYER_NAME"].lower(): p_info for p_info in players_info}
+
+        # L'ordine di fanta_teams.json è quello atteso da Court (titolari, sesto, panchina, riserve)
+        for player_name, role in roles_map.items():
+            p_info = info_by_name.get(player_name.lower())
+            if not p_info:
+                print(f"Attenzione: dati anagrafici non trovati per '{player_name}' ({team_name})")
+                continue
             player = Player(
                 id=p_info["PLAYER_ID"],
                 name=p_info["PLAYER_NAME"],
                 team_abbreviation=p_info["TEAM"],
-                position=p_info["POSITION"]
+                position=p_info["POSITION"],
+                score=NOT_PLAYED_SCORE  # Nessuna partita ancora giocata
             )
-            team.add_player(player, roles_map.get(p_info["PLAYER_NAME"], "RISERVA"))
+            team.add_player(player, role)
 
         team.target_date = TimeManager().italian_date_to_nba_date(italian_date_str=start_calendar_date)
 
         # Push struttura squadra
         sync.push_team(team)
         team.save_to_json()
-        sync.pull_lineup_for_all_teams(gameweek=1)
-        
+
     print("Setup statico completato (fanta_teams, nba_players, rosters).")
 
 
@@ -163,6 +169,7 @@ def run_calendar_setup(start_date: str, end_date: str):
     sync.push_calendar(calendar)
 
     print(f"Calendario di {len(calendar)} giornate generato e salvato con successo!")
+    return calendar
 
 def run_profiles_setup():
     SupabaseSync().push_fanta_teams_from_json()
@@ -173,6 +180,6 @@ def run_profiles_setup():
 if __name__ == "__main__":
     run_profiles_setup()
     run_teams_setup()
-    run_calendar_setup(start_date=start_calendar_date, end_date=end_calendar_date)
+    calendar = run_calendar_setup(start_date=start_calendar_date, end_date=end_calendar_date)
     SupabaseSync().sync_standings()
-    SupabaseSync().push_lineup_for_all_teams()
+    SupabaseSync().push_season_lineups(calendar)

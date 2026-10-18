@@ -703,6 +703,46 @@ class SupabaseSync:
         except Exception as e:
             print(f"Errore critico durante l'esportazione massiva delle lineup: {e}")
 
+    def push_season_lineups(self, calendar: list[dict]) -> None:
+        """
+        Inserisce in lineup_players le righe di TUTTE le giornate della stagione per tutte le squadre,
+        partendo dai file <nome_team>_state.json locali. Gli score sono NULL (nessuna partita giocata).
+        Pensato per il setup iniziale: presuppone la tabella vuota (reset_pre_setup.py).
+        """
+        print("Inserimento delle lineup di tutte le giornate su Supabase...")
+        teams_res = self.supabase.table("fanta_teams").select("id, name").execute()
+        if not teams_res.data:
+            print("Nessuna squadra trovata nel database Supabase.")
+            return
+
+        for t in teams_res.data:
+            state_path = Team(t["name"]).filename
+            if not os.path.exists(state_path):
+                print(f"Errore: File {state_path} non trovato per il team {t['name']}.")
+                continue
+            with open(state_path, "r", encoding="utf-8") as f:
+                roster = json.load(f).get("roster", [])
+
+            lineup_data = []
+            for round_data in calendar:
+                # Le date del calendario sono italiane, target_date in lineup_players è la data NBA
+                target_date = TimeManager.italian_date_to_nba_date(round_data["start_date"])
+                for index, player in enumerate(roster):
+                    lineup_data.append({
+                        "fanta_team_id": t["id"],
+                        "gameweek": round_data["round_number"],
+                        "nba_player_id": player.get("id"),
+                        "slot": index + 1,
+                        "score": NOT_PLAYED_SCORE,
+                        "player_name": player.get("name"),
+                        "role": player.get("role"),
+                        "target_date": target_date
+                    })
+
+            if lineup_data:
+                self.supabase.table("lineup_players").insert(lineup_data).execute()
+                print(f"Lineup di '{t['name']}' caricate: {len(calendar)} giornate, {len(lineup_data)} righe.")
+
     def pull_lineup_for_team(self, team_name: str, gameweek: int, data_dir: str = "data") -> bool:
         """
         Scarica i dati dalla tabella lineup_players per una specifica gameweek e aggiorna 
