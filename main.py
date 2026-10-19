@@ -105,7 +105,7 @@ def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_
     sync = SupabaseSync()
 
     # Recuperiamo la Gameweek da Supabase usando la DATA ITALIANA
-    gameweek = sync.get_gameweek_by_date(italian_date)
+    gameweek = sync.get_gameweek_by_date(italian_date, before_start_as_first=False)
     if gameweek is None:
         print(f"Avviso: Nessuna gameweek trovata su Supabase per la data italiana {italian_date}. L'aggiornamento dei matchups verrà saltato.")
 
@@ -360,7 +360,7 @@ def main(page: ft.Page) -> None:
             return
         
         page.clean()
-        page.add(MainDashboard(team))
+        page.add(MainDashboard(team, target_date))
         page.update()
     
     # Avvio con schermata di login

@@ -10,6 +10,25 @@ from nba_api.stats.static import players
 from nba_api.stats.endpoints import commonallplayers
 
 
+# Sigle NBA ufficiali (nba_players.nba_team) che su ESPN sono diverse
+NBA_TO_ESPN_TEAM = {"GSW": "GS", "NOP": "NO", "NYK": "NY", "SAS": "SA", "UTA": "UTAH", "WAS": "WSH"}
+ESPN_TO_NBA_TEAM = {espn: nba for nba, espn in NBA_TO_ESPN_TEAM.items()}
+
+
+def normalize_name(name):
+    """Nome confrontabile tra NBA ed ESPN (es. 'Luka Dončić Jr.' -> 'luka doncic')."""
+    # Rimuove accenti e diacritici (es. Dončić -> Doncic)
+    name = unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore').decode('utf-8')
+    name = name.lower()
+    # Rimuove apostrofi, punti e trattini
+    name = name.replace(".", "").replace("'", "").replace("-", " ")
+    # Rimuove suffissi comuni
+    name = re.sub(r'\b(jr|sr|ii|iii|iv)\b', '', name)
+    # Rimuove doppi spazi causati dalle pulizie precedenti
+    name = " ".join(name.split())
+    return name
+
+
 class NbaDataManager:
 
     def __init__(self, player_ids, season="2026-27", s_type="Pre Season"):
@@ -63,36 +82,7 @@ class NbaDataManager:
         nba_players_list = players.get_active_players()
 
         # 2. Ottieni giocatori attivi da ESPN
-        espn_players_list = []
-        try:
-            url_teams = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams?limit=30"
-            resp = requests.get(url_teams, timeout=10).json()
-            teams = resp["sports"][0]["leagues"][0]["teams"]
-
-            for t in teams:
-                t_id = t["team"]["id"]
-                r_url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{t_id}/roster"
-                r_data = requests.get(r_url, timeout=10).json()
-                for ath in r_data.get("athletes", []):
-                    espn_players_list.append({
-                        "espn_id": str(ath["id"]),
-                        "name": ath.get("fullName", ""),
-                    })
-                time.sleep(0.05)
-        except Exception as e:
-            print(f"Errore durante il recupero dei giocatori ESPN: {e}")
-
-        def normalize_name(name):
-            # Rimuove accenti e diacritici (es. Dončić -> Doncic)
-            name = unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore').decode('utf-8')
-            name = name.lower()
-            # Rimuove apostrofi, punti e trattini
-            name = name.replace(".", "").replace("'", "").replace("-", " ")
-            # Rimuove suffissi comuni
-            name = re.sub(r'\b(jr|sr|ii|iii|iv)\b', '', name)
-            # Rimuove doppi spazi causati dalle pulizie precedenti
-            name = " ".join(name.split())
-            return name
+        espn_players_list = self.fetch_espn_players()
 
         # 3. Accoppiamento basato sul Nome Normalizzato (Migliorato)
         espn_dict = {
@@ -117,7 +107,14 @@ class NbaDataManager:
 
         print("Giocatori non mappati:", unmapped)
 
-        # Salva mappa su file
+        self.save_id_map(nba_to_espn, espn_to_nba)
+        print(
+            f"Mappa creata: {len(nba_to_espn)} giocatori associati correttamente."
+        )
+        return nba_to_espn, espn_to_nba
+
+    def save_id_map(self, nba_to_espn, espn_to_nba):
+        """Salva le mappe NBA <-> ESPN su file JSON."""
         with open(self.map_file, "w", encoding="utf-8") as f:
             json.dump(
                 {"nba_to_espn": nba_to_espn, "espn_to_nba": espn_to_nba},
@@ -126,10 +123,63 @@ class NbaDataManager:
                 ensure_ascii=False,
             )
 
-        print(
-            f"Mappa creata: {len(nba_to_espn)} giocatori associati correttamente."
-        )
-        return nba_to_espn, espn_to_nba
+    def fetch_espn_players(self):
+        """Scarica i roster attuali delle 30 squadre da ESPN: lista di {"espn_id", "name"}."""
+        espn_players_list = []
+        try:
+            url_teams = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams?limit=30"
+            resp = requests.get(url_teams, timeout=10).json()
+            teams = resp["sports"][0]["leagues"][0]["teams"]
+
+            for t in teams:
+                t_id = t["team"]["id"]
+                r_url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{t_id}/roster"
+                r_data = requests.get(r_url, timeout=10).json()
+                for ath in r_data.get("athletes", []):
+                    espn_players_list.append({
+                        "espn_id": str(ath["id"]),
+                        "name": ath.get("fullName", ""),
+                    })
+                time.sleep(0.05)
+        except Exception as e:
+            print(f"Errore durante il recupero dei giocatori ESPN: {e}")
+        return espn_players_list
+
+    def map_missing_players(self, players_by_id):
+        """
+        Aggiunge alla mappa i giocatori che mancano (es. rookie assenti dai dati statici di nba_api),
+        cercandoli per nome nei roster ESPN attuali.
+        :param players_by_id: dizionario {id NBA: nome completo}, es. dalla tabella nba_players
+        :return: nomi dei giocatori che non è stato possibile mappare
+        """
+        missing = {
+            str(p_id): name for p_id, name in players_by_id.items()
+            if str(p_id) not in self.nba_to_espn_map
+        }
+        if not missing:
+            return []
+
+        print(f"Ricerca su ESPN di {len(missing)} giocatori assenti dalla mappa NBA <-> ESPN...")
+        espn_dict = {
+            normalize_name(p["name"]): p["espn_id"]
+            for p in self.fetch_espn_players()
+        }
+
+        not_found = []
+        for nba_id, name in missing.items():
+            espn_id = espn_dict.get(normalize_name(name))
+            if espn_id:
+                self.nba_to_espn_map[nba_id] = espn_id
+                self.espn_to_nba_map[espn_id] = nba_id
+                if nba_id in self.player_ids:
+                    self.espn_player_ids.add(espn_id)
+                print(f"Mappato: {name} ({nba_id}) -> ESPN {espn_id}")
+            else:
+                not_found.append(name)
+
+        if len(not_found) < len(missing):
+            self.save_id_map(self.nba_to_espn_map, self.espn_to_nba_map)
+        return not_found
 
     # ==========================================
     # SEZIONE 2: METODI ESPN (Dati Giornalieri)
@@ -233,8 +283,14 @@ class NbaDataManager:
             print(f"Games Error: {e}")
             return []
 
-    def fetch_boxscores(self, date_string):
-        """Scarica i tabellini via ESPN e riconverte i PLAYER_ID negli ID NBA Ufficiali"""
+    def fetch_boxscores(self, date_string, only_completed=False, include_dnp=False, strict=False):
+        """
+        Scarica i tabellini via ESPN e riconverte i PLAYER_ID negli ID NBA Ufficiali.
+        :param only_completed: se True salta le partite non concluse (in corso, rinviate)
+        :param include_dnp: se True include i giocatori a referto non entrati in campo
+                            (record con "DNP": True e statistiche vuote -> 0.0 punti)
+        :param strict: se True solleva un'eccezione quando ESPN non risponde, invece di restituire []
+        """
         try:
             date_param = pd.to_datetime(date_string).strftime("%Y%m%d")
             game_date_iso = pd.to_datetime(date_string).strftime("%Y-%m-%d")
@@ -242,17 +298,25 @@ class NbaDataManager:
             url_sb = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={date_param}"
             resp_sb = requests.get(url_sb, timeout=10)
             if resp_sb.status_code != 200:
+                if strict:
+                    raise RuntimeError(f"ESPN Scoreboard HTTP {resp_sb.status_code}")
                 return []
 
             events = resp_sb.json().get("events", [])
             boxscores = []
 
             for event in events:
+                # Partite in corso o rinviate: il tabellino non è definitivo
+                if only_completed and not event.get("status", {}).get("type", {}).get("completed", False):
+                    continue
+
                 g_id = str(event.get("id"))
                 url_box = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={g_id}"
                 resp_box = requests.get(url_box, timeout=10)
 
                 if resp_box.status_code != 200:
+                    if strict:
+                        raise RuntimeError(f"ESPN Summary HTTP {resp_box.status_code} (partita {g_id})")
                     continue
 
                 data_box = resp_box.json()
@@ -279,6 +343,7 @@ class NbaDataManager:
 
                 for team_entry in teams_players:
                     t_id = str(team_entry.get("team", {}).get("id"))
+                    team_abbr = team_entry.get("team", {}).get("abbreviation", "")
                     wl_status = "W" if t_id in winners_team_ids else "L"
 
                     for stat_group in team_entry.get("statistics", []):
@@ -301,29 +366,40 @@ class NbaDataManager:
                             ):
                                 continue
 
-                            if ath.get("didNotPlay", False):
-                                continue
-
                             stats = ath.get("stats", [])
-                            if not stats:
+                            dnp = ath.get("didNotPlay", False) or not stats
+                            if dnp and not include_dnp:
                                 continue
 
                             # Riconversione a ID NBA Ufficiale
                             nba_p_id = self.espn_to_nba_map.get(
                                 espn_p_id, espn_p_id
                             )
+                            player_id = int(nba_p_id) if nba_p_id.isdigit() else nba_p_id
+
+                            if dnp:
+                                # A referto ma non entrato in campo: tabellino vuoto (vale 0.0)
+                                boxscores.append({
+                                    "PLAYER_ID": player_id,
+                                    "GAME_ID": g_id,
+                                    "GAME_DATE": game_date_iso,
+                                    "MATCHUP": matchup_str,
+                                    "TEAM": team_abbr,
+                                    "WL": wl_status,
+                                    "DNP": True,
+                                })
+                                continue
 
                             fg = get_val(stats, "FG").split("-")
                             fg3 = get_val(stats, "3PT").split("-")
                             ft = get_val(stats, "FT").split("-")
 
                             record = {
-                                "PLAYER_ID": int(nba_p_id)
-                                if nba_p_id.isdigit()
-                                else nba_p_id,
+                                "PLAYER_ID": player_id,
                                 "GAME_ID": g_id,
                                 "GAME_DATE": game_date_iso,
                                 "MATCHUP": matchup_str,
+                                "TEAM": team_abbr,
                                 "WL": wl_status,
                                 "MIN": get_val(stats, "MIN"),
                                 "FGM": int(fg[0]) if len(fg) > 0 else 0,
@@ -349,6 +425,8 @@ class NbaDataManager:
             return boxscores
 
         except Exception as e:
+            if strict:
+                raise
             print(f"Boxscores Error: {e}")
             return []
 

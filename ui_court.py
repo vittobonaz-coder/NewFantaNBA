@@ -1,14 +1,15 @@
 import flet as ft
 import os
 import json
-from fanta_obj import Player, Team, has_played
+from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS
+from time_manager import TimeManager
 
 
 ROLE_CONFIGS = {
-    "STARTER": {"width": 110, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": 1.0, "button_size": 20, "button_left": -5, "button_top": -5},
-    "SIXTH": {"width": 110, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": 1.0, "button_size": 20, "button_left": -5, "button_top": -5},
-    "BENCH": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 1.0, "mult": 0.5, "button_size": 15, "button_left": -8, "button_top": -8},
-    "RESERVE": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 0.6, "mult": 0.0, "button_size": 15, "button_left": -8, "button_top": -8},
+    "STARTER": {"width": 100, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["STARTER"], "button_size": 20, "button_left": -5, "button_top": -5},
+    "SIXTH": {"width": 100, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["SIXTH"], "button_size": 20, "button_left": -5, "button_top": -5},
+    "BENCH": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["BENCH"], "button_size": 15, "button_left": -8, "button_top": -8},
+    "RESERVE": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 0.6, "mult": ROLE_MULTIPLIERS["RESERVE"], "button_size": 15, "button_left": -8, "button_top": -8},
 }
 
 # Posizioni richieste dagli slot titolari (0-4) per ogni modulo
@@ -16,6 +17,8 @@ LINEUP_ROLES = {
     "2-2-1": ['C', 'A', 'A', 'G', 'G'],
     "2-1-2": ['C', 'C', 'A', 'G', 'G'],
     "1-2-2": ['C', 'C', 'A', 'A', 'G'],
+    "3-1-1": ['C', 'A', 'G', 'G', 'G'],
+    "1-3-1": ['C', 'A', 'A', 'A', 'G'],
 }
 
 def find_starter_assignment(roles: list[str], players: list[Player]) -> list[int] | None:
@@ -108,7 +111,7 @@ class PlayerCard(ft.Container):
         self.setup_ui()
 
 class Court(ft.Column):
-    def __init__(self, team_instance: Team):
+    def __init__(self, team_instance: Team, target_date: str):
         super().__init__()
         self.horizontal_alignment = "center"
         self.scroll = ft.ScrollMode.AUTO
@@ -116,6 +119,7 @@ class Court(ft.Column):
         self.spacing = 0
         # self.spacing = 10
         self.team = team_instance
+        self.target_date = target_date  # Data NBA di riferimento (fornita da main)
         self.lineup = self.team.lineup 
 
         # # 1. SALVATAGGIO STATO INIZIALE (per Annulla)
@@ -166,7 +170,7 @@ class Court(ft.Column):
             on_select=self.change_lineup
         )
         
-        self.starters_container = ft.Container(width=250, height=450)
+        self.starters_container = ft.Container(width=320, height=450)
 
         # 2. BOTTONI SALVA / ANNULLA
         self.btn_save = ft.ElevatedButton(
@@ -212,6 +216,15 @@ class Court(ft.Column):
         # Sincronizza Cloud e salva in locale
         sync.push_team(self.team, court=self)
         self.team.save_to_json()
+
+        # Aggiorna slot e ruoli in lineup_players dalla giornata corrente in poi,
+        # solo per i giocatori che hanno cambiato slot rispetto all'ultimo salvataggio
+        moved_ids = {c.player.id for c, (old_p, _) in zip(self.cards, self.initial_state)
+                     if c.player.id != old_p.id}
+        ita_date = TimeManager.nba_date_to_italian_date(self.target_date)
+        gameweek = sync.get_gameweek_by_date(ita_date)
+        if gameweek is not None and moved_ids:
+            sync.update_lineup_slots(self.team, gameweek, only_ids=moved_ids)
         
         # Il nuovo stato corrente diventa il punto di ripristino per futuri cambi
         self._capture_current_state()
@@ -312,25 +325,20 @@ class Court(ft.Column):
 
     def update_starters_layout(self):
         """Cambia SOLO il contenuto del rettangolo dei titolari"""
-        if self.lineup == "2-2-1":
-            rows = [
-                ft.Row(controls=[self.cards[0]], alignment=ft.MainAxisAlignment.CENTER),
-                ft.Row(controls=[self.cards[1], self.cards[2]], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                ft.Row(controls=[self.cards[3], self.cards[4]], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
-            ]
-        elif self.lineup == "2-1-2":
-            rows = [
-                ft.Row(controls=[self.cards[0], self.cards[1]], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                ft.Row(controls=[self.cards[2]], alignment=ft.MainAxisAlignment.CENTER),
-                ft.Row(controls=[self.cards[3], self.cards[4]], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
-            ]
-        else: # 1-2-2
-            rows = [
-                ft.Row(controls=[self.cards[0], self.cards[1]], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                ft.Row(controls=[self.cards[2], self.cards[3]], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                ft.Row(controls=[self.cards[4]], alignment=ft.MainAxisAlignment.CENTER)
-            ]
-        
+        # Il modulo è Guardie-Ali-Centri, le righe vanno dall'alto: Centri, Ali, Guardie
+        row_sizes = [int(n) for n in reversed(self.lineup.split('-'))]
+        rows = []
+        start = 0
+        for size in row_sizes:
+            row_cards = self.cards[start:start + size]
+            start += size
+            if size == 1:
+                rows.append(ft.Row(controls=row_cards, alignment=ft.MainAxisAlignment.CENTER))
+            elif size == 3:
+                rows.append(ft.Row(controls=row_cards, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=8))
+            else:
+                rows.append(ft.Row(controls=row_cards, alignment=ft.MainAxisAlignment.SPACE_EVENLY))
+
         self.starters_container.content = ft.Column(controls=rows)
     
     def get_starter_roles(self, lineup_str):
@@ -665,7 +673,7 @@ class SettingsView(ft.Tabs):
 
 
 class MainDashboard(ft.Tabs):
-    def __init__(self, team: Team):
+    def __init__(self, team: Team, target_date: str):
         super().__init__(content=None, length=0)
         self.team = team
         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
@@ -674,7 +682,7 @@ class MainDashboard(ft.Tabs):
         self.animation_duration=300
 
         # Inizializziamo le varie viste
-        self.team_view = Court(self.team)
+        self.team_view = Court(self.team, target_date)
         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
         self.calendar_view = CalendarView()
         self.championship_view = StandingsView()

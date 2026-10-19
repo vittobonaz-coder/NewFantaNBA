@@ -1,15 +1,27 @@
-name: Test Python Cron Job
+name: Cron punteggi
 
-# 1. Trigger schedulato (alle 11:23 UTC ogni giorno = 13:23 in Italia con l'ora legale)
-# 2. Trigger manuale / via API (usato da Supabase pg_cron)
+# Lanciato solo da Supabase pg_cron (o a mano), con mode:
+# - daily    -> ogni giorno 08:00 UTC: scarica i tabellini e aggiorna i punteggi
+# - rollover -> ogni giorno 15:00 UTC: se domani inizia una nuova giornata, chiude oggi e azzera domani
 on:
-  schedule:
-    - cron: '01 16 * * *'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "daily oppure rollover"
+        required: true
+        default: daily
+        type: choice
+        options: [daily, rollover]
+
+# Due run non girano mai in contemporanea
+concurrency:
+  group: cron-punteggi
+  cancel-in-progress: false
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout del codice
@@ -18,10 +30,10 @@ jobs:
       - name: Configurazione di Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Installazione dipendenze
         run: pip install requests pandas nba_api supabase
 
       - name: Esecuzione dello script Python
-        run: python cron_test_script.py
+        run: python cron_test_script.py ${{ inputs.mode }}

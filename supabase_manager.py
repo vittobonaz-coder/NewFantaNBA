@@ -419,10 +419,11 @@ class SupabaseSync:
             print(f"Errore durante il recupero dell'ID per la squadra '{team_name}': {e}")
             raise e
 
-    def get_gameweek_by_date(self, target_date: date | str) -> int | None:
+    def get_gameweek_by_date(self, target_date: date | str, before_start_as_first: bool = True) -> int | None:
         """
         Restituisce la gameweek corrispondente a una determinata data
         verificando l'intervallo start_date <= target_date <= end_date nella tabella 'matchups'.
+        Se la data precede l'inizio del campionato e before_start_as_first è True, restituisce 1.
         Ritorna None se la data non rientra in alcuna gameweek.
         """
         # Formatta la data nel formato ISO "YYYY-MM-DD"
@@ -446,6 +447,18 @@ class SupabaseSync:
 
             if data and len(data) > 0:
                 return int(data[0]["gameweek"])
+
+            # Data precedente all'inizio del campionato: si considera la giornata 1
+            if before_start_as_first:
+                first = (
+                    self.supabase.table("matchups")
+                    .select("start_date")
+                    .eq("gameweek", 1)
+                    .limit(1)
+                    .execute()
+                ).data
+                if first and date_str < first[0]["start_date"]:
+                    return 1
 
             print(f"Nessuna gameweek trovata per la data {date_str}.")
             return None
@@ -742,6 +755,45 @@ class SupabaseSync:
             if lineup_data:
                 self.supabase.table("lineup_players").insert(lineup_data).execute()
                 print(f"Lineup di '{t['name']}' caricate: {len(calendar)} giornate, {len(lineup_data)} righe.")
+
+    def update_lineup_slots(self, team: Team, gameweek: int, only_ids: set[int] | None = None) -> bool:
+        """
+        Aggiorna slot e ruolo dei giocatori del team nella tabella lineup_players
+        per la gameweek indicata e tutte le successive, in base all'ordine attuale di team.players.
+        Se only_ids è indicato, aggiorna solo quei giocatori (quelli che hanno cambiato slot).
+        Score e target_date non vengono toccati.
+        """
+        players = [(slot, p) for slot, p in enumerate(team.players, start=1)
+                   if only_ids is None or p.id in only_ids]
+        if not players:
+            return True
+
+        team_id = self.get_team_id_by_name(team.name)
+        if not team_id:
+            print(f"Errore: Impossibile recuperare l'ID per il team {team.name}.")
+            return False
+        try:
+            # 1. Slot temporanei, per non violare il vincolo unico (team, gameweek, slot)
+            for slot, p in players:
+                self.supabase.table("lineup_players") \
+                    .update({"slot": slot + 100}) \
+                    .eq("fanta_team_id", team_id) \
+                    .gte("gameweek", gameweek) \
+                    .eq("nba_player_id", p.id) \
+                    .execute()
+            # 2. Slot e ruoli definitivi
+            for slot, p in players:
+                self.supabase.table("lineup_players") \
+                    .update({"slot": slot, "role": team.roles_map[p.id]}) \
+                    .eq("fanta_team_id", team_id) \
+                    .gte("gameweek", gameweek) \
+                    .eq("nba_player_id", p.id) \
+                    .execute()
+            print(f"Lineup di '{team.name}' aggiornata dalla GW {gameweek} in poi.")
+            return True
+        except Exception as e:
+            print(f"Errore durante l'aggiornamento della lineup per {team.name} (GW {gameweek}): {e}")
+            return False
 
     def pull_lineup_for_team(self, team_name: str, gameweek: int, data_dir: str = "data") -> bool:
         """
@@ -1147,6 +1199,43 @@ class SupabaseSync:
         except Exception as e:
             print(f"Errore durante il recupero degli ID da nba_players: {e}")
             raise e
+
+    def get_gameweek_info(self, gameweek: int) -> dict | None:
+        """Restituisce start_date, end_date e was_played di una gameweek (None se non esiste)."""
+        data = (
+            self.supabase.table("matchups")
+            .select("start_date, end_date, was_played")
+            .eq("gameweek", gameweek)
+            .execute()
+        ).data
+        if not data:
+            return None
+        return {
+            "start_date": str(data[0]["start_date"]),
+            "end_date": str(data[0]["end_date"]),
+            "was_played": all(row["was_played"] for row in data),
+        }
+
+    def get_lineup_rows_for_gameweek(self, gameweek: int) -> list[dict]:
+        """Righe di lineup_players di TUTTE le squadre per la gameweek, con la squadra NBA del giocatore."""
+        return (
+            self.supabase.table("lineup_players")
+            .select("fanta_team_id, nba_player_id, player_name, role, score, nba_players(full_name, nba_team)")
+            .eq("gameweek", gameweek)
+            .execute()
+        ).data or []
+
+    def set_gameweek_played(self, gameweek: int, was_played: bool = True) -> None:
+        """Imposta was_played per tutti i matchups della gameweek."""
+        self.supabase.table("matchups").update({"was_played": was_played}).eq("gameweek", gameweek).execute()
+
+    def update_nba_player_team(self, nba_player_id: int, nba_team: str) -> None:
+        """Aggiorna la squadra NBA di un giocatore nella tabella nba_players."""
+        self.supabase.table("nba_players").update({"nba_team": nba_team}).eq("id", nba_player_id).execute()
+
+    def reset_matchup_scores_for_gameweek(self, gameweek: int) -> None:
+        """Riporta a 0.0 i punteggi di tutte le fanta-squadre nella gameweek."""
+        self.supabase.table("matchups").update({"home_score": 0.0, "away_score": 0.0}).eq("gameweek", gameweek).execute()
 
 
 if __name__ == "__main__":

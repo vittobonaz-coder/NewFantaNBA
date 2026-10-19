@@ -21,7 +21,7 @@ def main(page: ft.Page) -> None:
         team.load_from_json()
 
         page.clean()
-        page.add(MainDashboard(team))
+        page.add(MainDashboard(team, SIM_NBA_DATE))
         page.update()
             
     # Avvio con schermata di login

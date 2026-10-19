@@ -11,6 +11,9 @@ NOT_PLAYED_SCORE = None
 # Numero di giocatori di ogni rosa: 5 titolari + 1 sesto uomo + 4 panchina + 5 riserve
 ROSTER_SIZE = 15
 
+# Moltiplicatori del punteggio per ruolo (unica fonte: usati dalla UI e dal cron job)
+ROLE_MULTIPLIERS = {"STARTER": 1.0, "SIXTH": 1.0, "BENCH": 0.75, "RESERVE": 0.0}
+
 def has_played(score) -> bool:
     """True se lo score rappresenta una partita già giocata (anche con 0 punti o DNP)."""
     return score is not None
