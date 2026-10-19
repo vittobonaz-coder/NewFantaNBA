@@ -1,9 +1,9 @@
 import os
 import json
 from supabase import create_client, Client
-from fanta_obj import Player, Team, NOT_PLAYED_SCORE
+from fanta_obj import Player, Team, NOT_PLAYED_SCORE, ROLE_MULTIPLIERS, has_played
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime, timezone
 from time_manager import TimeManager
 
 SUPABASE_URL = "https://ifqiarpfsbcrfpmabdus.supabase.co"
@@ -795,15 +795,18 @@ class SupabaseSync:
             print(f"Errore durante l'aggiornamento della lineup per {team.name} (GW {gameweek}): {e}")
             return False
 
-    def pull_lineup_for_team(self, team_name: str, gameweek: int, data_dir: str = "data") -> bool:
+    def pull_lineup_for_team(self, team_name: str, gameweek: int, team_id: str | None = None,
+                             data_as_of: datetime | None = None, data_dir: str = "data") -> bool:
         """
-        Scarica i dati dalla tabella lineup_players per una specifica gameweek e aggiorna 
-        (o crea) il file locale <nome_team>_state.json.
+        Scarica i dati dalla tabella lineup_players per una specifica gameweek e aggiorna
+        (o crea) il file locale <nome_team>_gw<N>_state.json.
+        data_as_of: fine dell'ultimo cron noto al momento del download (l'app lo confronta
+        con i cron successivi per capire quando riscaricare).
         """
         print(f"Recupero della lineup per '{team_name}' (GW {gameweek}) da Supabase...")
         try:
             # 1. Recupera l'ID del fanta team
-            team_id = self.get_team_id_by_name(team_name)
+            team_id = team_id or self.get_team_id_by_name(team_name)
             if not team_id:
                 print(f"Errore: Team '{team_name}' non trovato su Supabase.")
                 return False
@@ -825,7 +828,7 @@ class SupabaseSync:
 
             # 3. Costruisci il nuovo roster formattato per il JSON
             new_roster = []
-            target_date = str(date.today().isoformat())  # Fallback
+            target_date = ""
 
             for row in data:
                 # Estrae target_date (basta prenderla dalla prima riga valida)
@@ -844,25 +847,27 @@ class SupabaseSync:
                     "role": row.get("role", "RESERVE")
                 })
 
-            # 4. Leggi il file esistente per preservare total_score e lineup (modulo)
-            filename = f"{team_name.lower()}_state.json"
-            json_path = Path(data_dir) / filename
+            # 4. Totale ricalcolato dai punteggi scaricati (come fa il cron)
+            total_score = sum(p["score"] * ROLE_MULTIPLIERS.get(p["role"], 0.0)
+                              for p in new_roster if has_played(p["score"]))
 
+            filename = Path(Team(team_name, gameweek=gameweek).filename).name
+            json_path = Path(data_dir) / filename
             state_data = {
                 "team_name": team_name,
                 "target_date": target_date,
-                "total_score": 0.0,
+                "gameweek": gameweek,
+                "data_as_of": data_as_of.isoformat() if data_as_of else "",
+                "total_score": round(total_score, 2),
                 "lineup": "2-2-1",
                 "roster": new_roster
             }
 
+            # Preserva il modulo salvato in locale (l'app lo verifica comunque sui titolari)
             if json_path.exists():
                 with open(json_path, "r", encoding="utf-8") as f:
                     try:
-                        existing_data = json.load(f)
-                        # Preserva modulo e score totale attuali
-                        state_data["total_score"] = existing_data.get("total_score", 0.0)
-                        state_data["lineup"] = existing_data.get("lineup", "2-2-1")
+                        state_data["lineup"] = json.load(f).get("lineup", "2-2-1")
                     except json.JSONDecodeError:
                         pass
 
@@ -1236,6 +1241,47 @@ class SupabaseSync:
     def reset_matchup_scores_for_gameweek(self, gameweek: int) -> None:
         """Riporta a 0.0 i punteggi di tutte le fanta-squadre nella gameweek."""
         self.supabase.table("matchups").update({"home_score": 0.0, "away_score": 0.0}).eq("gameweek", gameweek).execute()
+
+    def get_team_by_user_id(self, user_id: str) -> dict | None:
+        """Restituisce {"id", "name"} della fanta-squadra collegata al profilo (None se non esiste)."""
+        data = self.supabase.table("fanta_teams").select("id, name").eq("user_id", user_id).limit(1).execute().data
+        return data[0] if data else None
+
+    def get_last_cron_run(self) -> datetime | None:
+        """Fine dell'ultimo run del cron (tabella cron_runs). None se la tabella è vuota o non esiste."""
+        try:
+            data = (
+                self.supabase.table("cron_runs")
+                .select("finished_at")
+                .order("finished_at", desc=True)
+                .limit(1)
+                .execute()
+            ).data
+        except Exception as e:
+            print(f"Tabella cron_runs non disponibile: {e}")
+            return None
+        return datetime.fromisoformat(data[0]["finished_at"]) if data else None
+
+    def record_cron_run(self, mode: str, ok: bool) -> None:
+        """Registra la fine di un run del cron: l'app la usa per sapere quando riscaricare i dati."""
+        try:
+            self.supabase.table("cron_runs").upsert({
+                "mode": mode,
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "ok": ok,
+            }).execute()
+        except Exception as e:
+            print(f"Impossibile registrare il run in cron_runs: {e}")
+
+    def update_roster_positions(self, team: Team, team_id: str) -> None:
+        """Aggiorna solo assigned_position in rosters (nba_players non si tocca: la tiene allineata il cron)."""
+        rows = [{
+            "fanta_team_id": team_id,
+            "nba_player_id": p.id,
+            "player_name": p.name,
+            "assigned_position": team.roles_map[p.id],
+        } for p in team.players]
+        self.supabase.table("rosters").upsert(rows, on_conflict="nba_player_id").execute()
 
 
 if __name__ == "__main__":

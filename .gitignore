@@ -4,3 +4,4 @@ venv/
 *.pyc
 .vscode/
 *_state.json
+data/sync_meta.json

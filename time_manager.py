@@ -1,15 +1,89 @@
 import json
 import os
 from typing import List
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 # Definiamo le zone
 ITA_TZ = ZoneInfo("Europe/Rome")
 NBA_TZ = ZoneInfo("America/New_York")
+UTC = timezone.utc
+
+# Orari dei pg_cron su Supabase (in UTC: in Italia slittano di un'ora con l'ora legale)
+DAILY_CRON_UTC = time(8, 0)       # punteggi della notte NBA
+ROLLOVER_CRON_UTC = time(15, 0)   # cambio giornata = chiusura dei cambi formazione
+# Ritardo massimo atteso di un run su GitHub Actions (usato solo se manca la tabella cron_runs)
+CRON_DELAY_MARGIN = timedelta(minutes=45)
 
 class TimeManager:
     """Classe utility per gestire logiche orarie e controlli temporali della lega."""
+    _sim_offset: timedelta | None = None
+
+    @classmethod
+    def simulate_now(cls, fake_now: datetime | None) -> None:
+        """Solo per i test: sposta l'orologio dell'app a fake_now (aware), da lì il tempo scorre normalmente."""
+        cls._sim_offset = None if fake_now is None else fake_now - datetime.now(UTC)
+
+    @classmethod
+    def now(cls) -> datetime:
+        """Istante attuale in UTC, eventualmente simulato con simulate_now."""
+        real_now = datetime.now(UTC)
+        return real_now + cls._sim_offset if cls._sim_offset is not None else real_now
+
+    @staticmethod
+    def rollover_instant(ita_day: date) -> datetime:
+        """Istante del rollover nel giorno italiano indicato (15:00 UTC = 16:00 o 17:00 italiane)."""
+        return datetime.combine(ita_day, ROLLOVER_CRON_UTC, tzinfo=UTC)
+
+    @staticmethod
+    def last_scheduled_cron() -> datetime:
+        """
+        Ultimo orario programmato di un cron, passato da almeno CRON_DELAY_MARGIN (orologio reale).
+        Ripiego per quando su Supabase non c'è traccia dei run (tabella cron_runs).
+        """
+        now = datetime.now(UTC)
+        slots = [datetime.combine(now.date() - timedelta(days=d), t, tzinfo=UTC) + CRON_DELAY_MARGIN
+                 for d in (0, 1) for t in (DAILY_CRON_UTC, ROLLOVER_CRON_UTC)]
+        return max(s for s in slots if s <= now)
+
+    @classmethod
+    def get_league_context(cls, rounds: list[dict]) -> dict:
+        """
+        Stato della lega adesso, dalle giornate del calendario (date italiane):
+        - current_gw: giornata in corso (o appena conclusa) da mostrare con i punteggi,
+          None prima dell'inizio del campionato
+        - edit_gw: giornata a cui si applicano i cambi formazione, None se i cambi sono chiusi
+        - deadline: chiusura dei cambi (UTC), None se i cambi sono chiusi
+        I cambi sono aperti nel giorno che precede l'inizio di una giornata fino al rollover
+        (stessa condizione di run_rollover nel cron) e sempre prima della giornata 1.
+        """
+        context = {"current_gw": None, "edit_gw": None, "deadline": None}
+        if not rounds:
+            return context
+        rounds = sorted(rounds, key=lambda r: r["start_date"])
+        starts = {r["start_date"]: r["round_number"] for r in rounds}
+
+        now = cls.now()
+        today = now.astimezone(ITA_TZ).date()
+        tomorrow = (today + timedelta(days=1)).isoformat()
+        rollover = cls.rollover_instant(today)
+
+        # Prima del rollover le partite di riferimento sono quelle di oggi, dopo quelle di domani
+        # (la giornata di domani è appena stata azzerata dal cron)
+        league_day = today.isoformat() if now < rollover else tomorrow
+        started = [r for r in rounds if r["start_date"] <= league_day]
+        if started:
+            context["current_gw"] = started[-1]["round_number"]
+
+        if tomorrow < rounds[0]["start_date"]:
+            # Pre-campionato: cambi aperti fino al rollover del giorno prima della giornata 1
+            first_eve = date.fromisoformat(rounds[0]["start_date"]) - timedelta(days=1)
+            context.update(edit_gw=rounds[0]["round_number"], deadline=cls.rollover_instant(first_eve))
+        elif tomorrow in starts and now < rollover:
+            # Ultimo giorno di una giornata: i cambi valgono per quella che inizia domani
+            context.update(edit_gw=starts[tomorrow], deadline=rollover)
+        return context
+
     @staticmethod
     def get_today_str(fmt: str = "%Y-%m-%d") -> str:
         """

@@ -257,20 +257,26 @@ class Team:
     # Ordine gerarchico per la UI (Court si aspetta prima i titolari, poi la panchina, ecc.)
     ROLE_ORDER = {"STARTER": 0, "SIXTH": 1, "BENCH": 2, "RESERVE": 3}
     
-    def __init__(self, name: str):
+    def __init__(self, name: str, gameweek: int | None = None):
         self.name = name
         self.players: list[Player] = []
         self.roles_map: dict[int, str] = {}
         self.score: float = 0.0
         self.lineup = "2-2-1"
         self.target_date = ""
-        self.filename = os.path.join("data", f"{self.name.replace(' ', '_').lower()}_state.json")
+        self.gameweek = gameweek  # Giornata a cui si riferiscono formazione e punteggi
+        self.data_as_of = ""      # Fine dell'ultimo cron (ISO, UTC) quando i dati sono stati scaricati
+        # Con la giornata, un file per giornata (l'app ne usa due nella finestra dei cambi)
+        suffix = f"_gw{gameweek}" if gameweek is not None else ""
+        self.filename = os.path.join("data", f"{self.name.replace(' ', '_').lower()}{suffix}_state.json")
     
     def save_to_json(self):
         """Salva l'intero stato del team, inclusi i dati dei giocatori e il punteggio totale."""
         data = {
             "team_name": self.name,
             "target_date": self.target_date,
+            "gameweek": self.gameweek,
+            "data_as_of": self.data_as_of,
             "total_score": self.score,
             "lineup": self.lineup,
             "roster": self.to_ui_format() # Usiamo il formato UI che è già un dizionario pulito
@@ -292,6 +298,8 @@ class Team:
             
             self.name = data["team_name"]
             self.target_date = data.get("target_date", "")
+            self.gameweek = data.get("gameweek", self.gameweek)
+            self.data_as_of = data.get("data_as_of", "")
             self.score = data["total_score"]
             self.lineup = data.get("lineup", "2-2-1")
             self.players = []

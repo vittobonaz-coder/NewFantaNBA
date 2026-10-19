@@ -1,8 +1,9 @@
 import flet as ft
 import os
 import json
+from datetime import datetime
 from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS
-from time_manager import TimeManager
+from time_manager import TimeManager, ITA_TZ
 
 
 ROLE_CONFIGS = {
@@ -44,6 +45,17 @@ def find_starter_assignment(roles: list[str], players: list[Player]) -> list[int
         return None
 
     return assign(0, frozenset())
+
+def infer_lineup(players: list[Player], preferred: str) -> str | None:
+    """
+    Restituisce il modulo che i primi 5 giocatori (titolari) rispettano già, senza scambi.
+    Se ne vanno bene più di uno (giocatori con doppia posizione) preferisce preferred.
+    """
+    for lineup in [preferred] + [l for l in LINEUP_ROLES if l != preferred]:
+        roles = LINEUP_ROLES.get(lineup)
+        if roles and len(players) >= len(roles) and all(r in p.position.split('/') for r, p in zip(roles, players)):
+            return lineup
+    return None
 
 class PlayerCard(ft.Container):
     """Classe per le cards dei giocatori"""
@@ -111,27 +123,24 @@ class PlayerCard(ft.Container):
         self.setup_ui()
 
 class Court(ft.Column):
-    def __init__(self, team_instance: Team, target_date: str):
+    def __init__(self, team_instance: Team, gameweek: int, edit_deadline: datetime | None = None):
         super().__init__()
         self.horizontal_alignment = "center"
         self.scroll = ft.ScrollMode.AUTO
         self.expand = True
         self.spacing = 0
-        # self.spacing = 10
         self.team = team_instance
-        self.target_date = target_date  # Data NBA di riferimento (fornita da main)
-        self.lineup = self.team.lineup 
-
-        # # 1. SALVATAGGIO STATO INIZIALE (per Annulla)
-        # # Salviamo una lista di tuple (Giocatore, Score) per ogni card
-        # self.initial_state = [] 
-        # self.initial_lineup = self.lineup
+        self.gameweek = gameweek            # Giornata mostrata, a cui si applicano anche i cambi
+        self.edit_deadline = edit_deadline  # Chiusura dei cambi (UTC); None = cambi chiusi
+        self.editable = edit_deadline is not None and TimeManager.now() < edit_deadline
+        self.lineup = self.team.lineup if self.team.lineup in LINEUP_ROLES else "2-2-1"
 
         # Testo UI legato al campo 'score' del Team
         self.total_score_text = ft.Text(
-            f"TOTAL SCORE: {self.team.score:.1f}", 
+            f"TOTAL SCORE: {self.team.score:.1f}",
             size=20, weight="bold", color="amber"
         )
+        self.status_text = ft.Text("", size=12, color="grey")
 
         # CARDS
         self.cards = []
@@ -152,12 +161,18 @@ class Court(ft.Column):
             l for l in LINEUP_ROLES
             if find_starter_assignment(LINEUP_ROLES[l], self.team.players) is not None
         ] or [self.lineup]  # nessun modulo possibile: lasciamo quello salvato
-        if self.lineup not in self.available_lineups:
-            self.lineup = self.available_lineups[0]
 
-        # VALIDAZIONE AUTOMATICA ALL'AVVIO
-        # Se i giocatori caricati non rispettano il modulo attuale, li scambiamo subito
-        self.auto_fix_starters(self.lineup)
+        # MODULO INIZIALE: quello che i titolari rispettano già. Il modulo è salvato solo in locale
+        # (su Render il file può mancare), quindi lo si ricava dai giocatori. I titolari vengono
+        # riorganizzati solo se nessun modulo combacia e i cambi sono aperti: a formazione bloccata
+        # si mostra esattamente quella su Supabase, con cui il cron calcola il punteggio.
+        inferred = infer_lineup(self.team.players, self.lineup)
+        if inferred:
+            self.lineup = inferred
+        elif self.editable:
+            if self.lineup not in self.available_lineups:
+                self.lineup = self.available_lineups[0]
+            self.auto_fix_starters(self.lineup)
 
         # Popoliamo lo stato iniziale dopo aver creato le cards
         self._capture_current_state()
@@ -189,6 +204,7 @@ class Court(ft.Column):
             visible=False # Nascosti all'inizio
         )
 
+        self.apply_lock()
         self.setup_static_ui()
         self.update_starters_layout()
         self.refresh_menus()
@@ -205,36 +221,62 @@ class Court(ft.Column):
         self.controls_bar.visible = visible
         self.update()
 
-    def handle_save(self, e):
-        """Salva su Supabase, su file locale e nasconde i bottoni."""
-        from supabase_manager import SupabaseSync
-        sync = SupabaseSync()
+    def status_message(self) -> str:
+        if self.editable:
+            deadline = self.edit_deadline.astimezone(ITA_TZ)
+            return f"Giornata {self.gameweek} · cambi aperti fino al {deadline:%d/%m} alle {deadline:%H:%M}"
+        return f"Giornata {self.gameweek} · formazione bloccata"
 
-        # Aggiorniamo i dati nel team (incluso l'ordine dei giocatori)
-        self.refresh_ui_and_data()
-        
-        # Sincronizza Cloud e salva in locale
-        sync.push_team(self.team, court=self)
-        self.team.save_to_json()
+    def apply_lock(self):
+        """Disattiva dropdown e bottoni di scambio quando i cambi sono chiusi."""
+        self.lineup_dd.disabled = not self.editable
+        for card in self.cards:
+            card.swap_button.disabled = not self.editable
+        if not self.editable:
+            self.controls_bar.visible = False
+        self.status_text.value = self.status_message()
 
-        # Aggiorna slot e ruoli in lineup_players dalla giornata corrente in poi,
-        # solo per i giocatori che hanno cambiato slot rispetto all'ultimo salvataggio
-        moved_ids = {c.player.id for c, (old_p, _) in zip(self.cards, self.initial_state)
-                     if c.player.id != old_p.id}
-        ita_date = TimeManager.nba_date_to_italian_date(self.target_date)
-        gameweek = sync.get_gameweek_by_date(ita_date)
-        if gameweek is not None and moved_ids:
-            sync.update_lineup_slots(self.team, gameweek, only_ids=moved_ids)
-        
-        # Il nuovo stato corrente diventa il punto di ripristino per futuri cambi
-        self._capture_current_state()
-        self.toggle_buttons(False)
-
-        # Feedback all'utente
-        sb = ft.SnackBar(ft.Text(f"Formazione di {self.team.name} salvata!"), bgcolor="green")
+    def show_message(self, text: str, color: str):
+        sb = ft.SnackBar(ft.Text(text), bgcolor=color)
         self.page.overlay.append(sb) # Metodo più robusto per Flet
         sb.open = True
         self.page.update()
+
+    def handle_save(self, e):
+        """Salva su Supabase (dalla giornata self.gameweek in poi) e in locale, poi nasconde i bottoni."""
+        from supabase_manager import SupabaseSync
+
+        # I cambi potrebbero essersi chiusi mentre l'app era aperta
+        if TimeManager.now() >= self.edit_deadline:
+            self.handle_cancel(e)
+            self.editable = False
+            self.apply_lock()
+            self.update()
+            self.show_message("Cambi chiusi: formazione non salvata", "red")
+            return
+
+        # Aggiorniamo i dati nel team (incluso l'ordine dei giocatori)
+        self.refresh_ui_and_data()
+
+        sync = SupabaseSync()
+        try:
+            team_id = sync.get_team_id_by_name(self.team.name)
+            sync.update_roster_positions(self.team, team_id)
+            # Tutti i giocatori, dalla giornata modificabile in poi (mai quella in corso):
+            # riallinea anche eventuali righe disallineate delle giornate future
+            saved = sync.update_lineup_slots(self.team, self.gameweek)
+        except Exception as ex:
+            print(f"Errore durante il salvataggio della formazione: {ex}")
+            saved = False
+        if not saved:
+            self.show_message("Errore nel salvataggio della formazione, riprova", "red")
+            return
+
+        self.team.save_to_json()
+        # Il nuovo stato corrente diventa il punto di ripristino per futuri cambi
+        self._capture_current_state()
+        self.toggle_buttons(False)
+        self.show_message(f"Formazione di {self.team.name} salvata!", "green")
 
     def handle_cancel(self, e):
         """Ripristina i dati all'ultimo salvataggio."""
@@ -292,6 +334,8 @@ class Court(ft.Column):
         self.controls = [
             # Punteggio Squadra
             self.total_score_text,
+            # Giornata e stato dei cambi
+            self.status_text,
             # Dropdown formazione
             ft.Container(
                 content=ft.Row([self.lineup_dd], alignment=ft.MainAxisAlignment.START),
@@ -395,6 +439,11 @@ class Court(ft.Column):
         Rigenera i menu di scambio applicando solo il vincolo di slot
         dei titolari (le posizioni richieste dal modulo per gli slot 0-4).
         """
+        if not self.editable:
+            for card in self.cards:
+                card.swap_button.items = []
+            return
+
         starter_roles = self.get_starter_roles(self.lineup)
 
         for i, card in enumerate(self.cards):
@@ -672,17 +721,56 @@ class SettingsView(ft.Tabs):
         return ft.ListView(expand=True, padding=5, controls=view_controls)
 
 
+class TeamView(ft.Column):
+    """
+    Schermata Squadra: la giornata in corso con i punteggi e, nella finestra dei cambi,
+    la formazione modificabile della giornata successiva (selezionabili con due pulsanti).
+    """
+    def __init__(self, current_team: Team | None, current_gw: int | None,
+                 edit_team: Team | None = None, edit_gw: int | None = None,
+                 edit_deadline: datetime | None = None):
+        super().__init__()
+        self.expand = True
+        self.horizontal_alignment = "center"
+
+        self.courts: list[tuple[str, Court]] = []
+        if current_team is not None:
+            self.courts.append((f"Giornata {current_gw}", Court(current_team, current_gw)))
+        if edit_team is not None:
+            self.courts.append((f"Formazione GW {edit_gw}", Court(edit_team, edit_gw, edit_deadline)))
+
+        self.switch_buttons = [
+            ft.ElevatedButton(label, on_click=lambda e, i=i: self.show_court(i))
+            for i, (label, _) in enumerate(self.courts)
+        ]
+        self.controls = ([ft.Row(self.switch_buttons, alignment=ft.MainAxisAlignment.CENTER)]
+                         if len(self.courts) > 1 else [])
+        self.controls += [court for _, court in self.courts]
+        self.show_court(0, refresh=False)
+
+    def show_court(self, index: int, refresh: bool = True):
+        """Mostra solo la formazione selezionata (le altre restano in memoria con le loro modifiche)."""
+        for i, (_, court) in enumerate(self.courts):
+            court.visible = i == index
+        for i, button in enumerate(self.switch_buttons):
+            button.bgcolor = "amber" if i == index else ft.Colors.GREY_800
+            button.color = "black" if i == index else "white"
+        if refresh:
+            self.update()
+
+
 class MainDashboard(ft.Tabs):
-    def __init__(self, team: Team, target_date: str):
+    def __init__(self, current_team: Team | None, current_gw: int | None,
+                 edit_team: Team | None = None, edit_gw: int | None = None,
+                 edit_deadline: datetime | None = None):
         super().__init__(content=None, length=0)
-        self.team = team
         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
         self.length = 5
         self.selected_index=0
         self.animation_duration=300
 
         # Inizializziamo le varie viste
-        self.team_view = Court(self.team, target_date)
+        self.team_view = TeamView(current_team, current_gw, edit_team, edit_gw, edit_deadline)
         self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
         self.calendar_view = CalendarView()
         self.championship_view = StandingsView()

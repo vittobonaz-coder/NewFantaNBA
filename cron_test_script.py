@@ -203,13 +203,19 @@ def main():
     today = args.today or TimeManager.get_today_str()
     print(f"=== Cron {args.mode} | oggi (ITA) {today} | dry-run: {args.dry_run} ===")
 
-    if args.mode == "rollover":
-        errors = run_rollover(sync, today, args.dry_run)
-    else:
-        last_nba_date = args.date or TimeManager.italian_date_to_nba_date(today)
-        days = args.days or (1 if args.date else 2)
-        nba_dates = [shift_date(last_nba_date, -i) for i in reversed(range(days))]  # dalla più vecchia
-        errors = run_daily(sync, nba_dates, args.dry_run)
+    errors = None  # resta None se il run si interrompe con un'eccezione
+    try:
+        if args.mode == "rollover":
+            errors = run_rollover(sync, today, args.dry_run)
+        else:
+            last_nba_date = args.date or TimeManager.italian_date_to_nba_date(today)
+            days = args.days or (1 if args.date else 2)
+            nba_dates = [shift_date(last_nba_date, -i) for i in reversed(range(days))]  # dalla più vecchia
+            errors = run_daily(sync, nba_dates, args.dry_run)
+    finally:
+        # Anche un run fallito può aver scritto qualcosa: l'app deve comunque riscaricare i dati
+        if not args.dry_run:
+            sync.record_cron_run(args.mode, ok=errors == [])
 
     if errors:
         print("\nERRORI:")
