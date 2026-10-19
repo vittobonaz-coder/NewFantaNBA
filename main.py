@@ -88,6 +88,9 @@ def get_best_player_score(team_name: str, player_id: int, new_score: float, targ
                 nba_player_id=player_id
             )
 
+    if new_score == None:
+        return new_score
+
     return max(new_score, old_score)
 
 def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_CONFIGS):
