@@ -35,6 +35,8 @@ def main():
     # 4. Calcolo del fanta-punteggio con il metodo di fanta_obj.Player
     player = Player(id=player_id, name=PLAYER_NAME)
     score = player.calculate_score(boxscores, target_date=GAME_DATE)
+    if score is None:
+        raise SystemExit(f"Nessun tabellino di {PLAYER_NAME} il {GAME_DATE}: score non calcolato.")
 
     print(f"Fanta-punteggio {PLAYER_NAME}: {score:.2f}")
 

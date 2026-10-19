@@ -20,7 +20,7 @@ class TimeManager:
         Returns:
             str: Data odierna formattata.
         """
-        return date.today().strftime(fmt)
+        return datetime.now(ITA_TZ).strftime(fmt)
 
     @staticmethod
     def is_past_target_time(target_hour: int = 8, target_minute: int = 0) -> bool:
@@ -32,7 +32,7 @@ class TimeManager:
         Returns:
             bool: True se l'ora attuale è passata rispetto al target, False altrimenti.
         """
-        now = datetime.now()
+        now = datetime.now(ITA_TZ)
         target_time = time(hour=target_hour, minute=target_minute)
         
         # Confronta l'orario attuale (time) con l'orario di target
@@ -58,7 +58,7 @@ class TimeManager:
             input_date = datetime.strptime(date_str, date_format).date()
             
             # Ottieni la data odierna
-            today = date.today()
+            today = datetime.now(ITA_TZ).date()
             
             # Confronto diretto tra oggetti date
             return input_date < today

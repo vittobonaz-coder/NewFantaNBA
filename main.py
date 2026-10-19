@@ -52,29 +52,31 @@ def get_user_date(team_name: str, teams_dict: Optional[Dict[str, str]] = None, a
         print(f"Errore: Il formato della data per '{team_name}' non è valido (%Y-%m-%d).")
         return None
 
-def get_best_player_score(team_name: str, player_id: int, new_score: float, target_date: str, gameweek: int, sync: SupabaseSync) -> float:
+def get_best_player_score(team_name: str, player_id: int, new_score: float | None, target_date: str, gameweek: int, sync: SupabaseSync) -> float | None:
     """
     Controlla il vecchio punteggio del giocatore e restituisce il maggiore tra il vecchio e il nuovo.
     - Se esiste {team}_state.json e la target_date combacia, usa lo score del file locale.
     - Se il file non esiste o la target_date è antecedente, usa lo score da Supabase.
+    None (= squadra NBA non ancora scesa in campo) non viene mai confrontato.
     """
+    if new_score is None:
+        return None
+
     state_file = os.path.join("data", f"{team_name.lower()}_state.json")
-    old_score = 0.0
+    old_score = None
 
     # Condizione 1: Controllo file locale
     if os.path.exists(state_file):
         try:
             with open(state_file, "r", encoding="utf-8") as f:
                 state_data = json.load(f)
-            
-            json_target_date = state_data.get("target_date")
-            
+
             # Se la data è quella corretta, prendiamo lo score dal JSON
-            if json_target_date == target_date:
+            if state_data.get("target_date") == target_date:
                 for p_data in state_data.get("roster", []):
                     if p_data.get("id") == player_id:
-                        old_score = float(p_data.get("score", 0.0))
-                        return max(new_score, old_score)
+                        old_score = p_data.get("score")
+                        return new_score if old_score is None else max(new_score, float(old_score))
         except Exception as e:
             print(f"Errore nella lettura del file locale per {team_name}: {e}")
 
@@ -83,15 +85,12 @@ def get_best_player_score(team_name: str, player_id: int, new_score: float, targ
         team_id = sync.get_team_id_by_name(team_name)
         if team_id:
             old_score = sync.get_lineup_player_score(
-                gameweek=gameweek, 
-                fanta_team_id=team_id, 
+                gameweek=gameweek,
+                fanta_team_id=team_id,
                 nba_player_id=player_id
             )
 
-    if new_score == None:
-        return new_score
-
-    return max(new_score, old_score)
+    return new_score if old_score is None else max(new_score, old_score)
 
 def update_all_teams_scores_via_api(target_date: str, role_configs: dict = ROLE_CONFIGS):
     """
@@ -219,9 +218,11 @@ def get_best_score_from_db(sync: SupabaseSync, gameweek: int, team_id: str, play
     )
     print(f"###### Database score = {db_score}")
 
-    if new_score == None:
+    if new_score is None:
         return None
-    
+    if db_score is None:
+        return new_score
+
     return max(new_score, db_score)
 
 def reset_for_gameweek(gameweek: int):

@@ -119,7 +119,7 @@ class Player:
         
         return self.calculate_score(boxscores, target_date=target_date, average=average)
     
-    def calculate_score(self, boxscores: list[dict], target_date: str = None, average: bool = False) -> float:
+    def calculate_score(self, boxscores: list[dict], target_date: str = None, average: bool = False) -> float | None:
         """
         Riceve una lista di boxscores (dizionari) e calcola il punteggio del giocatore.
         :param boxscores: Lista dei boxscore di gara.
@@ -138,9 +138,11 @@ class Player:
         if target_date:
             player_games = [g for g in player_games if g.get("GAME_DATE") == target_date]
 
+        # Giocatore assente dai boxscores: la sua squadra non ha (ancora) giocato
+        # TODO: anche i DNP finiscono qui (fetch_boxscores li scarta), ma dovrebbero valere 0.0
         if not player_games:
-            self.score = 0.0
-            return 0.0
+            self.score = NOT_PLAYED_SCORE
+            return self.score
 
         total_scores = []
 
@@ -237,7 +239,7 @@ class Player:
         """
         Calcola il fanta-punteggio di una lista di giocatori a partire dagli stessi boxscores.
         Restituisce un dizionario {player_id: score}.
-        I giocatori senza partite nei boxscores (o nella target_date) hanno score 0.0.
+        I giocatori senza partite nei boxscores (o nella target_date) hanno score None (NOT_PLAYED_SCORE).
         """
         scores = {}
         for p_id in player_ids:
