@@ -31,7 +31,7 @@ def normalize_name(name):
 
 class NbaDataManager:
 
-    def __init__(self, player_ids, season="2026-27", s_type="Pre Season"):
+    def __init__(self, player_ids, season="2026-27", s_type="Regular Season"):
         # self.player_ids contiene sempre gli ID UFFICIALI NBA (es. [203999, 1628369])
         self.player_ids = [str(pid) for pid in player_ids]
         self.season = season

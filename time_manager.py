@@ -52,16 +52,17 @@ class TimeManager:
         Stato della lega adesso, dalle giornate del calendario (date italiane):
         - current_gw: giornata in corso (o appena conclusa) da mostrare con i punteggi,
           None prima dell'inizio del campionato
-        - edit_gw: giornata a cui si applicano i cambi formazione, None se i cambi sono chiusi
-        - deadline: chiusura dei cambi (UTC), None se i cambi sono chiusi
-        I cambi sono aperti nel giorno che precede l'inizio di una giornata fino al rollover
-        (stessa condizione di run_rollover nel cron) e sempre prima della giornata 1.
+        - edit_gw: prima giornata non ancora iniziata, a cui si applicano i cambi formazione;
+          None se non ce ne sono altre (fine campionato)
+        - deadline: chiusura dei cambi per edit_gw (UTC) = rollover del giorno prima del suo inizio
+        I cambi sono quindi sempre aperti per la giornata successiva a quella in corso
+        (e per la giornata 1 in pre-campionato): il salvataggio scrive su lineup_players
+        da edit_gw in poi, senza toccare la giornata in corso.
         """
         context = {"current_gw": None, "edit_gw": None, "deadline": None}
         if not rounds:
             return context
         rounds = sorted(rounds, key=lambda r: r["start_date"])
-        starts = {r["start_date"]: r["round_number"] for r in rounds}
 
         now = cls.now()
         today = now.astimezone(ITA_TZ).date()
@@ -71,17 +72,19 @@ class TimeManager:
         # Prima del rollover le partite di riferimento sono quelle di oggi, dopo quelle di domani
         # (la giornata di domani è appena stata azzerata dal cron)
         league_day = today.isoformat() if now < rollover else tomorrow
+
         started = [r for r in rounds if r["start_date"] <= league_day]
         if started:
             context["current_gw"] = started[-1]["round_number"]
 
-        if tomorrow < rounds[0]["start_date"]:
-            # Pre-campionato: cambi aperti fino al rollover del giorno prima della giornata 1
-            first_eve = date.fromisoformat(rounds[0]["start_date"]) - timedelta(days=1)
-            context.update(edit_gw=rounds[0]["round_number"], deadline=cls.rollover_instant(first_eve))
-        elif tomorrow in starts and now < rollover:
-            # Ultimo giorno di una giornata: i cambi valgono per quella che inizia domani
-            context.update(edit_gw=starts[tomorrow], deadline=rollover)
+        # Giornata modificabile: la prima non ancora iniziata rispetto a league_day.
+        # Dopo il rollover della vigilia la giornata di domani è già "iniziata" (bloccata),
+        # quindi i cambi passano subito a quella dopo ancora.
+        upcoming = [r for r in rounds if r["start_date"] > league_day]
+        if upcoming:
+            next_round = upcoming[0]
+            eve = date.fromisoformat(next_round["start_date"]) - timedelta(days=1)
+            context.update(edit_gw=next_round["round_number"], deadline=cls.rollover_instant(eve))
         return context
 
     @staticmethod
