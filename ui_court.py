@@ -92,8 +92,23 @@ class PlayerCard(ft.Container):
         name_parts = self.player.name.split()
         first_initial = name_parts[0][0]
         surname = ' '.join(name_parts[1:])
-        score_text = f"{self.score * conf['mult']:.1f}" if has_played(self.score) else "-"
-            
+        # Le riserve non contribuiscono al totale (mult 0), ma mostriamo il punteggio
+        # grezzo tra parentesi per aiutare l'allenatore a decidere se schierarle
+        is_reserve = self.role_type == "RESERVE"
+        if not has_played(self.score):
+            score_text = "-"
+        elif is_reserve:
+            score_text = f"({self.score:.1f})"
+        else:
+            score_text = f"{self.score * conf['mult']:.1f}"
+        score_control = ft.Text(
+            score_text,
+            size=conf["font"],
+            weight="normal" if is_reserve else "bold",
+            italic=is_reserve,
+            color="grey" if is_reserve else None,
+        )
+
         btn_container = ft.Container(
             content=self.swap_button,
             left=conf["button_left"], top=conf["button_top"]
@@ -109,7 +124,7 @@ class PlayerCard(ft.Container):
                         ft.Image(src=self.player.get_avatar_img(), width=conf["avatar"], height=conf["avatar"]),
                         ft.Text(f"{first_initial}. {surname}", size=conf["font"], weight="bold", no_wrap=True),
                         ft.Text(f"{self.player.team_abbreviation} | {self.player.position}", size=9, color="grey"),
-                        ft.Text(score_text, size=conf["font"], weight="bold"),
+                        score_control,
                     ]
                 ),
                 btn_container
