@@ -1,6 +1,7 @@
 import flet as ft
 import os
 import json
+import asyncio
 from datetime import datetime
 from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS
 from time_manager import TimeManager, ITA_TZ
@@ -137,6 +138,34 @@ class PlayerCard(ft.Container):
         self.score = new_score
         self.setup_ui()
 
+class LoadingOverlay(ft.Container):
+    """Velo semitrasparente con spinner sopra la schermata: la formazione resta visibile sotto."""
+    PAINT_DELAY = 0.05  # Secondi lasciati al client per disegnare il velo prima del lavoro pesante
+
+    def __init__(self):
+        super().__init__(
+            content=ft.ProgressRing(color="amber"),
+            alignment=ft.alignment.Alignment.CENTER,
+            bgcolor=ft.Colors.with_opacity(0.55, ft.Colors.BLACK),
+            left=0, top=0, right=0, bottom=0,  # Copre tutto lo Stack
+            visible=False,
+            on_click=lambda e: None,  # Assorbe i tocchi: niente doppi click durante il caricamento
+        )
+
+    async def show(self):
+        """
+        Mostra il velo e lascia libero il loop per un attimo: i gestori di Flet girano nel suo
+        loop asyncio, quindi senza questa pausa il velo arriverebbe al client insieme al resto.
+        """
+        self.visible = True
+        self.update()
+        await asyncio.sleep(self.PAINT_DELAY)
+
+    def hide(self):
+        self.visible = False
+        self.update()
+
+
 class Court(ft.Column):
     def __init__(self, team_instance: Team, gameweek: int, edit_deadline: datetime | None = None, read_only: bool = False):
         super().__init__()
@@ -149,6 +178,7 @@ class Court(ft.Column):
         self.edit_deadline = edit_deadline  # Chiusura dei cambi (UTC); None = cambi chiusi
         self.read_only = read_only          # Formazione di un'altra squadra: niente modulo né scambi
         self.editable = not read_only and edit_deadline is not None and TimeManager.now() < edit_deadline
+        self.loading: LoadingOverlay | None = None  # Velo di caricamento, assegnato da TeamView
         self.lineup = self.team.lineup if self.team.lineup in LINEUP_ROLES else "2-2-1"
 
         # Testo UI legato al campo 'score' del Team
@@ -261,13 +291,11 @@ class Court(ft.Column):
         sb.open = True
         self.page.update()
 
-    def handle_save(self, e):
+    async def handle_save(self, e):
         """Salva su Supabase (dalla giornata self.gameweek in poi) e in locale, poi nasconde i bottoni."""
-        from supabase_manager import SupabaseSync
-
         # I cambi potrebbero essersi chiusi mentre l'app era aperta
         if TimeManager.now() >= self.edit_deadline:
-            self.handle_cancel(e)
+            self.restore_saved_state()
             self.editable = False
             self.apply_lock()
             self.update()
@@ -277,16 +305,14 @@ class Court(ft.Column):
         # Aggiorniamo i dati nel team (incluso l'ordine dei giocatori)
         self.refresh_ui_and_data()
 
-        sync = SupabaseSync()
+        # Solo le chiamate di rete vanno nel thread: gli update della UI restano nel loop di Flet
+        if self.loading:
+            await self.loading.show()
         try:
-            team_id = sync.get_team_id_by_name(self.team.name)
-            sync.update_roster_positions(self.team, team_id)
-            # Tutti i giocatori, dalla giornata modificabile in poi (mai quella in corso):
-            # riallinea anche eventuali righe disallineate delle giornate future
-            saved = sync.update_lineup_slots(self.team, self.gameweek)
-        except Exception as ex:
-            print(f"Errore durante il salvataggio della formazione: {ex}")
-            saved = False
+            saved = await asyncio.to_thread(self._push_lineup)
+        finally:
+            if self.loading:
+                self.loading.hide()
         if not saved:
             self.show_message("Errore nel salvataggio della formazione, riprova", "red")
             return
@@ -297,7 +323,32 @@ class Court(ft.Column):
         self.toggle_buttons(False)
         self.show_message(f"Formazione di {self.team.name} salvata!", "green")
 
-    def handle_cancel(self, e):
+    def _push_lineup(self) -> bool:
+        """Scrive rosa e formazione su Supabase (eseguito in un thread: niente UI qui)."""
+        from supabase_manager import SupabaseSync
+
+        sync = SupabaseSync()
+        try:
+            team_id = sync.get_team_id_by_name(self.team.name)
+            sync.update_roster_positions(self.team, team_id)
+            # Tutti i giocatori, dalla giornata modificabile in poi (mai quella in corso):
+            # riallinea anche eventuali righe disallineate delle giornate future
+            return sync.update_lineup_slots(self.team, self.gameweek)
+        except Exception as ex:
+            print(f"Errore durante il salvataggio della formazione: {ex}")
+            return False
+
+    async def handle_cancel(self, e):
+        """Ripristina l'ultimo salvataggio mostrando il velo di caricamento."""
+        if self.loading:
+            await self.loading.show()
+        try:
+            self.restore_saved_state()
+        finally:
+            if self.loading:
+                self.loading.hide()
+
+    def restore_saved_state(self):
         """Ripristina i dati all'ultimo salvataggio."""
         # Ripristina Giocatori nelle card
         for i, (old_p, old_s) in enumerate(self.initial_state):
@@ -758,16 +809,37 @@ class TeamView(ft.Column):
         if current_team is not None:
             self.courts.append((f"Giornata {current_gw}", Court(current_team, current_gw)))
         if edit_team is not None:
-            self.courts.append((f"Formazione GW {edit_gw}", Court(edit_team, edit_gw, edit_deadline)))
+            self.courts.append((f"Formazione G{edit_gw}", Court(edit_team, edit_gw, edit_deadline)))
 
+        # Velo di caricamento sopra le formazioni (cambio giornata, Salva, Annulla)
+        self.loading = LoadingOverlay()
+        for _, court in self.courts:
+            court.loading = self.loading
+
+        # Gestore async senza lambda (Flet riconosce come async solo le coroutine function): l'indice va in data
         self.switch_buttons = [
-            ft.ElevatedButton(label, on_click=lambda e, i=i: self.show_court(i))
+            ft.ElevatedButton(label, data=i, on_click=self.handle_switch_click)
             for i, (label, _) in enumerate(self.courts)
         ]
-        self.controls = ([ft.Row(self.switch_buttons, alignment=ft.MainAxisAlignment.CENTER)]
-                         if len(self.courts) > 1 else [])
-        self.controls += [court for _, court in self.courts]
+        content = ft.Column(expand=True, horizontal_alignment="center", left=0, top=0, right=0, bottom=0)
+        content.controls = ([ft.Row(self.switch_buttons, alignment=ft.MainAxisAlignment.CENTER)]
+                            if len(self.courts) > 1 else [])
+        content.controls += [court for _, court in self.courts]
+        self.controls = [ft.Stack([content, self.loading], expand=True)]
         self.show_court(0, refresh=False)
+
+    async def handle_switch_click(self, e):
+        await self.switch_court(e.control.data)
+
+    async def switch_court(self, index: int):
+        """Passa all'altra formazione mostrando il velo mentre il client la disegna."""
+        if self.courts[index][1].visible:
+            return  # Già selezionata: niente velo
+        await self.loading.show()
+        try:
+            self.show_court(index)
+        finally:
+            self.loading.hide()
 
     def show_court(self, index: int, refresh: bool = True):
         """Mostra solo la formazione selezionata (le altre restano in memoria con le loro modifiche)."""
@@ -798,13 +870,14 @@ class LeagueView(ft.Column):
         else:
             self.controls = [ft.ProgressRing(), ft.Text("Caricamento squadre...")]
 
-    def load(self):
+    async def load(self):
         """Scarica (o legge dalla cache locale) le altre squadre e costruisce un tab per ognuna."""
         if self.loaded or self.loader is None:
             return
         self.loaded = True
         try:
-            teams = self.loader()
+            # In un thread: il loop di Flet resta libero e lo spinner si vede (e gira)
+            teams = await asyncio.to_thread(self.loader)
         except Exception as e:
             print(f"Errore nel caricamento delle altre squadre: {e}")
             self.loaded = False  # Riprova alla prossima apertura del tab
@@ -904,10 +977,10 @@ class MainDashboard(ft.Tabs):
             ],
         )
 
-    def handle_tab_change(self, e):
+    async def handle_tab_change(self, e):
         """Al primo ingresso nel tab Avversari scarica le formazioni delle altre squadre."""
         if int(e.data) == 1:  # e.data = indice del tab selezionato
-            self.league_view.load()
+            await self.league_view.load()
 
 
 class LoginView(ft.Column):
@@ -921,23 +994,27 @@ class LoginView(ft.Column):
         self.username_field = ft.TextField(label="Username", width=280, bgcolor="#1a1a1a")
         self.password_field = ft.TextField(label="Password", width=280, password=True, can_reveal_password=True, bgcolor="#1a1a1a")
         self.error_text = ft.Text("", color="red")
-        
+        self.login_button = ft.ElevatedButton("Entra", on_click=self._check_login, bgcolor="amber", color="black")
+
         self.controls = [
             ft.Icon(ft.Icons.SPORTS_BASKETBALL, size=80, color="amber"),
             ft.Text("NewFantaNBA Login", size=24, weight="bold"),
             self.username_field,
             self.password_field,
             self.error_text,
-            ft.ElevatedButton("Entra", on_click=self._check_login, bgcolor="amber", color="black")
+            self.login_button
         ]
 
-    def _check_login(self, e):
+    async def _check_login(self, e):
         with open("data/profiles.json", "r") as f:
             profiles = json.load(f)
-            
+
         for user in profiles:
             if user["username"] == self.username_field.value and user["password"] == self.password_field.value:
-                self.on_login_success(user)
+                # Niente doppi click mentre si caricano i dati
+                self.login_button.disabled = True
+                self.update()
+                await self.on_login_success(user)
                 return
         
         self.error_text.value = "Credenziali errate"

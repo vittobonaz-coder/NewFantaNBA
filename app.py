@@ -5,6 +5,7 @@ quando è girato un cron dopo l'ultimo download e li salva nei file locali.
 """
 import os
 import json
+import asyncio
 import flet as ft
 from datetime import datetime
 from fanta_obj import Team
@@ -90,20 +91,16 @@ def main(page: ft.Page) -> None:
         page.add(ft.Text(text, color=color))
         page.update()
 
-    def on_login_success(user_data):
-        page.clean()
-        page.add(ft.Column(
-            [ft.ProgressRing(), ft.Text("Aggiornamento dati...")],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER
-        ))
-        page.update()
-
+    def load_user_data(user_data) -> tuple[dict | None, str | None]:
+        """
+        Scarica (o legge dai file locali) tutto il necessario per la dashboard.
+        Gira in un thread, quindi niente UI qui: restituisce (dati, None) oppure (None, errore).
+        """
         try:
             sync = SupabaseSync()
             team_row = sync.get_team_by_user_id(user_data["id"])
             if not team_row:
-                show_message(f"Nessuna squadra associata a {user_data['username']}", "red")
-                return
+                return None, f"Nessuna squadra associata a {user_data['username']}"
 
             # 1. Calendario e classifica (riscaricati solo dopo un nuovo run del cron)
             last_update = get_last_update(sync)
@@ -113,19 +110,33 @@ def main(page: ft.Page) -> None:
             league = TimeManager.get_league_context(calendar)
             gameweeks = [gw for gw in (league["current_gw"], league["edit_gw"]) if gw is not None]
             if not gameweeks:
-                show_message("Calendario vuoto", "red")
-                return
+                return None, "Calendario vuoto"
 
             # 3. Formazione e punteggi della squadra per ciascuna giornata da mostrare
             teams = {gw: sync_team_data(sync, team_row["name"], team_row["id"], gw, last_update) for gw in gameweeks}
         except Exception as e:
             print(f"Errore durante l'aggiornamento dei dati: {e}")
-            show_message("Impossibile scaricare i dati, riprova più tardi", "red")
-            return
+            return None, "Impossibile scaricare i dati, riprova più tardi"
 
         if any(team is None or not team.is_valid_roster() for team in teams.values()):
-            show_message(f"Errore Roster: {team_row['name']}", "red")
+            return None, f"Errore Roster: {team_row['name']}"
+        return {"team_row": team_row, "last_update": last_update, "league": league, "teams": teams}, None
+
+    async def on_login_success(user_data):
+        page.clean()
+        page.add(ft.Column(
+            [ft.ProgressRing(), ft.Text("Aggiornamento dati...")],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        ))
+        page.update()
+
+        # Il download gira in un thread: il loop di Flet resta libero, quindi lo spinner
+        # arriva subito al client e continua a girare
+        data, error = await asyncio.to_thread(load_user_data, user_data)
+        if error:
+            show_message(error, "red")
             return
+        team_row, last_update, league, teams = data["team_row"], data["last_update"], data["league"], data["teams"]
 
         # Le altre squadre (solo giornata in corso) si scaricano alla prima apertura del tab Avversari
         current_gw = league["current_gw"]
