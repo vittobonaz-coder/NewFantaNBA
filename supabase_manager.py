@@ -826,62 +826,93 @@ class SupabaseSync:
                 print(f"Attenzione: Nessuna lineup trovata per '{team_name}' nella gameweek {gameweek}.")
                 return False
 
-            # 3. Costruisci il nuovo roster formattato per il JSON
-            new_roster = []
-            target_date = ""
-
-            for row in data:
-                # Estrae target_date (basta prenderla dalla prima riga valida)
-                if row.get("target_date"):
-                    target_date = row["target_date"]
-
-                # Dati dalla join con la tabella nba_players
-                nba_info = row.get("nba_players") or {}
-
-                new_roster.append({
-                    "id": row.get("nba_player_id"),
-                    "name": row.get("player_name"),
-                    "team": nba_info.get("nba_team", ""),
-                    "pos": nba_info.get("position", ""),
-                    "score": float(row["score"]) if row.get("score") is not None else NOT_PLAYED_SCORE,
-                    "role": row.get("role", "RESERVE")
-                })
-
-            # 4. Totale ricalcolato dai punteggi scaricati (come fa il cron)
-            total_score = sum(p["score"] * ROLE_MULTIPLIERS.get(p["role"], 0.0)
-                              for p in new_roster if has_played(p["score"]))
-
-            filename = Path(Team(team_name, gameweek=gameweek).filename).name
-            json_path = Path(data_dir) / filename
-            state_data = {
-                "team_name": team_name,
-                "target_date": target_date,
-                "gameweek": gameweek,
-                "data_as_of": data_as_of.isoformat() if data_as_of else "",
-                "total_score": round(total_score, 2),
-                "lineup": "2-2-1",
-                "roster": new_roster
-            }
-
-            # Preserva il modulo salvato in locale (l'app lo verifica comunque sui titolari)
-            if json_path.exists():
-                with open(json_path, "r", encoding="utf-8") as f:
-                    try:
-                        state_data["lineup"] = json.load(f).get("lineup", "2-2-1")
-                    except json.JSONDecodeError:
-                        pass
-
-            # 5. Salva (o sovrascrivi) il file locale
-            json_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(json_path, "w", encoding="utf-8") as f:
-                json.dump(state_data, f, ensure_ascii=False, indent=4)
-
-            print(f"File '{filename}' aggiornato con successo ({len(new_roster)} giocatori).")
+            self._write_lineup_state(team_name, gameweek, data, data_as_of, data_dir)
             return True
 
         except Exception as e:
             print(f"Errore durante il pull della lineup per {team_name}: {e}")
             return False
+
+    def _write_lineup_state(self, team_name: str, gameweek: int, rows: list[dict],
+                            data_as_of: datetime | None = None, data_dir: str = "data") -> None:
+        """
+        Scrive (o sovrascrive) il file <nome_team>_gw<N>_state.json a partire dalle righe
+        di lineup_players (ordinate per slot, con la join nba_players(nba_team, position)).
+        """
+        # 1. Costruisci il nuovo roster formattato per il JSON
+        new_roster = []
+        target_date = ""
+
+        for row in rows:
+            # Estrae target_date (basta prenderla dalla prima riga valida)
+            if row.get("target_date"):
+                target_date = row["target_date"]
+
+            # Dati dalla join con la tabella nba_players
+            nba_info = row.get("nba_players") or {}
+
+            new_roster.append({
+                "id": row.get("nba_player_id"),
+                "name": row.get("player_name"),
+                "team": nba_info.get("nba_team", ""),
+                "pos": nba_info.get("position", ""),
+                "score": float(row["score"]) if row.get("score") is not None else NOT_PLAYED_SCORE,
+                "role": row.get("role", "RESERVE")
+            })
+
+        # 2. Totale ricalcolato dai punteggi scaricati (come fa il cron)
+        total_score = sum(p["score"] * ROLE_MULTIPLIERS.get(p["role"], 0.0)
+                          for p in new_roster if has_played(p["score"]))
+
+        filename = Path(Team(team_name, gameweek=gameweek).filename).name
+        json_path = Path(data_dir) / filename
+        state_data = {
+            "team_name": team_name,
+            "target_date": target_date,
+            "gameweek": gameweek,
+            "data_as_of": data_as_of.isoformat() if data_as_of else "",
+            "total_score": round(total_score, 2),
+            "lineup": "2-2-1",
+            "roster": new_roster
+        }
+
+        # Preserva il modulo salvato in locale (l'app lo verifica comunque sui titolari)
+        if json_path.exists():
+            with open(json_path, "r", encoding="utf-8") as f:
+                try:
+                    state_data["lineup"] = json.load(f).get("lineup", "2-2-1")
+                except json.JSONDecodeError:
+                    pass
+
+        # 3. Salva (o sovrascrivi) il file locale
+        json_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(state_data, f, ensure_ascii=False, indent=4)
+
+        print(f"File '{filename}' aggiornato con successo ({len(new_roster)} giocatori).")
+
+    def pull_lineups_for_teams(self, teams: list[dict], gameweek: int,
+                               data_as_of: datetime | None = None, data_dir: str = "data") -> None:
+        """
+        Scarica con una sola query le lineup di più squadre ({"id", "name"}) per la gameweek
+        e scrive un file <nome_team>_gw<N>_state.json per ciascuna.
+        """
+        if not teams:
+            return
+        rows = (
+            self.supabase.table("lineup_players")
+            .select("*, nba_players(nba_team, position)")
+            .in_("fanta_team_id", [t["id"] for t in teams])
+            .eq("gameweek", gameweek)
+            .order("slot")
+            .execute()
+        ).data or []
+        for t in teams:
+            team_rows = [r for r in rows if r.get("fanta_team_id") == t["id"]]
+            if team_rows:
+                self._write_lineup_state(t["name"], gameweek, team_rows, data_as_of, data_dir)
+            else:
+                print(f"Attenzione: Nessuna lineup trovata per '{t['name']}' nella gameweek {gameweek}.")
 
 
     def pull_lineup_for_all_teams(self, gameweek: int, data_dir: str = "data") -> None:
@@ -1246,6 +1277,10 @@ class SupabaseSync:
         """Restituisce {"id", "name"} della fanta-squadra collegata al profilo (None se non esiste)."""
         data = self.supabase.table("fanta_teams").select("id, name").eq("user_id", user_id).limit(1).execute().data
         return data[0] if data else None
+
+    def get_all_teams(self) -> list[dict]:
+        """Restituisce {"id", "name"} di tutte le fanta-squadre, in ordine di nome."""
+        return self.supabase.table("fanta_teams").select("id, name").order("name").execute().data or []
 
     def get_last_cron_run(self) -> datetime | None:
         """Fine dell'ultimo run del cron (tabella cron_runs). None se la tabella è vuota o non esiste."""

@@ -65,6 +65,18 @@ def sync_team_data(sync: SupabaseSync, team_name: str, team_id: str, gameweek: i
     sync.pull_lineup_for_team(team_name, gameweek, team_id=team_id, data_as_of=last_update)
     return team if team.load_from_json() else None
 
+def sync_other_teams(sync: SupabaseSync, exclude_id: str, gameweek: int, last_update: datetime) -> list[Team]:
+    """Formazioni e punteggi delle altre squadre: riscaricati in blocco solo quelli mancanti o vecchi."""
+    others = [t for t in sync.get_all_teams() if t["id"] != exclude_id]
+    teams = {t["name"]: Team(t["name"], gameweek=gameweek) for t in others}
+    stale = [t for t in others
+             if not teams[t["name"]].load_from_json() or is_stale(teams[t["name"]].data_as_of, last_update)]
+    if stale:
+        sync.pull_lineups_for_teams(stale, gameweek, data_as_of=last_update)
+        for t in stale:
+            teams[t["name"]].load_from_json()
+    return [team for team in teams.values() if team.is_valid_roster()]
+
 
 def main(page: ft.Page) -> None:
     page.title = 'Fanta NBA - Dashboard'
@@ -115,11 +127,17 @@ def main(page: ft.Page) -> None:
             show_message(f"Errore Roster: {team_row['name']}", "red")
             return
 
+        # Le altre squadre (solo giornata in corso) si scaricano alla prima apertura del tab Avversari
+        current_gw = league["current_gw"]
+        league_loader = (lambda: sync_other_teams(SupabaseSync(), team_row["id"], current_gw, last_update)) \
+                        if current_gw is not None else None
+
         page.clean()
         page.add(MainDashboard(
-            current_team=teams.get(league["current_gw"]), current_gw=league["current_gw"],
+            current_team=teams.get(current_gw), current_gw=current_gw,
             edit_team=teams.get(league["edit_gw"]), edit_gw=league["edit_gw"],
-            edit_deadline=league["deadline"]
+            edit_deadline=league["deadline"],
+            league_loader=league_loader
         ))
         page.update()
 

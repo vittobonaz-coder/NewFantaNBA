@@ -1,8 +1,6 @@
 TO DO:
 - Visualizzare formazione e punteggio squadra avversaria
 
-- Mettere i punteggi delle riserve, anche se non contano nella somma
-
 - Nel calendario, se entrambe le squadre non hanno ancora giocatori che hanno giocato non segna i punteggi,
     mentre dovrebbe segnare 0 ad entrambi appena inizia la giornata
     --> In base all'ultima data di aggiornamento dovrei scaricare i dati per tutti i giorni di cui sono indietro

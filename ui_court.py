@@ -60,12 +60,13 @@ def infer_lineup(players: list[Player], preferred: str) -> str | None:
 class PlayerCard(ft.Container):
     """Classe per le cards dei giocatori"""
 
-    def __init__(self, player: Player, score: float | None, role_type: str, slot_index: int):
+    def __init__(self, player: Player, score: float | None, role_type: str, slot_index: int, show_swap: bool = True):
         super().__init__()
         self.player = player
         self.score = score
         self.role_type = role_type
         self.slot_index = slot_index
+        self.show_swap = show_swap  # False nelle formazioni in sola lettura (squadre avversarie)
         # Swap Button
         self.swap_button = ft.PopupMenuButton(
             icon=ft.Icons.SWAP_VERT_CIRCLE, icon_color="white", bgcolor="black"
@@ -127,8 +128,7 @@ class PlayerCard(ft.Container):
                         score_control,
                     ]
                 ),
-                btn_container
-            ]
+            ] + ([btn_container] if self.show_swap else [])
         )
     
     def update_data(self, new_player: Player, new_score: float | None):
@@ -138,7 +138,7 @@ class PlayerCard(ft.Container):
         self.setup_ui()
 
 class Court(ft.Column):
-    def __init__(self, team_instance: Team, gameweek: int, edit_deadline: datetime | None = None):
+    def __init__(self, team_instance: Team, gameweek: int, edit_deadline: datetime | None = None, read_only: bool = False):
         super().__init__()
         self.horizontal_alignment = "center"
         self.scroll = ft.ScrollMode.AUTO
@@ -147,7 +147,8 @@ class Court(ft.Column):
         self.team = team_instance
         self.gameweek = gameweek            # Giornata mostrata, a cui si applicano anche i cambi
         self.edit_deadline = edit_deadline  # Chiusura dei cambi (UTC); None = cambi chiusi
-        self.editable = edit_deadline is not None and TimeManager.now() < edit_deadline
+        self.read_only = read_only          # Formazione di un'altra squadra: niente modulo né scambi
+        self.editable = not read_only and edit_deadline is not None and TimeManager.now() < edit_deadline
         self.lineup = self.team.lineup if self.team.lineup in LINEUP_ROLES else "2-2-1"
 
         # Testo UI legato al campo 'score' del Team
@@ -166,7 +167,8 @@ class Court(ft.Column):
                 player=p,
                 score=p.score,
                 role_type=self.team.roles_map[p.id],
-                slot_index=i
+                slot_index=i,
+                show_swap=not read_only
             )
             self.cards.append(card)
 
@@ -237,6 +239,8 @@ class Court(ft.Column):
         self.update()
 
     def status_message(self) -> str:
+        if self.read_only:
+            return f"Giornata {self.gameweek}"
         if self.editable:
             deadline = self.edit_deadline.astimezone(ITA_TZ)
             return f"Giornata {self.gameweek} · cambi aperti fino al {deadline:%d/%m} alle {deadline:%H:%M}"
@@ -351,10 +355,11 @@ class Court(ft.Column):
             self.total_score_text,
             # Giornata e stato dei cambi
             self.status_text,
-            # Dropdown formazione
+            # Dropdown formazione (nascosto in sola lettura)
             ft.Container(
                 content=ft.Row([self.lineup_dd], alignment=ft.MainAxisAlignment.START),
-                width=330, height=80
+                width=330, height=80,
+                visible=not self.read_only
             ),
             # Titolari
             self.starters_container,
@@ -533,8 +538,9 @@ class CalendarView(ft.Tabs):
                             
                             # Punteggio centrale
                             ft.Container(
-                                content=ft.Text(score_text, weight="bold", color="amber"),
-                                width=80, 
+                                # Largo abbastanza per due punteggi a 3 cifre sulla stessa riga
+                                content=ft.Text(score_text, weight="bold", color="amber", no_wrap=True),
+                                width=125,
                                 alignment=ft.alignment.Alignment.CENTER
                             ),
                             
@@ -774,19 +780,80 @@ class TeamView(ft.Column):
             self.update()
 
 
+class LeagueView(ft.Column):
+    """
+    Formazioni e punteggi della giornata in corso delle altre squadre, una per tab.
+    I dati si scaricano solo alla prima apertura del tab (loader), non al login.
+    """
+    def __init__(self, gameweek: int | None, loader=None):
+        super().__init__()
+        self.expand = True
+        self.horizontal_alignment = "center"
+        self.alignment = ft.MainAxisAlignment.CENTER
+        self.gameweek = gameweek
+        self.loader = loader  # Restituisce la lista dei Team; None = nessuna giornata in corso
+        self.loaded = False
+        if loader is None:
+            self.controls = [ft.Text("Nessuna giornata in corso", size=16, color="grey")]
+        else:
+            self.controls = [ft.ProgressRing(), ft.Text("Caricamento squadre...")]
+
+    def load(self):
+        """Scarica (o legge dalla cache locale) le altre squadre e costruisce un tab per ognuna."""
+        if self.loaded or self.loader is None:
+            return
+        self.loaded = True
+        try:
+            teams = self.loader()
+        except Exception as e:
+            print(f"Errore nel caricamento delle altre squadre: {e}")
+            self.loaded = False  # Riprova alla prossima apertura del tab
+            self.controls = [ft.Text("Impossibile scaricare le squadre, riprova", color="red")]
+            self.update()
+            return
+
+        self.alignment = ft.MainAxisAlignment.START
+        if not teams:
+            self.controls = [ft.Text("Nessuna formazione disponibile", size=16, color="grey")]
+        else:
+            self.controls = [ft.Tabs(
+                length=len(teams),
+                selected_index=0,
+                expand=True,
+                content=ft.Column(
+                    expand=True,
+                    controls=[
+                        ft.TabBar(
+                            scrollable=True,
+                            label_color=ft.Colors.ORANGE,
+                            unselected_label_color=ft.Colors.GREY,
+                            indicator_color=ft.Colors.ORANGE,
+                            tabs=[ft.Tab(label=t.name) for t in teams]
+                        ),
+                        ft.TabBarView(
+                            expand=True,
+                            controls=[Court(t, self.gameweek, read_only=True) for t in teams]
+                        ),
+                    ],
+                ),
+            )]
+        self.update()
+
+
 class MainDashboard(ft.Tabs):
     def __init__(self, current_team: Team | None, current_gw: int | None,
                  edit_team: Team | None = None, edit_gw: int | None = None,
-                 edit_deadline: datetime | None = None):
+                 edit_deadline: datetime | None = None, league_loader=None):
         super().__init__(content=None, length=0)
         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
         self.length = 5
         self.selected_index=0
         self.animation_duration=300
+        self.on_change = self.handle_tab_change
 
         # Inizializziamo le varie viste
         self.team_view = TeamView(current_team, current_gw, edit_team, edit_gw, edit_deadline)
-        self.search_view = ft.Text("Vista Ricerca - Prossimamente", size=20)
+        self.league_view = LeagueView(current_gw, league_loader)
         self.calendar_view = CalendarView()
         self.championship_view = StandingsView()
         self.settings_view = SettingsView()
@@ -802,7 +869,7 @@ class MainDashboard(ft.Tabs):
                     indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
                     tabs=[
                         ft.Tab(label="Squadra", icon=ft.Icons.SPORTS_BASKETBALL),
-                        ft.Tab(label="Ricerca", icon=ft.Icons.MANAGE_SEARCH),
+                        ft.Tab(label="Altre Squadre", icon=ft.Icons.GROUPS),
                         ft.Tab(label="Calendario", icon=ft.Icons.CALENDAR_MONTH),
                         ft.Tab(label="Campionato", icon=ft.Icons.EMOJI_EVENTS),
                         ft.Tab(label="Impostazioni", icon=ft.Icons.SETTINGS),
@@ -813,9 +880,9 @@ class MainDashboard(ft.Tabs):
                     controls=[
                         # Squadra
                         self.team_view,
-                        # Ricerca
+                        # Avversari
                         ft.Container(
-                            content=self.search_view,
+                            content=self.league_view,
                             padding=0
                         ),
                         # Calendario
@@ -836,6 +903,11 @@ class MainDashboard(ft.Tabs):
                 ),
             ],
         )
+
+    def handle_tab_change(self, e):
+        """Al primo ingresso nel tab Avversari scarica le formazioni delle altre squadre."""
+        if int(e.data) == 1:  # e.data = indice del tab selezionato
+            self.league_view.load()
 
 
 class LoginView(ft.Column):
