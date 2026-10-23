@@ -126,20 +126,36 @@ def process_nba_date(sync: SupabaseSync, manager: NbaDataManager, nba_date: str,
     new_scores, errors = compute_player_scores(rows, boxscores, nba_date, manager.nba_to_espn_map)
     sync_nba_teams(sync, rows, boxscores, dry_run)
 
+    # Per il log: chi è a referto ed è entrato in campo, chi è a referto ma DNP
+    played_ids = {b["PLAYER_ID"] for b in boxscores if not b.get("DNP")}
+    dnp_ids = {b["PLAYER_ID"] for b in boxscores if b.get("DNP")}
+
     # Ogni giocatore tiene la prestazione migliore della giornata:
-    # si scrive solo se il nuovo punteggio supera quello salvato (o se non ce n'era uno)
+    # si scrive solo se il nuovo punteggio supera quello salvato (o se non ce n'era uno).
+    # Nel log compaiono tutti i giocatori schierati la cui squadra NBA ha giocato,
+    # anche quelli il cui punteggio non migliora.
     updated = 0
     for row in rows:
         p_id = int(row["nba_player_id"])
         new_score = new_scores[p_id]
         if new_score is None:
-            continue
+            continue  # la sua squadra NBA non ha giocato (o la partita non è conclusa)
         new_score = round(new_score, 2)
         old_score = float(row["score"]) if row["score"] is not None else None
+
+        if p_id in played_ids:
+            note = ""
+        elif p_id in dnp_ids:
+            note = " [DNP]"
+        else:
+            note = " [non a referto]"
+
         if old_score is not None and new_score <= old_score:
+            esito = "invariato" if new_score == old_score else "non migliorato"
+            print(f"  {row['player_name']}: {old_score} (questa data {new_score}{note}, {esito})")
             continue
 
-        print(f"  {row['player_name']}: {old_score} -> {new_score}")
+        print(f"  {row['player_name']}: {old_score} -> {new_score}{note}")
         row["score"] = new_score
         updated += 1
         if not dry_run and not sync.update_lineup_player_score(gameweek, new_score, nba_player_id=p_id):
