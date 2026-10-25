@@ -224,6 +224,10 @@ class Player:
                 if wl_str == "W":
                     current_score *= 1.05
 
+                # 8. Malus espulsione per 6 falli (-6, fuori dal +5% vittoria)
+                if pf >= 6:
+                    current_score -= 5
+
                 total_scores.append(current_score)
             except Exception:
                 # Salta eventuali partite corrotte senza bloccare l'esecuzione globale

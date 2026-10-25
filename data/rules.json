@@ -14,6 +14,7 @@
     { "azione": "Tiro sbagliato", "punteggio": "-1" },
     { "azione": "Tiro libero sbagliato", "punteggio": "-1" },
     { "azione": "Palla persa", "punteggio": "-1.5" },
+    { "azione": "6 falli (espulsione)", "punteggio": "-5" },
     { "azione": "Punti segnati: 30/40/50...", "punteggio": "+3/4/5..." },
     { "azione": "Plus/Minus (PM)", "punteggio": "+PM/5" },
     { "azione": "20+ Rimbalzi", "punteggio": "+5" },
