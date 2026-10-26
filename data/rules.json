@@ -20,5 +20,9 @@
     { "azione": "20+ Rimbalzi", "punteggio": "+5" },
     { "azione": "20+ Assist", "punteggio": "+5" },
     { "azione": "Vittoria squadra", "punteggio": "+5% Punteggio giocatore" }
+  ],
+  "classifica": [
+    { "azione": "Vittoria", "punteggio": "+1" },
+    { "azione": "Miglior punteggio della giornata (MP)", "punteggio": "+0.2" }
   ]
 }

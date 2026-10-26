@@ -6,7 +6,9 @@
         "wins": 1,
         "losses": 0,
         "total_score": 410.56,
-        "total_points_against": 338.17
+        "total_points_against": 338.17,
+        "best_scores": 1,
+        "standing_points": 1.2
     },
     {
         "fanta_team_id": "491c4b46-1483-4527-8b97-26017d17a476",
@@ -15,7 +17,9 @@
         "wins": 1,
         "losses": 0,
         "total_score": 383.03,
-        "total_points_against": 377.01
+        "total_points_against": 377.01,
+        "best_scores": 0,
+        "standing_points": 1.0
     },
     {
         "fanta_team_id": "b8160e15-a779-4464-9168-3dde60c9b539",
@@ -24,7 +28,9 @@
         "wins": 1,
         "losses": 0,
         "total_score": 353.75,
-        "total_points_against": 350.45
+        "total_points_against": 350.45,
+        "best_scores": 0,
+        "standing_points": 1.0
     },
     {
         "fanta_team_id": "78ab202d-9e35-44c8-994b-39748e123384",
@@ -33,7 +39,9 @@
         "wins": 1,
         "losses": 0,
         "total_score": 350.3,
-        "total_points_against": 332.38
+        "total_points_against": 332.38,
+        "best_scores": 0,
+        "standing_points": 1.0
     },
     {
         "fanta_team_id": "2d6ebc93-e115-42c3-b9b8-8c6dc97e09df",
@@ -42,7 +50,9 @@
         "wins": 0,
         "losses": 1,
         "total_score": 377.01,
-        "total_points_against": 383.03
+        "total_points_against": 383.03,
+        "best_scores": 0,
+        "standing_points": 0.0
     },
     {
         "fanta_team_id": "96aab004-e06a-4b5a-a188-6034afa89f8b",
@@ -51,7 +61,9 @@
         "wins": 0,
         "losses": 1,
         "total_score": 350.45,
-        "total_points_against": 353.75
+        "total_points_against": 353.75,
+        "best_scores": 0,
+        "standing_points": 0.0
     },
     {
         "fanta_team_id": "391f1683-fac7-435c-8b48-457e5117fc30",
@@ -60,7 +72,9 @@
         "wins": 0,
         "losses": 1,
         "total_score": 338.17,
-        "total_points_against": 410.56
+        "total_points_against": 410.56,
+        "best_scores": 0,
+        "standing_points": 0.0
     },
     {
         "fanta_team_id": "c0152cdd-4318-4ee7-a982-b75db4a10ec4",
@@ -69,6 +83,8 @@
         "wins": 0,
         "losses": 1,
         "total_score": 332.38,
-        "total_points_against": 350.3
+        "total_points_against": 350.3,
+        "best_scores": 0,
+        "standing_points": 0.0
     }
 ]

@@ -767,8 +767,8 @@ class StandingsView(ft.Column):
             with open(self.json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            # Ordina: prima per vittorie (Wins), in caso di parità per Punti Fatti (total_score)
-            data.sort(key=lambda x: (x.get("wins", 0), x.get("total_score", 0.0)), reverse=True)
+            # Ordina: prima per Punti classifica (vittorie + bonus miglior punteggio), in caso di parità per Punti Fatti (total_score)
+            data.sort(key=lambda x: (float(x.get("standing_points", x.get("wins", 0))), x.get("total_score", 0.0)), reverse=True)
             return data
         except Exception as err:
             print(f"Errore durante il caricamento della classifica: {err}")
@@ -794,25 +794,32 @@ class StandingsView(ft.Column):
                     cells=[
                         ft.DataCell(ft.Text(f"{pos}", weight="bold", color="amber" if pos <= 3 else "white")),
                         ft.DataCell(ft.Text(team.get("team_name", "-"), weight="bold")),
+                        ft.DataCell(ft.Text(f"{float(team.get('standing_points', team.get('wins', 0))):.1f}", weight="bold", color="amber")),
                         ft.DataCell(ft.Text(str(team.get("wins", 0)), color="green_400")),
                         ft.DataCell(ft.Text(str(team.get("losses", 0)), color="red_400")),
+                        ft.DataCell(ft.Text(str(team.get("best_scores", 0)))),
                         ft.DataCell(ft.Text(f"{team.get('total_score', 0.0):.1f}")),
                         ft.DataCell(ft.Text(f"{team.get('total_points_against', 0.0):.1f}")),
                     ]
                 )
             )
 
-        # Tabella reattiva Flet
+        # Tabella reattiva Flet (spazi e font ridotti per far stare tutte le colonne su telefono)
         standings_table = ft.DataTable(
             bgcolor=ft.Colors.GREY_900,
             border_radius=10,
-            column_spacing=18,
+            column_spacing=10,
+            horizontal_margin=10,
             heading_row_height=45,
+            heading_text_style=ft.TextStyle(size=13),
+            data_text_style=ft.TextStyle(size=13),
             columns=[
                 ft.DataColumn(ft.Text("#", weight="bold")),
                 ft.DataColumn(ft.Text("Squadra", weight="bold")),
+                ft.DataColumn(ft.Text("Pt", weight="bold", color="amber"), numeric=True),
                 ft.DataColumn(ft.Text("V", weight="bold", color="green_400")),
                 ft.DataColumn(ft.Text("P", weight="bold", color="red_400")),
+                ft.DataColumn(ft.Text("MP", weight="bold"), numeric=True),
                 ft.DataColumn(ft.Text("PF", weight="bold"), numeric=True),
                 ft.DataColumn(ft.Text("PS", weight="bold"), numeric=True),
             ],
@@ -825,11 +832,12 @@ class StandingsView(ft.Column):
                     controls=[
                         ft.Text("Classifica Campionato", size=20, weight="bold", color="amber"),
                         ft.Divider(color="grey_800"),
-                        ft.Row([standings_table], alignment=ft.MainAxisAlignment.CENTER)
+                        # Scroll orizzontale di riserva se la tabella non entra comunque nello schermo
+                        ft.Row([standings_table], alignment=ft.MainAxisAlignment.CENTER, scroll=ft.ScrollMode.AUTO)
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER
                 ),
-                padding=10
+                padding=4
             )
         ]
 
