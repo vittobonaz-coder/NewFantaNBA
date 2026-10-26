@@ -543,13 +543,25 @@ class Court(ft.Column):
 
 WEEKDAYS_IT = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
 
-def round_tabs(rounds: list[dict], build_round) -> ft.Tabs:
-    """Una tab per giornata (etichetta = numero); build_round costruisce il contenuto di ciascuna."""
-    return ft.Tabs(
-        length=len(rounds),
-        selected_index=0,
-        expand=True,
-        content=ft.Column(
+class RoundTabs(ft.Tabs):
+    """
+    Una tab per giornata (etichetta = numero); build_round costruisce il contenuto di ciascuna.
+    Con lazy=True una giornata si costruisce solo alla prima apertura: il calendario NBA completo
+    sono migliaia di controlli, troppi da spedire al browser tutti insieme al login.
+    """
+    def __init__(self, rounds: list[dict], build_round, lazy: bool = False):
+        super().__init__(content=None, length=len(rounds))
+        self.selected_index = 0
+        self.expand = True
+        self.rounds = rounds
+        self.build_round = build_round
+        self.lazy = lazy
+        self.current = 0  # Giornata selezionata
+        self.round_views = [ft.Container(expand=True) if lazy else build_round(r) for r in rounds]
+        if lazy:
+            self.on_change = self.handle_change
+
+        self.content = ft.Column(
             expand=True,
             controls=[
                 ft.TabBar(
@@ -562,11 +574,23 @@ def round_tabs(rounds: list[dict], build_round) -> ft.Tabs:
                 ),
                 ft.TabBarView(
                     expand=True,
-                    controls=[build_round(r) for r in rounds]
+                    controls=self.round_views
                 ),
             ],
-        ),
-    )
+        )
+
+    def build_current(self) -> bool:
+        """Costruisce la giornata selezionata se non lo è ancora (True se l'ha costruita ora)."""
+        view = self.round_views[self.current] if self.round_views else None
+        if not self.lazy or view is None or view.content is not None:
+            return False
+        view.content = self.build_round(self.rounds[self.current])
+        return True
+
+    def handle_change(self, e):
+        self.current = int(e.data)  # e.data = indice della tab selezionata
+        if self.build_current():
+            self.update()
 
 
 class CalendarView(ft.Tabs):
@@ -581,8 +605,10 @@ class CalendarView(ft.Tabs):
         if calendar_data is None:
             league_view = nba_view = ft.Text("Calendario non trovato.")
         else:
-            league_view = round_tabs(calendar_data, self.build_league_round)
-            nba_view = round_tabs(calendar_data, self.build_nba_round)
+            league_view = RoundTabs(calendar_data, self.build_league_round)
+            # Le giornate NBA si costruiscono solo quando si aprono (vedi RoundTabs)
+            nba_view = self.nba_tabs = RoundTabs(calendar_data, self.build_nba_round, lazy=True)
+            self.on_change = self.handle_change
 
         self.content = ft.Column(
             expand=True,
@@ -596,6 +622,11 @@ class CalendarView(ft.Tabs):
                 ft.TabBarView(expand=True, controls=[league_view, nba_view]),
             ],
         )
+
+    def handle_change(self, e):
+        """Alla prima apertura del Calendario NBA costruisce la giornata selezionata."""
+        if int(e.data) == 1 and self.nba_tabs.build_current():
+            self.nba_tabs.update()
 
     def load_calendar(self) -> list[dict] | None:
         cal_path = os.path.join("data", "calendar.json")
