@@ -549,7 +549,8 @@ class RoundTabs(ft.Tabs):
     Con lazy=True una giornata si costruisce solo alla prima apertura: il calendario NBA completo
     sono migliaia di controlli, troppi da spedire al browser tutti insieme al login.
     In quel caso le giornate non stanno in un TabBarView (il client non ridisegna le pagine già
-    create) ma in un unico contenitore, a cui si cambia il contenuto quando cambia la giornata.
+    create) ma in un unico contenitore, a cui si cambia il contenuto quando cambia la giornata,
+    con il velo di caricamento sopra finché la nuova giornata non è stata spedita al browser.
     """
     def __init__(self, rounds: list[dict], build_round, lazy: bool = False):
         super().__init__(content=None, length=len(rounds))
@@ -563,9 +564,11 @@ class RoundTabs(ft.Tabs):
 
         if lazy:
             self.on_change = self.handle_change
-            self.body = ft.Container(expand=True)
+            self.loading = LoadingOverlay()
+            self.body = ft.Container(left=0, top=0, right=0, bottom=0)  # Riempie lo Stack
+            body_area = ft.Stack([self.body, self.loading], expand=True)
         else:
-            self.body = ft.TabBarView(expand=True, controls=[build_round(r) for r in rounds])
+            body_area = self.body = ft.TabBarView(expand=True, controls=[build_round(r) for r in rounds])
 
         self.content = ft.Column(
             expand=True,
@@ -578,26 +581,32 @@ class RoundTabs(ft.Tabs):
                     indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
                     tabs=[ft.Tab(label=f"{r['round_number']}") for r in rounds]
                 ),
-                self.body,
+                body_area,
             ],
         )
 
-    def show_current(self) -> bool:
-        """Mostra la giornata selezionata, costruendola se serve (True se il contenuto è cambiato)."""
+    async def show_current(self):
+        """
+        Mostra la giornata selezionata, costruendola se serve. Il velo resta sopra la giornata
+        precedente finché la nuova non è stata spedita al browser.
+        """
         if not self.lazy or not self.rounds:
-            return False
-        if self.current not in self.built_views:
-            self.built_views[self.current] = self.build_round(self.rounds[self.current])
-        view = self.built_views[self.current]
-        if self.body.content is view:
-            return False
-        self.body.content = view
-        return True
-
-    def handle_change(self, e):
-        self.current = int(e.data)  # e.data = indice della tab selezionata
-        if self.show_current():
+            return
+        view = self.built_views.get(self.current)
+        if view is not None and self.body.content is view:
+            return  # Già visibile: niente velo
+        await self.loading.show()
+        try:
+            if view is None:
+                view = self.built_views[self.current] = self.build_round(self.rounds[self.current])
+            self.body.content = view
             self.body.update()
+        finally:
+            self.loading.hide()
+
+    async def handle_change(self, e):
+        self.current = int(e.data)  # e.data = indice della tab selezionata
+        await self.show_current()
 
 
 class CalendarView(ft.Tabs):
@@ -630,10 +639,10 @@ class CalendarView(ft.Tabs):
             ],
         )
 
-    def handle_change(self, e):
-        """Alla prima apertura del Calendario NBA costruisce la giornata selezionata."""
-        if int(e.data) == 1 and self.nba_tabs.show_current():
-            self.nba_tabs.body.update()
+    async def handle_change(self, e):
+        """All'apertura del Calendario NBA mostra (e alla prima volta costruisce) la giornata selezionata."""
+        if int(e.data) == 1:
+            await self.nba_tabs.show_current()
 
     def load_calendar(self) -> list[dict] | None:
         cal_path = os.path.join("data", "calendar.json")
