@@ -47,6 +47,7 @@ def clean_database():
     
     # Ordine inverso rispetto alle dipendenze (prima le tabelle figlie, poi quelle genitrici)
     tables = [
+        "nba_games",
         "player_stats",
         "lineup_players",
         "matchups",
@@ -61,7 +62,10 @@ def clean_database():
             query = supabase.table(table).delete()
             
             # Applichiamo il filtro corretto in base alla tipologia di ID della tabella
-            if table == "player_stats":
+            if table == "nba_games":
+                # Chiave primaria testuale (id evento ESPN)
+                response = query.neq("game_id", "").execute()
+            elif table == "player_stats":
                 # Chiave primaria composta (player_id, game_id)
                 response = query.neq("player_id", -1).execute()
             elif table == "nba_players":

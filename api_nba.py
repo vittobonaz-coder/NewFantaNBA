@@ -5,9 +5,11 @@ import unicodedata
 import re
 import pandas as pd
 import requests
+from datetime import datetime
 from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import commonallplayers
+from time_manager import NBA_TZ
 
 
 # Sigle NBA ufficiali (nba_players.nba_team) che su ESPN sono diverse
@@ -429,6 +431,58 @@ class NbaDataManager:
                 raise
             print(f"Boxscores Error: {e}")
             return []
+
+    @staticmethod
+    def fetch_scoreboard_games(date_param):
+        """
+        Partite NBA dallo scoreboard ESPN, nel formato della tabella nba_games (senza gameweek).
+        :param date_param: un giorno (YYYYMMDD) oppure un mese intero (YYYYMM)
+        Le sigle sono quelle NBA ufficiali, i punteggi None finché la partita non inizia.
+        Solleva un'eccezione se ESPN non risponde.
+        """
+        url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={date_param}&limit=1000"
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+
+        games = []
+        for event in response.json().get("events", []):
+            comp = event.get("competitions", [{}])[0]
+            sides = {c.get("homeAway"): c for c in comp.get("competitors", [])}
+            if "home" not in sides or "away" not in sides:
+                continue
+
+            status_type = event.get("status", {}).get("type", {})
+            name = status_type.get("name", "")
+            if name in ("STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_SUSPENDED"):
+                status = "postponed"
+            elif status_type.get("completed"):
+                status = "final"
+            elif name == "STATUS_SCHEDULED":
+                status = "scheduled"
+            else:
+                status = "in_progress"
+
+            def team(side):
+                abbr = sides[side].get("team", {}).get("abbreviation", "")
+                return ESPN_TO_NBA_TEAM.get(abbr, abbr)
+
+            def score(side):
+                raw = sides[side].get("score")
+                return int(raw) if status in ("final", "in_progress") and raw not in (None, "") else None
+
+            # La data NBA è quella USA (fuso di New York) dell'orario di inizio
+            start_time = datetime.fromisoformat(event["date"].replace("Z", "+00:00"))
+            games.append({
+                "game_id": str(event.get("id")),
+                "nba_date": start_time.astimezone(NBA_TZ).date().isoformat(),
+                "start_time": start_time.isoformat(),
+                "home_team": team("home"),
+                "away_team": team("away"),
+                "home_score": score("home"),
+                "away_score": score("away"),
+                "status": status,
+            })
+        return games
 
     # ==========================================
     # SEZIONE 3: METODI NBA_API (Dati Statici)

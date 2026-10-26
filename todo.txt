@@ -1,4 +1,6 @@
 TO DO:
+- Cambiare l'orario di fine cambio alle 17
+
 - Visualizzare formazione e punteggio squadra avversaria
 
 - Nel calendario, se entrambe le squadre non hanno ancora giocatori che hanno giocato non segna i punteggi,
@@ -17,6 +19,10 @@ TO DO:
 - 2 numeri dopo la virgola per visualizzazione punteggi
 
 - Fare copia in locale (o su cloud) di tutti dati di tutte le giornate.
+
+- 1 giocatore Free agent ogni 4 giornate. L'ultimo in classifica ha la prima scelta.
+
+- Routine che ogni tot fa una foto dello stato del campionato e lo carica da qualche parte per backup
 
 
 

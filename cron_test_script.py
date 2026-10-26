@@ -171,6 +171,15 @@ def run_daily(sync: SupabaseSync, nba_dates: list[str], dry_run: bool) -> list[s
     errors = []
     for nba_date in nba_dates:
         errors += process_nba_date(sync, manager, nba_date, dry_run)
+
+    # Calendario NBA: risultati delle stesse date (non influisce sui punteggi)
+    if dry_run:
+        print("Calendario NBA non aggiornato (dry-run).")
+    else:
+        try:
+            sync.sync_nba_games(nba_dates)
+        except Exception as e:
+            errors.append(f"Calendario NBA non aggiornato: {e}")
     return errors
 
 
@@ -180,6 +189,7 @@ def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
     (la giornata di domani comprende anche le partite che iniziano stasera, data NBA = oggi):
     - chiude la giornata di oggi: ultimo ricalcolo dei totali e was_played = True
     - azzera la giornata di domani: score dei giocatori NULL, punteggi delle squadre 0.0
+    - riscarica le partite NBA della giornata di domani (rinvii e cambi d'orario)
     """
     current_gw = sync.get_gameweek_by_date(today, before_start_as_first=False)
     next_gw = sync.get_gameweek_by_date(shift_date(today, 1), before_start_as_first=False)
@@ -200,6 +210,10 @@ def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
     if not dry_run:
         sync.reset_lineup_scores_for_gameweek(next_gw)
         sync.reset_matchup_scores_for_gameweek(next_gw)
+        try:
+            sync.sync_nba_games(sync.get_gameweek_nba_dates(next_gw))
+        except Exception as e:
+            return [f"Calendario NBA della GW {next_gw} non aggiornato: {e}"]
     return []
 
 

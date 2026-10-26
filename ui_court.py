@@ -541,71 +541,15 @@ class Court(ft.Column):
             card.swap_button.items = valid_items
 
 
-class CalendarView(ft.Tabs):
-    def __init__(self):
-        super().__init__(content=None, length=0)
-        self.load_calendar()
-        self.expand = True # Permette alla dashboard di occupare tutto lo spazio
-        self.length = 5
-        self.selected_index=0
-        self.animation_duration=300
+WEEKDAYS_IT = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
 
-    def load_calendar(self):
-        cal_path = os.path.join("data", "calendar.json")
-        if not os.path.exists(cal_path):
-            self.controls.append(ft.Text("Calendario non trovato."))
-            return
-
-        with open(cal_path, "r", encoding="utf-8") as f:
-            calendar_data = json.load(f)
-
-        round_tabs = []
-        round_col = []
-
-        for round_data in calendar_data:
-            round_n = round_data['round_number']
-            round_col.append(
-                ft.Column(
-                    controls=[
-                        ft.Text(f"{round_data['start_date']} - {round_data['end_date']}", size=16, weight="bold", color="amber"),
-                        ft.Divider()
-                    ]
-                )
-            )
-            for m in round_data["matchups"]:
-                # Formattiamo i punteggi a 1 decimale
-                h_score = m.get('home_score', 0.0)
-                a_score = m.get('away_score', 0.0)
-                
-                # Se la partita non è stata ancora giocata o ha punteggio a 0, possiamo mostrare uno stato diverso
-                # (Opzionale: se vuoi mantenere lo 0.0 o mostrare "vs" quando non è stata giocata)
-                score_text = f"{h_score:.1f} - {a_score:.1f}" if m.get('was_played', False) or h_score > 0 or a_score > 0 else " vs "
-
-                round_col[-1].controls.append(
-                    ft.Container(
-                        content=ft.Row([
-                            # Squadra di casa
-                            ft.Text(f"{m['home_team']}", expand=True, text_align="right", size=14),
-                            
-                            # Punteggio centrale
-                            ft.Container(
-                                # Largo abbastanza per due punteggi a 3 cifre sulla stessa riga
-                                content=ft.Text(score_text, weight="bold", color="amber", no_wrap=True),
-                                width=125,
-                                alignment=ft.alignment.Alignment.CENTER
-                            ),
-                            
-                            # Squadra in trasferta
-                            ft.Text(f"{m['away_team']}", expand=True, text_align="left", size=14),
-                        ]),
-                        padding=10,
-                        bgcolor=ft.Colors.GREY_900,
-                        border_radius=8
-                    )
-                )
-            round_tabs.append(ft.Tab(label=f"{round_n}"))
-        
-        self.content=ft.Column(
+def round_tabs(rounds: list[dict], build_round) -> ft.Tabs:
+    """Una tab per giornata (etichetta = numero); build_round costruisce il contenuto di ciascuna."""
+    return ft.Tabs(
+        length=len(rounds),
+        selected_index=0,
+        expand=True,
+        content=ft.Column(
             expand=True,
             controls=[
                 ft.TabBar(
@@ -614,13 +558,146 @@ class CalendarView(ft.Tabs):
                     label_color=ft.Colors.ORANGE,           # Colore testo selezionato
                     unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
                     indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
-                    tabs=round_tabs
+                    tabs=[ft.Tab(label=f"{r['round_number']}") for r in rounds]
                 ),
                 ft.TabBarView(
                     expand=True,
-                    controls=round_col
+                    controls=[build_round(r) for r in rounds]
                 ),
             ],
+        ),
+    )
+
+
+class CalendarView(ft.Tabs):
+    """Calendario: scontri diretti della lega e partite NBA, divisi per giornata."""
+    def __init__(self):
+        super().__init__(content=None, length=2)
+        self.expand = True # Permette alla dashboard di occupare tutto lo spazio
+        self.selected_index = 0
+        self.animation_duration = 300
+
+        calendar_data = self.load_calendar()
+        if calendar_data is None:
+            league_view = nba_view = ft.Text("Calendario non trovato.")
+        else:
+            league_view = round_tabs(calendar_data, self.build_league_round)
+            nba_view = round_tabs(calendar_data, self.build_nba_round)
+
+        self.content = ft.Column(
+            expand=True,
+            controls=[
+                ft.TabBar(
+                    label_color=ft.Colors.ORANGE,
+                    unselected_label_color=ft.Colors.GREY,
+                    indicator_color=ft.Colors.ORANGE,
+                    tabs=[ft.Tab(label="Calendario Lega"), ft.Tab(label="Calendario NBA")]
+                ),
+                ft.TabBarView(expand=True, controls=[league_view, nba_view]),
+            ],
+        )
+
+    def load_calendar(self) -> list[dict] | None:
+        cal_path = os.path.join("data", "calendar.json")
+        if not os.path.exists(cal_path):
+            return None
+        with open(cal_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def build_league_round(self, round_data: dict) -> ft.Column:
+        """Scontri diretti della giornata."""
+        col = ft.Column(
+            controls=[
+                ft.Text(f"{round_data['start_date']} - {round_data['end_date']}", size=16, weight="bold", color="amber"),
+                ft.Divider()
+            ]
+        )
+        for m in round_data["matchups"]:
+            # Formattiamo i punteggi a 1 decimale
+            h_score = m.get('home_score', 0.0)
+            a_score = m.get('away_score', 0.0)
+
+            # Se la partita non è stata ancora giocata o ha punteggio a 0, possiamo mostrare uno stato diverso
+            # (Opzionale: se vuoi mantenere lo 0.0 o mostrare "vs" quando non è stata giocata)
+            score_text = f"{h_score:.1f} - {a_score:.1f}" if m.get('was_played', False) or h_score > 0 or a_score > 0 else " vs "
+
+            col.controls.append(
+                ft.Container(
+                    content=ft.Row([
+                        # Squadra di casa
+                        ft.Text(f"{m['home_team']}", expand=True, text_align="right", size=14),
+
+                        # Punteggio centrale
+                        ft.Container(
+                            # Largo abbastanza per due punteggi a 3 cifre sulla stessa riga
+                            content=ft.Text(score_text, weight="bold", color="amber", no_wrap=True),
+                            width=125,
+                            alignment=ft.alignment.Alignment.CENTER
+                        ),
+
+                        # Squadra in trasferta
+                        ft.Text(f"{m['away_team']}", expand=True, text_align="left", size=14),
+                    ]),
+                    padding=10,
+                    bgcolor=ft.Colors.GREY_900,
+                    border_radius=8
+                )
+            )
+        return col
+
+    def build_nba_round(self, round_data: dict) -> ft.ListView:
+        """Partite NBA della giornata, raggruppate per data italiana (ospiti a sinistra, casa a destra)."""
+        games_by_date = round_data.get("nba_games") or {}
+        view = ft.ListView(expand=True, spacing=6, controls=[
+            ft.Text(f"{round_data['start_date']} - {round_data['end_date']}", size=16, weight="bold", color="amber"),
+            ft.Divider()
+        ])
+        if not games_by_date:
+            view.controls.append(ft.Text("Nessuna partita NBA disponibile", color="grey"))
+            return view
+
+        for ita_date in sorted(games_by_date):
+            day = datetime.strptime(ita_date, "%Y-%m-%d")
+            view.controls.append(
+                ft.Text(f"{WEEKDAYS_IT[day.weekday()]} {day:%d/%m}", size=14, weight="bold", color=ft.Colors.ORANGE)
+            )
+            for g in games_by_date[ita_date]:
+                view.controls.append(self.build_nba_game(g))
+        return view
+
+    def build_nba_game(self, g: dict) -> ft.Container:
+        status = g.get("status")
+        played = status in ("final", "in_progress") and g.get("home_score") is not None
+        if played:
+            center = f"{g['away_score']} - {g['home_score']}"
+        elif status == "postponed":
+            center = "Rinviata"
+        else:
+            center = g.get("time") or "vs"
+
+        # A partita finita la vincente è in grassetto, la perdente in grigio
+        def team_text(team, own, other, align):
+            won = status == "final" and own is not None and other is not None and own > other
+            lost = status == "final" and own is not None and other is not None and own < other
+            return ft.Text(team, expand=True, text_align=align, size=14,
+                           weight="bold" if won else None, color="grey" if lost else None)
+
+        return ft.Container(
+            content=ft.Row([
+                team_text(g["away_team"], g.get("away_score"), g.get("home_score"), "right"),
+                ft.Container(
+                    content=ft.Column([
+                        ft.Text(center, weight="bold", color="amber", no_wrap=True),
+                    ] + ([ft.Text("in corso", size=10, color="grey")] if status == "in_progress" else []),
+                        spacing=0, horizontal_alignment="center"),
+                    width=125,
+                    alignment=ft.alignment.Alignment.CENTER
+                ),
+                team_text(f"@ {g['home_team']}", g.get("home_score"), g.get("away_score"), "left"),
+            ]),
+            padding=8,
+            bgcolor=ft.Colors.GREY_900,
+            border_radius=8
         )
 
 

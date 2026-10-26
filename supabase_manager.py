@@ -3,8 +3,8 @@ import json
 from supabase import create_client, Client
 from fanta_obj import Player, Team, NOT_PLAYED_SCORE, ROLE_MULTIPLIERS, has_played
 from pathlib import Path
-from datetime import date, datetime, timezone
-from time_manager import TimeManager
+from datetime import date, datetime, timedelta, timezone
+from time_manager import TimeManager, ITA_TZ
 
 SUPABASE_URL = "https://ifqiarpfsbcrfpmabdus.supabase.co"
 SUPABASE_KEY = "sb_publishable_KNhdTSkcs0XuzDwKqNbIOA_XpiJlqFZ"
@@ -1017,6 +1017,7 @@ class SupabaseSync:
                     "away_lineup": row["away_lineup"] or "2-2-1"
                 })
 
+            self._attach_nba_games(rounds_dict)
             calendar_data = list(rounds_dict.values())
 
             # Scrittura su file JSON
@@ -1032,6 +1033,122 @@ class SupabaseSync:
         except Exception as e:
             print(f"Errore durante il pull del calendario da Supabase: {e}")
             raise e
+
+    def _attach_nba_games(self, rounds_dict: dict[int, dict]) -> None:
+        """
+        Aggiunge a ogni giornata la chiave 'nba_games': {data italiana: [partite]}, in ordine di inizio.
+        Se nba_games non è leggibile il calendario della lega si scarica lo stesso (senza partite NBA).
+        """
+        for round_data in rounds_dict.values():
+            round_data["nba_games"] = {}
+        try:
+            games = self.pull_nba_games()
+        except Exception as e:
+            print(f"Partite NBA non disponibili: {e}")
+            return
+
+        for g in games:
+            round_data = rounds_dict.get(g["gameweek"])
+            if round_data is None:
+                continue
+            if g.get("start_time"):
+                start = datetime.fromisoformat(g["start_time"]).astimezone(ITA_TZ)
+                ita_date, ita_time = start.date().isoformat(), f"{start:%H:%M}"
+            else:
+                ita_date, ita_time = TimeManager.nba_date_to_italian_date(str(g["nba_date"])), ""
+            round_data["nba_games"].setdefault(ita_date, []).append({
+                "home_team": g["home_team"],
+                "away_team": g["away_team"],
+                "home_score": g["home_score"],
+                "away_score": g["away_score"],
+                "status": g["status"],
+                "time": ita_time
+            })
+
+    def get_gameweek_ranges(self) -> list[dict]:
+        """Giornate del campionato {"gameweek", "start_date", "end_date"} (date italiane), lette da matchups."""
+        rows = self.supabase.table("matchups").select("gameweek, start_date, end_date").execute().data or []
+        ranges = {r["gameweek"]: {"gameweek": r["gameweek"], "start_date": str(r["start_date"]), "end_date": str(r["end_date"])}
+                  for r in rows}
+        return sorted(ranges.values(), key=lambda r: r["gameweek"])
+
+    def push_nba_games(self, games: list[dict]) -> int:
+        """
+        Scrive (upsert su game_id) le partite NBA nella tabella nba_games. La giornata si assegna come per
+        i punteggi (data italiana = data NBA + 1); le partite fuori calendario (preseason, playoff) si scartano.
+        Una partita rinviata e ricalendarizzata aggiorna data e giornata. Non tocca matchups.
+        Restituisce il numero di partite scritte.
+        """
+        ranges = self.get_gameweek_ranges()
+        now = datetime.now(timezone.utc).isoformat()
+        rows = {}
+        for g in games:
+            ita_date = TimeManager.nba_date_to_italian_date(g["nba_date"])
+            gameweek = next((r["gameweek"] for r in ranges if r["start_date"] <= ita_date <= r["end_date"]), None)
+            if gameweek is not None:
+                rows[g["game_id"]] = {**g, "gameweek": gameweek, "updated_at": now}  # niente doppioni nello stesso upsert
+
+        rows = list(rows.values())
+        for i in range(0, len(rows), 500):
+            self.supabase.table("nba_games").upsert(rows[i:i + 500], on_conflict="game_id").execute()
+        return len(rows)
+
+    def sync_nba_games(self, nba_dates: list[str]) -> int:
+        """Scarica da ESPN le partite delle date NBA indicate (YYYY-MM-DD), risultati inclusi, e le scrive in nba_games."""
+        from api_nba import NbaDataManager  # import locale: l'app non ne ha bisogno
+
+        games = []
+        for nba_date in nba_dates:
+            games += NbaDataManager.fetch_scoreboard_games(nba_date.replace("-", ""))
+        written = self.push_nba_games(games)
+        print(f"Partite NBA aggiornate: {written} ({', '.join(nba_dates)}).")
+        return written
+
+    def sync_nba_season(self, start_date: str, end_date: str) -> int:
+        """
+        Scarica da ESPN tutte le partite NBA della stagione, un mese alla volta (risultati di quelle già concluse
+        inclusi), e le scrive in nba_games divise per giornata. start_date/end_date: date italiane del calendario.
+        Richiede le giornate già presenti in matchups; il calendario degli scontri diretti non viene toccato.
+        """
+        from api_nba import NbaDataManager  # import locale: l'app non ne ha bisogno
+
+        print("Scaricamento del calendario NBA della stagione...")
+        first = date.fromisoformat(TimeManager.italian_date_to_nba_date(start_date))
+        last = date.fromisoformat(TimeManager.italian_date_to_nba_date(end_date))
+        games = []
+        month = first.replace(day=1)
+        while month <= last:
+            games += NbaDataManager.fetch_scoreboard_games(month.strftime("%Y%m"))
+            month = (month + timedelta(days=32)).replace(day=1)
+
+        written = self.push_nba_games(games)
+        print(f"Calendario NBA caricato su Supabase: {written} partite.")
+        return written
+
+    def pull_nba_games(self) -> list[dict]:
+        """Tutte le righe di nba_games in ordine di inizio (a pagine: Supabase ne restituisce al massimo 1000 per query)."""
+        games = []
+        while True:
+            chunk = (
+                self.supabase.table("nba_games")
+                .select("*")
+                .order("start_time")
+                .order("game_id")
+                .range(len(games), len(games) + 999)
+                .execute()
+            ).data or []
+            if not chunk:
+                return games
+            games += chunk
+
+    def get_gameweek_nba_dates(self, gameweek: int) -> list[str]:
+        """Date NBA (YYYY-MM-DD) delle partite che contano per la giornata (data italiana - 1)."""
+        info = self.get_gameweek_info(gameweek)
+        if not info:
+            return []
+        first = date.fromisoformat(TimeManager.italian_date_to_nba_date(info["start_date"]))
+        last = date.fromisoformat(TimeManager.italian_date_to_nba_date(info["end_date"]))
+        return [(first + timedelta(days=i)).isoformat() for i in range((last - first).days + 1)]
 
     def is_first_day_of_gameweek(self, check_date: date | str, gameweek: int) -> bool:
         """

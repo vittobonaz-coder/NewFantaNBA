@@ -181,5 +181,9 @@ if __name__ == "__main__":
     run_profiles_setup()
     run_teams_setup()
     calendar = run_calendar_setup(start_date=start_calendar_date, end_date=end_calendar_date)
+    # Partite NBA della stagione divise per giornata (servono le giornate appena caricate in matchups),
+    # poi calendar.json riscaricato con la chiave nba_games
+    sync.sync_nba_season(start_calendar_date, end_calendar_date)
+    sync.pull_calendar()
     SupabaseSync().sync_standings()
     SupabaseSync().push_season_lineups(calendar)
