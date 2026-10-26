@@ -75,23 +75,51 @@ def run_teams_setup():
     print("Setup statico completato (fanta_teams, nba_players, rosters).")
 
 
-def generate_calendar(team_names: list[str], start_date_str: str, end_date_str: str) -> list[dict]:
+def find_nba_breaks(start_date_str: str, end_date_str: str, min_days: int = 4) -> list[tuple[str, str]]:
+    """
+    Pause del calendario NBA tra due date italiane (in pratica la settimana dell'All-Star Game):
+    periodi di almeno min_days giorni consecutivi senza partite, come (primo, ultimo giorno) in date italiane.
+    Le partite valgono per il giorno italiano dopo la data NBA, come per le giornate.
+    """
+    games = NbaDataManager.fetch_season_games(TimeManager.italian_date_to_nba_date(start_date_str),
+                                              TimeManager.italian_date_to_nba_date(end_date_str))
+    game_days = sorted({TimeManager.nba_date_to_italian_date(g["nba_date"]) for g in games})
+
+    breaks = []
+    for prev, curr in zip(game_days, game_days[1:]):
+        first_free = datetime.strptime(prev, "%Y-%m-%d").date() + timedelta(days=1)
+        last_free = datetime.strptime(curr, "%Y-%m-%d").date() - timedelta(days=1)
+        if (last_free - first_free).days + 1 >= min_days:
+            breaks.append((first_free.isoformat(), last_free.isoformat()))
+    return breaks
+
+
+def generate_calendar(team_names: list[str], start_date_str: str, end_date_str: str,
+                      breaks: list[tuple[str, str]] = ()) -> list[dict]:
     """
     Genera il calendario delle giornate e i relativi matchup tramite algoritmo Round-Robin Berger.
-    
+
     :param team_names: Lista con i nomi delle squadre.
     :param start_date_str: Data inizio campionato in formato 'YYYY-MM-DD'.
     :param end_date_str: Data fine campionato in formato 'YYYY-MM-DD'.
+    :param breaks: Pause NBA (primo, ultimo giorno): la giornata che ne contiene una si allunga della durata
+                   della pausa, così ha comunque 7 giorni con partite.
     :return: Lista di dizionari rappresenta le giornate.
     """
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
     end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+    breaks = [(datetime.strptime(b[0], "%Y-%m-%d").date(), datetime.strptime(b[1], "%Y-%m-%d").date())
+              for b in breaks]
 
-    # 1. Calcola gli intervalli di date per ciascuna giornata (7 giorni ciascuna, l'ultima prende i restanti)
+    # 1. Calcola gli intervalli di date per ciascuna giornata (7 giorni ciascuna, l'ultima prende i restanti).
+    #    Una giornata che contiene una pausa NBA si allunga dei giorni di pausa: il campionato si ferma con l'NBA.
     periods = []
     curr_start = start_date
     while curr_start <= end_date:
         curr_end = curr_start + timedelta(days=6)
+        for b_start, b_end in breaks:
+            if b_start <= curr_end and b_end >= curr_start:
+                curr_end += timedelta(days=(b_end - b_start).days + 1)
         if curr_end > end_date:
             curr_end = end_date
         
@@ -158,7 +186,9 @@ def generate_calendar(team_names: list[str], start_date_str: str, end_date_str: 
 def run_calendar_setup(start_date: str, end_date: str):
     print(f"Generazione calendario dal {start_date} al {end_date}...")
     team_names = list(teams_data.keys())
-    calendar = generate_calendar(team_names, start_date, end_date)
+    breaks = find_nba_breaks(start_date, end_date)
+    print(f"Pause NBA (giornate allungate della durata della pausa): {breaks or 'nessuna'}")
+    calendar = generate_calendar(team_names, start_date, end_date, breaks)
     
     # Salvataggio in locale
     calendar_path = os.path.join("data", "calendar.json")

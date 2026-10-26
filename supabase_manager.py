@@ -1113,14 +1113,8 @@ class SupabaseSync:
         from api_nba import NbaDataManager  # import locale: l'app non ne ha bisogno
 
         print("Scaricamento del calendario NBA della stagione...")
-        first = date.fromisoformat(TimeManager.italian_date_to_nba_date(start_date))
-        last = date.fromisoformat(TimeManager.italian_date_to_nba_date(end_date))
-        games = []
-        month = first.replace(day=1)
-        while month <= last:
-            games += NbaDataManager.fetch_scoreboard_games(month.strftime("%Y%m"))
-            month = (month + timedelta(days=32)).replace(day=1)
-
+        games = NbaDataManager.fetch_season_games(TimeManager.italian_date_to_nba_date(start_date),
+                                                  TimeManager.italian_date_to_nba_date(end_date))
         written = self.push_nba_games(games)
         print(f"Calendario NBA caricato su Supabase: {written} partite.")
         return written
@@ -1149,6 +1143,55 @@ class SupabaseSync:
         first = date.fromisoformat(TimeManager.italian_date_to_nba_date(info["start_date"]))
         last = date.fromisoformat(TimeManager.italian_date_to_nba_date(info["end_date"]))
         return [(first + timedelta(days=i)).isoformat() for i in range((last - first).days + 1)]
+
+    def extend_gameweek(self, gameweek: int, days: int, season_end: str, dry_run: bool = False) -> list[int]:
+        """
+        Allunga di 'days' giorni (o accorcia, se negativo) una giornata non ancora conclusa, es. per la pausa
+        dell'All-Star Game, a campionato in corso: le giornate successive slittano degli stessi giorni
+        (target_date di lineup_players compresa) e l'ultima finisce sempre a season_end. Quelle che
+        inizierebbero dopo season_end vengono eliminate (matchups e lineup_players). Restituisce le giornate eliminate.
+        Va seguito da sync_nba_season (riassegna le partite NBA alle giornate) e pull_calendar.
+        """
+        info = self.get_gameweek_info(gameweek)
+        if info is None or info["was_played"]:
+            raise ValueError(f"GW {gameweek} inesistente o già conclusa: non si può modificare")
+
+        shift = timedelta(days=days)
+        last_day = date.fromisoformat(season_end)
+        ranges = self.get_gameweek_ranges()
+        last_kept = max((r["gameweek"] for r in ranges
+                         if r["gameweek"] <= gameweek
+                         or date.fromisoformat(r["start_date"]) + shift <= last_day), default=None)
+        removed = []
+        for r in ranges:
+            gw = r["gameweek"]
+            if gw < gameweek:
+                continue
+            start = date.fromisoformat(r["start_date"]) + (shift if gw > gameweek else timedelta(0))
+            end = last_day if gw == last_kept else min(date.fromisoformat(r["end_date"]) + shift, last_day)
+
+            if start > last_day:
+                print(f"GW {gw}: {r['start_date']} - {r['end_date']} -> eliminata")
+                removed.append(gw)
+                if not dry_run:
+                    self.supabase.table("lineup_players").delete().eq("gameweek", gw).execute()
+                    self.supabase.table("matchups").delete().eq("gameweek", gw).execute()
+                continue
+
+            print(f"GW {gw}: {r['start_date']} - {r['end_date']} -> {start} - {end}")
+            if dry_run:
+                continue
+            self.supabase.table("matchups") \
+                .update({"start_date": start.isoformat(), "end_date": end.isoformat()}) \
+                .eq("gameweek", gw) \
+                .execute()
+            if gw > gameweek:
+                # Come in push_season_lineups: target_date è la data NBA del primo giorno della giornata
+                self.supabase.table("lineup_players") \
+                    .update({"target_date": TimeManager.italian_date_to_nba_date(start.isoformat())}) \
+                    .eq("gameweek", gw) \
+                    .execute()
+        return removed
 
     def is_first_day_of_gameweek(self, check_date: date | str, gameweek: int) -> bool:
         """
@@ -1413,6 +1456,22 @@ class SupabaseSync:
             print(f"Tabella cron_runs non disponibile: {e}")
             return None
         return datetime.fromisoformat(data[0]["finished_at"]) if data else None
+
+    def get_cron_run(self, mode: str) -> dict | None:
+        """Ultimo run registrato per la modalità indicata: {"finished_at", "ok"}. None se assente o senza tabella."""
+        try:
+            data = (
+                self.supabase.table("cron_runs")
+                .select("finished_at, ok")
+                .eq("mode", mode)
+                .execute()
+            ).data
+        except Exception as e:
+            print(f"Tabella cron_runs non disponibile: {e}")
+            return None
+        if not data:
+            return None
+        return {"finished_at": datetime.fromisoformat(data[0]["finished_at"]), "ok": bool(data[0]["ok"])}
 
     def record_cron_run(self, mode: str, ok: bool) -> None:
         """Registra la fine di un run del cron: l'app la usa per sapere quando riscaricare i dati."""

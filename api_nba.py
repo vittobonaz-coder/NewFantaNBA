@@ -5,7 +5,7 @@ import unicodedata
 import re
 import pandas as pd
 import requests
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import commonallplayers
@@ -483,6 +483,18 @@ class NbaDataManager:
                 "status": status,
             })
         return games
+
+    @staticmethod
+    def fetch_season_games(first_nba_date, last_nba_date):
+        """Partite NBA tra due date NBA (YYYY-MM-DD, incluse), scaricate da ESPN un mese alla volta."""
+        first = date.fromisoformat(first_nba_date)
+        last = date.fromisoformat(last_nba_date)
+        games = []
+        month = first.replace(day=1)
+        while month <= last:
+            games += NbaDataManager.fetch_scoreboard_games(month.strftime("%Y%m"))
+            month = (month + timedelta(days=32)).replace(day=1)
+        return [g for g in games if first_nba_date <= g["nba_date"] <= last_nba_date]
 
     # ==========================================
     # SEZIONE 3: METODI NBA_API (Dati Statici)

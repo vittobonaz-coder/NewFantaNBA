@@ -9,9 +9,12 @@ ITA_TZ = ZoneInfo("Europe/Rome")
 NBA_TZ = ZoneInfo("America/New_York")
 UTC = timezone.utc
 
-# Orari dei pg_cron su Supabase (in UTC: in Italia slittano di un'ora con l'ora legale)
+# Orari dei cron
+# - daily: fisso in UTC (08:00 = 9:00 italiane con l'ora solare, 10:00 con l'ora legale)
+# - rollover: sempre alle 17:00 italiane. pg_cron (solo UTC) lo lancia alle 15:00 e alle 16:00 UTC
+#   e lo script prosegue solo con il run che cade dalle 17:00 in poi (cron_test_script.rollover_due)
 DAILY_CRON_UTC = time(8, 0)       # punteggi della notte NBA
-ROLLOVER_CRON_UTC = time(15, 0)   # cambio giornata = chiusura dei cambi formazione
+ROLLOVER_TIME_ITA = time(17, 0)   # cambio giornata = chiusura dei cambi formazione
 # Ritardo massimo atteso di un run su GitHub Actions (usato solo se manca la tabella cron_runs)
 CRON_DELAY_MARGIN = timedelta(minutes=45)
 
@@ -32,8 +35,8 @@ class TimeManager:
 
     @staticmethod
     def rollover_instant(ita_day: date) -> datetime:
-        """Istante del rollover nel giorno italiano indicato (15:00 UTC = 16:00 o 17:00 italiane)."""
-        return datetime.combine(ita_day, ROLLOVER_CRON_UTC, tzinfo=UTC)
+        """Istante (in UTC) del rollover nel giorno italiano indicato: le 17:00 italiane, con o senza ora legale."""
+        return datetime.combine(ita_day, ROLLOVER_TIME_ITA, tzinfo=ITA_TZ).astimezone(UTC)
 
     @staticmethod
     def last_scheduled_cron() -> datetime:
@@ -42,9 +45,10 @@ class TimeManager:
         Ripiego per quando su Supabase non c'è traccia dei run (tabella cron_runs).
         """
         now = datetime.now(UTC)
-        slots = [datetime.combine(now.date() - timedelta(days=d), t, tzinfo=UTC) + CRON_DELAY_MARGIN
-                 for d in (0, 1) for t in (DAILY_CRON_UTC, ROLLOVER_CRON_UTC)]
-        return max(s for s in slots if s <= now)
+        today_ita = now.astimezone(ITA_TZ).date()
+        slots = [datetime.combine(now.date() - timedelta(days=d), DAILY_CRON_UTC, tzinfo=UTC) for d in (0, 1)]
+        slots += [TimeManager.rollover_instant(today_ita - timedelta(days=d)) for d in (0, 1)]
+        return max(s + CRON_DELAY_MARGIN for s in slots if s + CRON_DELAY_MARGIN <= now)
 
     @classmethod
     def get_league_context(cls, rounds: list[dict]) -> dict:

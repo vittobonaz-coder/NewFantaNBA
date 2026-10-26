@@ -2,24 +2,26 @@
 Cron job dei punteggi (GitHub Actions, lanciato da Supabase pg_cron).
 
   python cron_test_script.py daily      ogni mattina: scarica i tabellini e aggiorna i punteggi
-  python cron_test_script.py rollover   ogni pomeriggio: se domani inizia una nuova giornata,
-                                        chiude quella di oggi e azzera la successiva
+  python cron_test_script.py rollover   ogni pomeriggio alle 17:00 italiane: se domani inizia una nuova
+                                        giornata, chiude quella di oggi e azzera la successiva
+                                        (lanciato alle 15:00 e alle 16:00 UTC, prosegue solo dalle 17:00)
 
 Opzioni per test e recuperi:
   --date YYYY-MM-DD   (daily) data NBA da elaborare al posto di ieri
   --days N            (daily) quante date NBA elaborare all'indietro (default: 2, oppure 1 con --date)
-  --today YYYY-MM-DD  data italiana da considerare come oggi
+  --today YYYY-MM-DD  data italiana da considerare come oggi (salta il controllo dell'orario del rollover)
+  --force             (rollover) esegue subito, senza controllare l'orario
   --dry-run           calcola e stampa senza scrivere su Supabase
 """
 import argparse
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from api_nba import NbaDataManager, NBA_TO_ESPN_TEAM, ESPN_TO_NBA_TEAM
 from fanta_obj import Player, Team, ROLE_MULTIPLIERS
 from supabase_manager import SupabaseSync
-from time_manager import TimeManager
+from time_manager import TimeManager, ITA_TZ
 
 ROLE_CONFIGS = {role: {"mult": mult} for role, mult in ROLE_MULTIPLIERS.items()}
 FETCH_ATTEMPTS = 3
@@ -183,6 +185,25 @@ def run_daily(sync: SupabaseSync, nba_dates: list[str], dry_run: bool) -> list[s
     return errors
 
 
+def rollover_due(sync: SupabaseSync, today: str) -> bool:
+    """
+    pg_cron lancia il rollover alle 15:00 e alle 16:00 UTC: alle 17:00 italiane cade il run delle 16:00 UTC
+    con l'ora solare e quello delle 15:00 UTC con l'ora legale. Si prosegue quindi solo dalle 17:00 italiane
+    in poi e una volta sola al giorno: se il rollover di oggi è già riuscito, il run successivo viene saltato.
+    """
+    rollover = TimeManager.rollover_instant(date.fromisoformat(today))
+    now = datetime.now(timezone.utc)
+    if now < rollover:
+        print(f"Sono le {now.astimezone(ITA_TZ):%H:%M} italiane, il rollover è alle "
+              f"{rollover.astimezone(ITA_TZ):%H:%M}: run saltato.")
+        return False
+    last_run = sync.get_cron_run("rollover")
+    if last_run and last_run["ok"] and last_run["finished_at"] >= rollover:
+        print("Rollover di oggi già eseguito: run saltato.")
+        return False
+    return True
+
+
 def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
     """
     Lanciato ogni giorno alle 17:00 italiane, agisce solo se domani inizia una nuova giornata
@@ -226,12 +247,18 @@ def main():
     parser.add_argument("--date", help="(daily) data NBA da elaborare, YYYY-MM-DD")
     parser.add_argument("--days", type=int, help="(daily) quante date NBA elaborare all'indietro")
     parser.add_argument("--today", help="data italiana da considerare come oggi, YYYY-MM-DD")
+    parser.add_argument("--force", action="store_true", help="(rollover) esegue senza controllare l'orario")
     parser.add_argument("--dry-run", action="store_true", help="non scrive su Supabase")
     args = parser.parse_args()
 
     sync = SupabaseSync()
     today = args.today or TimeManager.get_today_str()
     print(f"=== Cron {args.mode} | oggi (ITA) {today} | dry-run: {args.dry_run} ===")
+
+    # Dei due lanci giornalieri del rollover ne lavora uno solo (i run manuali con --today o --force sempre).
+    # Il run saltato non viene registrato in cron_runs, così l'app non riscarica dati inutilmente.
+    if args.mode == "rollover" and not (args.today or args.force) and not rollover_due(sync, today):
+        return
 
     errors = None  # resta None se il run si interrompe con un'eccezione
     try:

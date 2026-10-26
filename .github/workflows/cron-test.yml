@@ -2,7 +2,8 @@ name: Cron punteggi
 
 # Lanciato solo da Supabase pg_cron (o a mano), con mode:
 # - daily    -> ogni giorno 08:00 UTC: scarica i tabellini e aggiorna i punteggi
-# - rollover -> ogni giorno 15:00 UTC: se domani inizia una nuova giornata, chiude oggi e azzera domani
+# - rollover -> ogni giorno 15:00 e 16:00 UTC: lavora solo il run delle 17:00 italiane (l'altro esce subito);
+#               se domani inizia una nuova giornata, chiude oggi e azzera domani
 on:
   workflow_dispatch:
     inputs:
