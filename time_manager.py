@@ -11,10 +11,12 @@ UTC = timezone.utc
 
 # Orari dei cron
 # - daily: fisso in UTC (08:00 = 9:00 italiane con l'ora solare, 10:00 con l'ora legale)
-# - rollover: sempre alle 17:00 italiane. pg_cron (solo UTC) lo lancia alle 15:00 e alle 16:00 UTC
-#   e lo script prosegue solo con il run che cade dalle 17:00 in poi (cron_test_script.rollover_due)
+# - rollover: sempre alle 23:00 italiane. pg_cron (solo UTC) lo lancia alle 21:00 e alle 22:00 UTC
+#   e lo script prosegue solo con il run che cade dalle 23:00 in poi (cron_test_script.rollover_due)
 DAILY_CRON_UTC = time(8, 0)       # punteggi della notte NBA
-ROLLOVER_TIME_ITA = time(17, 0)   # cambio giornata = chiusura dei cambi formazione
+ROLLOVER_TIME_ITA = time(23, 0)   # cambio giornata = chiusura dei cambi formazione
+# Un run del rollover che parte dopo mezzanotte (fino alle 02:00) vale ancora per il giorno prima
+ROLLOVER_GRACE = timedelta(hours=3)
 # Ritardo massimo atteso di un run su GitHub Actions (usato solo se manca la tabella cron_runs)
 CRON_DELAY_MARGIN = timedelta(minutes=45)
 
@@ -35,8 +37,13 @@ class TimeManager:
 
     @staticmethod
     def rollover_instant(ita_day: date) -> datetime:
-        """Istante (in UTC) del rollover nel giorno italiano indicato: le 17:00 italiane, con o senza ora legale."""
+        """Istante (in UTC) del rollover nel giorno italiano indicato: le 23:00 italiane, con o senza ora legale."""
         return datetime.combine(ita_day, ROLLOVER_TIME_ITA, tzinfo=ITA_TZ).astimezone(UTC)
+
+    @staticmethod
+    def rollover_day(now: datetime) -> date:
+        """Giorno italiano a cui appartiene un run del rollover (dopo mezzanotte conta ancora il giorno prima)."""
+        return (now.astimezone(ITA_TZ) - ROLLOVER_GRACE).date()
 
     @staticmethod
     def last_scheduled_cron() -> datetime:
