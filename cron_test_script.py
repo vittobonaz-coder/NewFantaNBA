@@ -212,6 +212,7 @@ def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
     (la giornata di domani comprende anche le partite che iniziano stasera, data NBA = oggi):
     - chiude la giornata di oggi: ultimo ricalcolo dei totali e was_played = True
     - azzera la giornata di domani: score dei giocatori NULL, punteggi delle squadre 0.0
+    - allinea ai titolari il modulo in matchups di entrambe (storico dei moduli; i cambi di domani ora sono chiusi)
     - riscarica le partite NBA della giornata di domani (rinvii e cambi d'orario)
     """
     current_gw = sync.get_gameweek_by_date(today, before_start_as_first=False)
@@ -223,6 +224,8 @@ def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
     if current_gw is not None:
         print(f"Chiusura GW {current_gw}...")
         update_team_scores(sync, current_gw, sync.get_lineup_rows_for_gameweek(current_gw), dry_run)
+        # Storico dei moduli: quello della giornata chiusa deve corrispondere ai titolari che hanno giocato
+        sync.align_lineups_with_starters(current_gw, dry_run)
         if not dry_run:
             sync.set_gameweek_played(current_gw)
 
@@ -233,6 +236,8 @@ def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
     if not dry_run:
         sync.reset_lineup_scores_for_gameweek(next_gw)
         sync.reset_matchup_scores_for_gameweek(next_gw)
+    sync.align_lineups_with_starters(next_gw, dry_run)
+    if not dry_run:
         try:
             sync.sync_nba_games(sync.get_gameweek_nba_dates(next_gw))
         except Exception as e:

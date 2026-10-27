@@ -1,13 +1,18 @@
 import os
 import json
 from supabase import create_client, Client
-from fanta_obj import Player, Team, NOT_PLAYED_SCORE, ROLE_MULTIPLIERS, has_played
+from fanta_obj import Player, Team, NOT_PLAYED_SCORE, ROLE_MULTIPLIERS, DEFAULT_LINEUP, LINEUP_ROLES, has_played, infer_lineup
 from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
 from time_manager import TimeManager, ITA_TZ
 
 SUPABASE_URL = "https://ifqiarpfsbcrfpmabdus.supabase.co"
 SUPABASE_KEY = "sb_publishable_KNhdTSkcs0XuzDwKqNbIOA_XpiJlqFZ"
+
+
+def valid_lineup(value) -> str | None:
+    """Il modulo se è uno di quelli previsti, altrimenti None (es. la stringa "NULL" dei vecchi calendari)."""
+    return value if value in LINEUP_ROLES else None
 
 class SupabaseSync:
     def __init__(self):
@@ -116,8 +121,8 @@ class SupabaseSync:
                         "home_score": 0.00,
                         "away_score": 0.00,
                         "was_played": False,
-                        "home_lineup": "NULL",
-                        "away_lineup": "NULL"
+                        "home_lineup": DEFAULT_LINEUP,
+                        "away_lineup": DEFAULT_LINEUP
                     })
                 else:
                     print(f"Attenzione: ID non trovato per {home_name} o {away_name}")
@@ -826,7 +831,8 @@ class SupabaseSync:
                 print(f"Attenzione: Nessuna lineup trovata per '{team_name}' nella gameweek {gameweek}.")
                 return False
 
-            self._write_lineup_state(team_name, gameweek, data, data_as_of, data_dir)
+            lineup = self.get_team_lineups(gameweek).get(team_id)
+            self._write_lineup_state(team_name, gameweek, data, data_as_of, data_dir, lineup)
             return True
 
         except Exception as e:
@@ -834,10 +840,12 @@ class SupabaseSync:
             return False
 
     def _write_lineup_state(self, team_name: str, gameweek: int, rows: list[dict],
-                            data_as_of: datetime | None = None, data_dir: str = "data") -> None:
+                            data_as_of: datetime | None = None, data_dir: str = "data",
+                            lineup: str | None = None) -> None:
         """
         Scrive (o sovrascrive) il file <nome_team>_gw<N>_state.json a partire dalle righe
-        di lineup_players (ordinate per slot, con la join nba_players(nba_team, position)).
+        di lineup_players (ordinate per slot, con la join nba_players(nba_team, position))
+        e dal modulo salvato in matchups (se manca resta quello del file locale).
         """
         # 1. Costruisci il nuovo roster formattato per il JSON
         new_roster = []
@@ -872,15 +880,15 @@ class SupabaseSync:
             "gameweek": gameweek,
             "data_as_of": data_as_of.isoformat() if data_as_of else "",
             "total_score": round(total_score, 2),
-            "lineup": "2-2-1",
+            "lineup": valid_lineup(lineup) or DEFAULT_LINEUP,
             "roster": new_roster
         }
 
-        # Preserva il modulo salvato in locale (l'app lo verifica comunque sui titolari)
-        if json_path.exists():
+        # Senza modulo su Supabase preserva quello salvato in locale (l'app lo verifica comunque sui titolari)
+        if valid_lineup(lineup) is None and json_path.exists():
             with open(json_path, "r", encoding="utf-8") as f:
                 try:
-                    state_data["lineup"] = json.load(f).get("lineup", "2-2-1")
+                    state_data["lineup"] = json.load(f).get("lineup", DEFAULT_LINEUP)
                 except json.JSONDecodeError:
                     pass
 
@@ -907,10 +915,11 @@ class SupabaseSync:
             .order("slot")
             .execute()
         ).data or []
+        lineups = self.get_team_lineups(gameweek)
         for t in teams:
             team_rows = [r for r in rows if r.get("fanta_team_id") == t["id"]]
             if team_rows:
-                self._write_lineup_state(t["name"], gameweek, team_rows, data_as_of, data_dir)
+                self._write_lineup_state(t["name"], gameweek, team_rows, data_as_of, data_dir, lineups.get(t["id"]))
             else:
                 print(f"Attenzione: Nessuna lineup trovata per '{t['name']}' nella gameweek {gameweek}.")
 
@@ -1013,8 +1022,8 @@ class SupabaseSync:
                     "home_score": float(row["home_score"] or 0.0),
                     "away_score": float(row["away_score"] or 0.0),
                     "was_played": bool(row["was_played"]),
-                    "home_lineup": row["home_lineup"] or "2-2-1",
-                    "away_lineup": row["away_lineup"] or "2-2-1"
+                    "home_lineup": valid_lineup(row["home_lineup"]) or DEFAULT_LINEUP,
+                    "away_lineup": valid_lineup(row["away_lineup"]) or DEFAULT_LINEUP
                 })
 
             self._attach_nba_games(rounds_dict)
@@ -1416,7 +1425,8 @@ class SupabaseSync:
         """Righe di lineup_players di TUTTE le squadre per la gameweek, con la squadra NBA del giocatore."""
         return (
             self.supabase.table("lineup_players")
-            .select("fanta_team_id, nba_player_id, player_name, role, score, nba_players(full_name, nba_team)")
+            .select("fanta_team_id, nba_player_id, player_name, slot, role, score, "
+                    "nba_players(full_name, nba_team, position)")
             .eq("gameweek", gameweek)
             .execute()
         ).data or []
@@ -1493,6 +1503,73 @@ class SupabaseSync:
             "assigned_position": team.roles_map[p.id],
         } for p in team.players]
         self.supabase.table("rosters").upsert(rows, on_conflict="nba_player_id").execute()
+
+    def get_team_lineups(self, gameweek: int) -> dict[str, str | None]:
+        """Modulo di ogni fanta-squadra nella gameweek, da matchups: {team_id: modulo} (None se non salvato)."""
+        rows = (
+            self.supabase.table("matchups")
+            .select("home_team_id, away_team_id, home_lineup, away_lineup")
+            .eq("gameweek", gameweek)
+            .execute()
+        ).data or []
+        lineups = {}
+        for r in rows:
+            lineups[r["home_team_id"]] = valid_lineup(r["home_lineup"])
+            lineups[r["away_team_id"]] = valid_lineup(r["away_lineup"])
+        return lineups
+
+    def update_team_lineup(self, team_id: str, gameweek: int, lineup: str, following: bool = True) -> None:
+        """
+        Scrive il modulo della squadra in matchups (home_lineup o away_lineup, a seconda di dove gioca)
+        per la gameweek indicata e, con following, per tutte le successive (come update_lineup_slots).
+        Le giornate precedenti restano invariate: sono lo storico dei moduli schierati.
+        """
+        if valid_lineup(lineup) is None:
+            raise ValueError(f"Modulo non valido: {lineup}")
+        for side in ("home", "away"):
+            query = self.supabase.table("matchups").update({f"{side}_lineup": lineup}).eq(f"{side}_team_id", team_id)
+            query = query.gte("gameweek", gameweek) if following else query.eq("gameweek", gameweek)
+            query.execute()
+
+    def align_lineups_with_starters(self, gameweek: int, dry_run: bool = False) -> int:
+        """
+        Allinea il modulo in matchups ai titolari di lineup_players per la gameweek, squadra per squadra:
+        se il modulo salvato manca o i titolari non lo rispettano più (es. dopo una sostituzione),
+        lo ricava dalle posizioni dei titolari (a parità preferisce quello salvato, poi 2-2-1).
+        Restituisce il numero di moduli modificati.
+        """
+        rows = (
+            self.supabase.table("lineup_players")
+            .select("fanta_team_id, slot, role, nba_players(position)")
+            .eq("gameweek", gameweek)
+            .order("slot")
+            .execute()
+        ).data or []
+        stored = self.get_team_lineups(gameweek)
+        names = {t["id"]: t["name"] for t in self.get_all_teams()}
+
+        changed = 0
+        for team_id, current in stored.items():
+            starters = [Player(position=(r.get("nba_players") or {}).get("position", ""))
+                        for r in rows if r["fanta_team_id"] == team_id and r["role"] == "STARTER"]
+            if not starters:
+                continue
+            new = infer_lineup(starters, current or DEFAULT_LINEUP)
+            if new is None:
+                print(f"GW {gameweek}, {names.get(team_id, team_id)}: i titolari non rispettano nessun modulo "
+                      f"({[p.position for p in starters]}), modulo lasciato a {current}")
+                continue
+            if new != current:
+                print(f"GW {gameweek}, {names.get(team_id, team_id)}: modulo {current} -> {new}")
+                changed += 1
+                if not dry_run:
+                    self.update_team_lineup(team_id, gameweek, new, following=False)
+        return changed
+
+    def backfill_matchup_lineups(self, dry_run: bool = False) -> None:
+        """Da lanciare una volta: ricava dai titolari il modulo di tutte le giornate senza modulo valido in matchups."""
+        total = sum(self.align_lineups_with_starters(r["gameweek"], dry_run) for r in self.get_gameweek_ranges())
+        print(f"Moduli in matchups {'da aggiornare' if dry_run else 'aggiornati'}: {total}.")
 
 
 if __name__ == "__main__":

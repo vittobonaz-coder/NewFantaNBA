@@ -253,7 +253,55 @@ class Player:
             player = cls(id=int(p_id))
             scores[int(p_id)] = player.calculate_score(boxscores, target_date=target_date, average=average)
         return scores
-    
+
+
+# Modulo di partenza (e di ripiego quando non ce n'è uno salvato)
+DEFAULT_LINEUP = "2-2-1"
+
+# Posizioni richieste dagli slot titolari (0-4) per ogni modulo
+LINEUP_ROLES = {
+    "2-2-1": ['C', 'A', 'A', 'G', 'G'],
+    "2-1-2": ['C', 'C', 'A', 'G', 'G'],
+    "1-2-2": ['C', 'C', 'A', 'A', 'G'],
+    "3-1-1": ['C', 'A', 'G', 'G', 'G'],
+    "1-3-1": ['C', 'A', 'A', 'A', 'G'],
+}
+
+def find_starter_assignment(roles: list[str], players: list[Player]) -> list[int] | None:
+    """
+    Cerca giocatori distinti che coprano le posizioni richieste dagli slot titolari.
+    Restituisce, per ogni slot, l'indice del giocatore scelto; None se il modulo è impossibile.
+    Per fare meno scambi possibili preferisce chi è già nello slot, poi gli altri titolari,
+    poi sesto uomo, panchina e riserve.
+    """
+    n_starters = len(roles)
+
+    def candidates(k):
+        return [k] + [i for i in range(n_starters) if i != k] + list(range(n_starters, len(players)))
+
+    def assign(k, used):
+        if k == n_starters:
+            return []
+        for idx in candidates(k):
+            if idx not in used and roles[k] in players[idx].position.split('/'):
+                rest = assign(k + 1, used | {idx})
+                if rest is not None:
+                    return [idx] + rest
+        return None
+
+    return assign(0, frozenset())
+
+def infer_lineup(players: list[Player], preferred: str) -> str | None:
+    """
+    Restituisce il modulo che i primi 5 giocatori (titolari) rispettano già, senza scambi.
+    Se ne vanno bene più di uno (giocatori con doppia posizione) preferisce preferred.
+    """
+    for lineup in [preferred] + [l for l in LINEUP_ROLES if l != preferred]:
+        roles = LINEUP_ROLES.get(lineup)
+        if roles and len(players) >= len(roles) and all(r in p.position.split('/') for r, p in zip(roles, players)):
+            return lineup
+    return None
+
 
 class Team:
     """Gestisce il roster, la validazione e l'interfacciamento con i dati API e la UI."""

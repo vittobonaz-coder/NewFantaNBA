@@ -1,28 +1,17 @@
 TO DO:
-- Cambiare l'orario di fine cambio alle 17
+- Far vedere in qualche modo i matchup della giornata per ogni giocatore
+
+- Far vedere in qualche modo i punteggi fatti dai giocatori (se non sono maggiori dei precedenti e quindi non
+		vengono aggiornati)
 
 - Visualizzare formazione e punteggio squadra avversaria
 
-- Nel calendario, se entrambe le squadre non hanno ancora giocatori che hanno giocato non segna i punteggi,
-    mentre dovrebbe segnare 0 ad entrambi appena inizia la giornata
-    --> In base all'ultima data di aggiornamento dovrei scaricare i dati per tutti i giorni di cui sono indietro
-
-- Con le righe già inserite per tutte le giornate, il ruolo e lo slot delle giornate future restano quelli 
-    iniziali. Oggi nessun codice aggiorna lineup_players quando un utente salva la formazione: handle_save 
-    → push_team aggiorna solo la tabella rosters. Quindi all’inizio della giornata 2 pull_lineup_for_team 
-    riporterebbe la formazione del setup, non quella salvata dall’utente.
-
-- Aggiungere al calendario le partite NBA
-
-- Aggiungere possibilità di mettere una formazione fissa, che viene settata all'inizio di ogni giornata
-
 - 2 numeri dopo la virgola per visualizzazione punteggi
 
-- Fare copia in locale (o su cloud) di tutti dati di tutte le giornate.
+- Fare copia in locale (o su cloud) di tutti dati di tutte le giornate. Routine che ogni tot fa una foto dello 
+    stato del campionato e lo carica da qualche parte per backup
 
 - 1 giocatore Free agent ogni 4 giornate. L'ultimo in classifica ha la prima scelta.
-
-- Routine che ogni tot fa una foto dello stato del campionato e lo carica da qualche parte per backup
 
 
 

@@ -3,7 +3,7 @@ import os
 import json
 import asyncio
 from datetime import datetime
-from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS
+from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS, LINEUP_ROLES, find_starter_assignment, infer_lineup
 from time_manager import TimeManager, ITA_TZ
 
 
@@ -13,50 +13,6 @@ ROLE_CONFIGS = {
     "BENCH": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["BENCH"], "button_size": 15, "button_left": -8, "button_top": -8},
     "RESERVE": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 0.6, "mult": ROLE_MULTIPLIERS["RESERVE"], "button_size": 15, "button_left": -8, "button_top": -8},
 }
-
-# Posizioni richieste dagli slot titolari (0-4) per ogni modulo
-LINEUP_ROLES = {
-    "2-2-1": ['C', 'A', 'A', 'G', 'G'],
-    "2-1-2": ['C', 'C', 'A', 'G', 'G'],
-    "1-2-2": ['C', 'C', 'A', 'A', 'G'],
-    "3-1-1": ['C', 'A', 'G', 'G', 'G'],
-    "1-3-1": ['C', 'A', 'A', 'A', 'G'],
-}
-
-def find_starter_assignment(roles: list[str], players: list[Player]) -> list[int] | None:
-    """
-    Cerca giocatori distinti che coprano le posizioni richieste dagli slot titolari.
-    Restituisce, per ogni slot, l'indice del giocatore scelto; None se il modulo è impossibile.
-    Per fare meno scambi possibili preferisce chi è già nello slot, poi gli altri titolari,
-    poi sesto uomo, panchina e riserve.
-    """
-    n_starters = len(roles)
-
-    def candidates(k):
-        return [k] + [i for i in range(n_starters) if i != k] + list(range(n_starters, len(players)))
-
-    def assign(k, used):
-        if k == n_starters:
-            return []
-        for idx in candidates(k):
-            if idx not in used and roles[k] in players[idx].position.split('/'):
-                rest = assign(k + 1, used | {idx})
-                if rest is not None:
-                    return [idx] + rest
-        return None
-
-    return assign(0, frozenset())
-
-def infer_lineup(players: list[Player], preferred: str) -> str | None:
-    """
-    Restituisce il modulo che i primi 5 giocatori (titolari) rispettano già, senza scambi.
-    Se ne vanno bene più di uno (giocatori con doppia posizione) preferisce preferred.
-    """
-    for lineup in [preferred] + [l for l in LINEUP_ROLES if l != preferred]:
-        roles = LINEUP_ROLES.get(lineup)
-        if roles and len(players) >= len(roles) and all(r in p.position.split('/') for r, p in zip(roles, players)):
-            return lineup
-    return None
 
 class PlayerCard(ft.Container):
     """Classe per le cards dei giocatori"""
@@ -209,8 +165,8 @@ class Court(ft.Column):
             if find_starter_assignment(LINEUP_ROLES[l], self.team.players) is not None
         ] or [self.lineup]  # nessun modulo possibile: lasciamo quello salvato
 
-        # MODULO INIZIALE: quello che i titolari rispettano già. Il modulo è salvato solo in locale
-        # (su Render il file può mancare), quindi lo si ricava dai giocatori. I titolari vengono
+        # MODULO INIZIALE: quello salvato in matchups (arriva col file della giornata), verificato sui
+        # titolari; se non lo rispettano si ricava dai giocatori. I titolari vengono
         # riorganizzati solo se nessun modulo combacia e i cambi sono aperti: a formazione bloccata
         # si mostra esattamente quella su Supabase, con cui il cron calcola il punteggio.
         inferred = infer_lineup(self.team.players, self.lineup)
@@ -333,7 +289,11 @@ class Court(ft.Column):
             sync.update_roster_positions(self.team, team_id)
             # Tutti i giocatori, dalla giornata modificabile in poi (mai quella in corso):
             # riallinea anche eventuali righe disallineate delle giornate future
-            return sync.update_lineup_slots(self.team, self.gameweek)
+            if not sync.update_lineup_slots(self.team, self.gameweek):
+                return False
+            # Modulo in matchups, con la stessa regola: le giornate passate restano come storico
+            sync.update_team_lineup(team_id, self.gameweek, self.team.lineup)
+            return True
         except Exception as ex:
             print(f"Errore durante il salvataggio della formazione: {ex}")
             return False
