@@ -2,9 +2,9 @@
 Cron job dei punteggi (GitHub Actions, lanciato da Supabase pg_cron).
 
   python cron_test_script.py daily      ogni mattina: scarica i tabellini e aggiorna i punteggi
-  python cron_test_script.py rollover   ogni sera alle 23:00 italiane: se domani inizia una nuova
+  python cron_test_script.py rollover   ogni sera alle 23:59 italiane: se domani inizia una nuova
                                         giornata, chiude quella di oggi e azzera la successiva
-                                        (lanciato alle 21:00 e alle 22:00 UTC, prosegue solo dalle 23:00)
+                                        (lanciato alle 21:59 e alle 22:59 UTC, prosegue solo dalle 23:59)
 
 Opzioni per test e recuperi:
   --date YYYY-MM-DD   (daily) data NBA da elaborare al posto di ieri
@@ -187,10 +187,10 @@ def run_daily(sync: SupabaseSync, nba_dates: list[str], dry_run: bool) -> list[s
 
 def rollover_due(sync: SupabaseSync, today: str) -> bool:
     """
-    pg_cron lancia il rollover alle 21:00 e alle 22:00 UTC: alle 23:00 italiane cade il run delle 22:00 UTC
-    con l'ora solare e quello delle 21:00 UTC con l'ora legale. Si prosegue quindi solo dalle 23:00 italiane
+    pg_cron lancia il rollover alle 21:59 e alle 22:59 UTC: alle 23:59 italiane cade il run delle 22:59 UTC
+    con l'ora solare e quello delle 21:59 UTC con l'ora legale. Si prosegue quindi solo dalle 23:59 italiane
     in poi e una volta sola al giorno: se il rollover di oggi è già riuscito, il run successivo viene saltato.
-    Con l'ora legale il run delle 22:00 UTC cade a mezzanotte, ma today è ancora il giorno prima
+    Con l'ora legale il run delle 22:59 UTC cade alle 00:59, ma today è ancora il giorno prima
     (TimeManager.rollover_day), quindi fa da secondo tentativo se il primo è fallito.
     """
     rollover = TimeManager.rollover_instant(date.fromisoformat(today))
@@ -208,7 +208,7 @@ def rollover_due(sync: SupabaseSync, today: str) -> bool:
 
 def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
     """
-    Lanciato ogni giorno alle 23:00 italiane, agisce solo se domani inizia una nuova giornata
+    Lanciato ogni giorno alle 23:59 italiane, agisce solo se domani inizia una nuova giornata
     (la giornata di domani comprende anche le partite che iniziano stasera, data NBA = oggi):
     - chiude la giornata di oggi: ultimo ricalcolo dei totali e was_played = True
     - azzera la giornata di domani: score dei giocatori NULL, punteggi delle squadre 0.0

@@ -1,5 +1,7 @@
 import os
 import json
+import hashlib
+import secrets
 from supabase import create_client, Client
 from fanta_obj import Player, Team, NOT_PLAYED_SCORE, ROLE_MULTIPLIERS, DEFAULT_LINEUP, LINEUP_ROLES, has_played, infer_lineup
 from pathlib import Path
@@ -11,6 +13,7 @@ SUPABASE_KEY = "sb_publishable_KNhdTSkcs0XuzDwKqNbIOA_XpiJlqFZ"
 
 MAX_NAME_LENGTH = 20               # Username e nome squadra (devono stare nelle tab e nelle tabelle)
 INVALID_NAME_CHARS = '/\\:*?"<>|'  # Il nome squadra finisce nei nomi dei file locali
+LOGIN_TOKEN_DAYS = 90              # Durata dell'accesso automatico ("Ricordami")
 
 
 def valid_lineup(value) -> str | None:
@@ -1543,6 +1546,40 @@ class SupabaseSync:
         if any(Team(t["name"]).filename == Team(new_name).filename for t in others):
             raise ValueError(f"Il nome '{new_name}' è già usato da un'altra squadra")
         self._update_one("fanta_teams", team_id, {"name": new_name})
+
+    @staticmethod
+    def _token_hash(token: str) -> str:
+        """Su Supabase va solo l'hash: chi legge la tabella non può usare i token."""
+        return hashlib.sha256(token.encode()).hexdigest()
+
+    def create_login_token(self, user_id: str) -> str:
+        """Nuovo token "Ricordami" per il profilo: il valore in chiaro resta solo nel browser."""
+        token = secrets.token_urlsafe(32)
+        self.supabase.table("login_tokens").insert({"token_hash": self._token_hash(token), "user_id": user_id}).execute()
+        return token
+
+    def authenticate_token(self, token: str) -> dict | None:
+        """Profilo collegato al token, nello stesso formato di authenticate. None se inesistente o scaduto."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=LOGIN_TOKEN_DAYS)
+        data = (
+            self.supabase.table("login_tokens")
+            .select("profiles(id, username, fanta_teams(id, name))")
+            .eq("token_hash", self._token_hash(token))
+            .gte("created_at", cutoff.isoformat())
+            .limit(1)
+            .execute()
+        ).data
+        return data[0]["profiles"] if data else None
+
+    def delete_login_token(self, token: str) -> None:
+        self.supabase.table("login_tokens").delete().eq("token_hash", self._token_hash(token)).execute()
+
+    def revoke_login_tokens(self, user_id: str, keep_token: str | None = None) -> None:
+        """Cancella i token del profilo (tranne keep_token): gli altri dispositivi devono rifare l'accesso."""
+        query = self.supabase.table("login_tokens").delete().eq("user_id", user_id)
+        if keep_token:
+            query = query.neq("token_hash", self._token_hash(keep_token))
+        query.execute()
 
     @staticmethod
     def _validate_name(value: str, label: str) -> None:

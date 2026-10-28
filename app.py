@@ -17,6 +17,7 @@ from supabase_manager import SupabaseSync
 CALENDAR_PATH = os.path.join("data", "calendar.json")
 STANDINGS_PATH = os.path.join("data", "standings.json")
 SYNC_META_PATH = os.path.join("data", "sync_meta.json")  # Da non committare (.gitignore)
+LOGIN_TOKEN_KEY = "fantanba.login_token"  # Chiave del token "Ricordami" nello storage del browser
 
 
 def parse_timestamp(value: str | None) -> datetime | None:
@@ -79,16 +80,22 @@ def sync_other_teams(sync: SupabaseSync, exclude_id: str, gameweek: int, last_up
     return [team for team in teams.values() if team.is_valid_roster()]
 
 
-def main(page: ft.Page) -> None:
+async def main(page: ft.Page) -> None:
     page.title = 'Fanta NBA - Dashboard'
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
     page.window.width = 358
     page.window.height = 757
+    prefs = ft.SharedPreferences()  # Storage del browser (localStorage sul web)
 
     def show_message(text: str, color: str = "white"):
         page.clean()
         page.add(ft.Text(text, color=color))
+        page.update()
+
+    def show_login():
+        page.clean()
+        page.add(LoginView(page, on_login_success))
         page.update()
 
     def load_user_data(user_data, sync: SupabaseSync) -> tuple[dict | None, str | None]:
@@ -122,7 +129,19 @@ def main(page: ft.Page) -> None:
             return None, f"Errore Roster: {team_row['name']}"
         return {"team_row": team_row, "last_update": last_update, "league": league, "teams": teams}, None
 
-    async def on_login_success(user_data, sync: SupabaseSync):
+    async def on_login_success(user_data, sync: SupabaseSync, remember: bool = False, token: str | None = None):
+        """
+        remember: login con "Ricordami" spuntato, si crea un nuovo token.
+        token: accesso automatico con il token già salvato nel browser.
+        """
+        if remember:
+            try:
+                token = await asyncio.to_thread(sync.create_login_token, user_data["id"])
+                await prefs.set(LOGIN_TOKEN_KEY, token)
+            except Exception as e:
+                print(f"'Ricordami' non disponibile: {e}")  # Si entra lo stesso, senza accesso automatico
+                token = None
+
         page.clean()
         page.add(ft.Column(
             [ft.ProgressRing(), ft.Text("Aggiornamento dati...")],
@@ -145,13 +164,46 @@ def main(page: ft.Page) -> None:
 
         page.clean()
         page.add(MainDashboard(
-            user={"id": user_data["id"], "username": user_data["username"]}, team_row=team_row,
+            user={"id": user_data["id"], "username": user_data["username"], "token": token}, team_row=team_row,
             current_team=teams.get(current_gw), current_gw=current_gw,
             edit_team=teams.get(league["edit_gw"]), edit_gw=league["edit_gw"],
             edit_deadline=league["deadline"],
-            league_loader=league_loader
+            league_loader=league_loader,
+            on_logout=logout,
         ))
         page.update()
 
-    # Avvio con schermata di login
-    page.add(LoginView(page, on_login_success))
+    async def logout(token: str | None):
+        """Dimentica il token "Ricordami" (browser e Supabase) e torna al login."""
+        try:
+            await prefs.remove(LOGIN_TOKEN_KEY)
+            if token:
+                await asyncio.to_thread(SupabaseSync().delete_login_token, token)
+        except Exception as e:
+            print(f"Errore durante il logout: {e}")
+        show_login()
+
+    async def try_auto_login() -> bool:
+        """Accesso con il token salvato nel browser. False = serve la schermata di login."""
+        token = await prefs.get(LOGIN_TOKEN_KEY)
+        if not token:
+            return False
+        page.add(ft.Column([ft.ProgressRing(), ft.Text("Accesso in corso...")],
+                           horizontal_alignment=ft.CrossAxisAlignment.CENTER))
+        page.update()
+        sync = SupabaseSync()
+        try:
+            user = await asyncio.to_thread(sync.authenticate_token, token)
+        except Exception as e:
+            print(f"Accesso automatico non riuscito: {e}")  # Server irraggiungibile: il token resta
+            return False
+        if not user:
+            # Scaduto o revocato (logout, cambio password da un altro dispositivo)
+            await prefs.remove(LOGIN_TOKEN_KEY)
+            return False
+        await on_login_success(user, sync, token=token)
+        return True
+
+    # Avvio: accesso automatico se c'è un token valido, altrimenti schermata di login
+    if not await try_auto_login():
+        show_login()

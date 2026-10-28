@@ -815,13 +815,17 @@ class StandingsView(ft.Column):
         ]
 
 
-class ProfileView(ft.ListView):
-    """Gestione Profilo: cambio di username, nome squadra e password, confermati dalla password attuale."""
-    def __init__(self, user: dict, team_row: dict, on_team_renamed=None):
-        super().__init__(expand=True, padding=15, spacing=10)
-        self.user = user                        # {"id", "username"}: aggiornato dopo ogni modifica
+class ProfileView(ft.Stack):
+    """
+    Gestione Profilo: cambio di username, nome squadra e password, confermati dalla password attuale.
+    Durante ogni operazione il velo di caricamento copre il modulo, come per il salvataggio della formazione.
+    """
+    def __init__(self, user: dict, team_row: dict, on_team_renamed=None, on_logout=None):
+        super().__init__(expand=True)
+        self.user = user                        # {"id", "username", "token"}: token "Ricordami" (None se non attivo)
         self.team_row = team_row                # {"id", "name"}
         self.on_team_renamed = on_team_renamed  # (vecchio nome, nuovo nome) -> None
+        self.on_logout = on_logout              # async (token) -> None: torna alla schermata di login
 
         def field(label, value="", password=False):
             return ft.TextField(label=label, value=value, password=password,
@@ -841,14 +845,23 @@ class ProfileView(ft.ListView):
                                   color="white", on_click=on_save),
             ])
 
-        self.controls = [
-            ft.Text("Ogni modifica va confermata con la password attuale", size=12, color="grey"),
-            self.current_password,
-            ft.Divider(color="grey_800"),
-            section("Username", [self.username_field], self.save_username),
-            section("Nome squadra", [self.team_name_field], self.save_team_name),
-            section("Password", [self.new_password, self.confirm_password], self.save_password),
-        ]
+        form = ft.ListView(
+            padding=15, spacing=10,
+            left=0, top=0, right=0, bottom=0,  # Riempie lo Stack
+            controls=[
+                ft.Text("Ogni modifica va confermata con la password attuale", size=12, color="grey"),
+                self.current_password,
+                ft.Divider(color="grey_800"),
+                section("Username", [self.username_field], self.save_username),
+                section("Nome squadra", [self.team_name_field], self.save_team_name),
+                section("Password", [self.new_password, self.confirm_password], self.save_password),
+                ft.Divider(color="grey_800"),
+                ft.ElevatedButton("Esci", icon=ft.Icons.LOGOUT, bgcolor=ft.Colors.RED_700,
+                                  color="white", on_click=self.handle_logout),
+            ],
+        )
+        self.loading = LoadingOverlay()
+        self.controls = [form, self.loading]
 
     def show_message(self, text: str, color: str):
         sb = ft.SnackBar(ft.Text(text), bgcolor=color)
@@ -856,13 +869,13 @@ class ProfileView(ft.ListView):
         sb.open = True
         self.page.update()
 
-    async def _run(self, button, action, success: str) -> bool:
+    async def _run(self, action, success: str) -> bool:
         """Verifica la password attuale ed esegue action(sync) in un thread. True se è andato tutto bene."""
         if not self.current_password.value:
             self.show_message("Inserisci la password attuale", "red")
             return False
-        button.disabled = True
-        button.update()
+        # Il velo assorbe i tocchi: niente doppi click durante l'operazione
+        await self.loading.show()
         try:
             await asyncio.to_thread(self._checked, action)
         except ValueError as err:
@@ -873,8 +886,7 @@ class ProfileView(ft.ListView):
             self.show_message("Errore nel salvataggio, riprova", "red")
             return False
         finally:
-            button.disabled = False
-            button.update()
+            self.loading.hide()
         self.current_password.value = ""
         self.update()
         self.show_message(success, "green")
@@ -893,7 +905,7 @@ class ProfileView(ft.ListView):
         new = (self.username_field.value or "").strip()
         if new == self.user["username"]:
             return
-        if await self._run(e.control, lambda sync: sync.update_username(self.user["id"], new), "Username aggiornato"):
+        if await self._run(lambda sync: sync.update_username(self.user["id"], new), "Username aggiornato"):
             self.user["username"] = new
 
     async def save_team_name(self, e):
@@ -910,7 +922,7 @@ class ProfileView(ft.ListView):
             except Exception as err:
                 print(f"Calendario/classifica non aggiornati dopo il cambio nome: {err}")
 
-        if await self._run(e.control, action, "Nome squadra aggiornato"):
+        if await self._run(action, "Nome squadra aggiornato"):
             self.team_row["name"] = new
             if self.on_team_renamed:
                 self.on_team_renamed(old, new)
@@ -920,20 +932,30 @@ class ProfileView(ft.ListView):
         if new != self.confirm_password.value:
             self.show_message("Le due password non coincidono", "red")
             return
-        if await self._run(e.control, lambda sync: sync.update_password(self.user["id"], new), "Password aggiornata"):
+        def action(sync):
+            sync.update_password(self.user["id"], new)
+            # Gli altri dispositivi con "Ricordami" devono rifare l'accesso con la nuova password
+            sync.revoke_login_tokens(self.user["id"], keep_token=self.user.get("token"))
+
+        if await self._run(action, "Password aggiornata"):
             self.new_password.value = self.confirm_password.value = ""
             self.update()
 
+    async def handle_logout(self, e):
+        # Niente hide: al termine la pagina passa alla schermata di login
+        await self.loading.show()
+        await self.on_logout(self.user.get("token"))
+
 
 class SettingsView(ft.Tabs):
-    def __init__(self, user: dict, team_row: dict, on_team_renamed=None):
+    def __init__(self, user: dict, team_row: dict, on_team_renamed=None, on_logout=None):
         super().__init__(content=None, length=0)
         self.expand = True
         self.length = 5
         self.selected_index = 0
         self.animation_duration = 300
 
-        self.profile_view = ProfileView(user, team_row, on_team_renamed)
+        self.profile_view = ProfileView(user, team_row, on_team_renamed, on_logout)
         self.rules_filepath = os.path.join("data", "rules.json")
         self.rules_view = self._build_multi_table_view(self.rules_filepath)
         
@@ -1144,7 +1166,7 @@ class MainDashboard(ft.Tabs):
     def __init__(self, user: dict, team_row: dict,
                  current_team: Team | None, current_gw: int | None,
                  edit_team: Team | None = None, edit_gw: int | None = None,
-                 edit_deadline: datetime | None = None, league_loader=None):
+                 edit_deadline: datetime | None = None, league_loader=None, on_logout=None):
         super().__init__(content=None, length=0)
         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
         self.length = 5
@@ -1157,7 +1179,8 @@ class MainDashboard(ft.Tabs):
         self.league_view = LeagueView(current_gw, league_loader)
         self.calendar_view = CalendarView()
         self.championship_view = StandingsView()
-        self.settings_view = SettingsView(user, team_row, on_team_renamed=self.team_view.rename_team)
+        self.settings_view = SettingsView(user, team_row, on_team_renamed=self.team_view.rename_team,
+                                          on_logout=on_logout)
         
         self.content=ft.Column(
             expand=True,
@@ -1221,6 +1244,7 @@ class LoginView(ft.Column):
         
         self.username_field = ft.TextField(label="Username", width=280, bgcolor="#1a1a1a")
         self.password_field = ft.TextField(label="Password", width=280, password=True, can_reveal_password=True, bgcolor="#1a1a1a")
+        self.remember_checkbox = ft.Checkbox(label="Ricordami", value=False)
         self.error_text = ft.Text("", color="red")
         self.login_button = ft.ElevatedButton("Entra", on_click=self._check_login, bgcolor="amber", color="black")
 
@@ -1229,6 +1253,7 @@ class LoginView(ft.Column):
             ft.Text("NewFantaNBA Login", size=24, weight="bold"),
             self.username_field,
             self.password_field,
+            self.remember_checkbox,
             self.error_text,
             self.login_button
         ]
@@ -1251,7 +1276,7 @@ class LoginView(ft.Column):
             user, self.error_text.value = None, "Server non raggiungibile, riprova"
 
         if user:
-            await self.on_login_success(user, sync)
+            await self.on_login_success(user, sync, remember=bool(self.remember_checkbox.value))
             return
         self.login_button.disabled = False
         self.update()
