@@ -9,6 +9,9 @@ from time_manager import TimeManager, ITA_TZ
 SUPABASE_URL = "https://ifqiarpfsbcrfpmabdus.supabase.co"
 SUPABASE_KEY = "sb_publishable_KNhdTSkcs0XuzDwKqNbIOA_XpiJlqFZ"
 
+MAX_NAME_LENGTH = 20               # Username e nome squadra (devono stare nelle tab e nelle tabelle)
+INVALID_NAME_CHARS = '/\\:*?"<>|'  # Il nome squadra finisce nei nomi dei file locali
+
 
 def valid_lineup(value) -> str | None:
     """Il modulo se è uno di quelli previsti, altrimenti None (es. la stringa "NULL" dei vecchi calendari)."""
@@ -761,7 +764,8 @@ class SupabaseSync:
                 self.supabase.table("lineup_players").insert(lineup_data).execute()
                 print(f"Lineup di '{t['name']}' caricate: {len(calendar)} giornate, {len(lineup_data)} righe.")
 
-    def update_lineup_slots(self, team: Team, gameweek: int, only_ids: set[int] | None = None) -> bool:
+    def update_lineup_slots(self, team: Team, gameweek: int, only_ids: set[int] | None = None,
+                            team_id: str | None = None) -> bool:
         """
         Aggiorna slot e ruolo dei giocatori del team nella tabella lineup_players
         per la gameweek indicata e tutte le successive, in base all'ordine attuale di team.players.
@@ -773,7 +777,7 @@ class SupabaseSync:
         if not players:
             return True
 
-        team_id = self.get_team_id_by_name(team.name)
+        team_id = team_id or self.get_team_id_by_name(team.name)
         if not team_id:
             print(f"Errore: Impossibile recuperare l'ID per il team {team.name}.")
             return False
@@ -1301,6 +1305,49 @@ class SupabaseSync:
             return False
 
 
+    def align_fanta_teams_json(self, filepath: str = os.path.join("data", "fanta_teams.json"),
+                               dry_run: bool = False) -> dict[str, str]:
+        """
+        Riporta in fanta_teams.json (e nei file <squadra>_info.json) i nomi delle squadre cambiati dall'app.
+        Il file non ha gli id: ogni chiave che non esiste più su Supabase si abbina alla squadra
+        con cui ha più giocatori in comune (rosters.player_name). Restituisce {vecchio nome: nuovo nome}.
+        """
+        with open(filepath, "r", encoding="utf-8") as f:
+            teams_json = json.load(f)
+        teams = self.get_all_teams()
+        rosters = self.supabase.table("rosters").select("fanta_team_id, player_name").execute().data or []
+        orphans = [k for k in teams_json if k not in {t["name"] for t in teams}]
+
+        renames = {}
+        for t in teams:
+            if t["name"] in teams_json:
+                continue
+            players = {r["player_name"] for r in rosters if r["fanta_team_id"] == t["id"]}
+            common = lambda key: len(players & set(teams_json[key]))
+            best = max(orphans, key=common, default=None)
+            # Almeno metà della rosa in comune, altrimenti l'abbinamento non è affidabile
+            if best is None or common(best) * 2 <= len(players):
+                print(f"Attenzione: nessuna squadra di {filepath} corrisponde a '{t['name']}'")
+                continue
+            renames[best] = t["name"]
+            orphans.remove(best)
+
+        for old, new in renames.items():
+            print(f"{filepath}: '{old}' -> '{new}'" + (" (dry-run)" if dry_run else ""))
+        if not renames or dry_run:
+            return renames
+
+        # Stesso ordine delle squadre (setup_fanta_championship lo usa per il calendario)
+        teams_json = {renames.get(k, k): v for k, v in teams_json.items()}
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(teams_json, f, indent=4, ensure_ascii=True)
+        for old, new in renames.items():
+            info = lambda name: os.path.join(os.path.dirname(filepath), f"{name.replace(' ', '_').lower()}_info.json")
+            if os.path.exists(info(old)):
+                os.replace(info(old), info(new))
+                print(f"Rinominato {info(old)} -> {info(new)}")
+        return renames
+
     def push_profiles_from_teams(self) -> bool:
         """
         2. Legge la tabella 'fanta_teams', crea un profilo in 'profiles' per ogni 
@@ -1447,6 +1494,67 @@ class SupabaseSync:
         """Restituisce {"id", "name"} della fanta-squadra collegata al profilo (None se non esiste)."""
         data = self.supabase.table("fanta_teams").select("id, name").eq("user_id", user_id).limit(1).execute().data
         return data[0] if data else None
+
+    # --- Profilo utente (Impostazioni > Gestione Profilo) ---
+
+    def authenticate(self, username: str, password: str) -> dict | None:
+        """
+        Restituisce {"id", "username", "fanta_teams": [{"id", "name"}]} del profilo con queste
+        credenziali (None se errate): con la squadra nella stessa query il login non costa round trip in più.
+        """
+        data = (
+            self.supabase.table("profiles")
+            .select("id, username, fanta_teams(id, name)")
+            .eq("username", username)
+            .eq("password", password)
+            .limit(1)
+            .execute()
+        ).data
+        return data[0] if data else None
+
+    def check_password(self, user_id: str, password: str) -> bool:
+        """True se la password è quella attuale del profilo."""
+        return bool(self.supabase.table("profiles").select("id").eq("id", user_id).eq("password", password).execute().data)
+
+    def update_username(self, user_id: str, new_username: str) -> None:
+        """Cambia lo username. ValueError se non valido o già usato (anche con maiuscole diverse)."""
+        new_username = new_username.strip()
+        self._validate_name(new_username, "Lo username")
+        others = self.supabase.table("profiles").select("username").neq("id", user_id).execute().data or []
+        if any(p["username"].lower() == new_username.lower() for p in others):
+            raise ValueError(f"Lo username '{new_username}' è già in uso")
+        self._update_one("profiles", user_id, {"username": new_username})
+
+    def update_password(self, user_id: str, new_password: str) -> None:
+        if not new_password:
+            raise ValueError("La password non può essere vuota")
+        self._update_one("profiles", user_id, {"password": new_password})
+
+    def update_team_name(self, team_id: str, new_name: str) -> None:
+        """
+        Rinomina la fanta-squadra. Il nome identifica la squadra anche nei file locali
+        (<nome>_gwN_state.json): deve restare unico con la stessa regola dei nomi dei file.
+        """
+        new_name = new_name.strip()
+        self._validate_name(new_name, "Il nome squadra")
+        if any(c in INVALID_NAME_CHARS for c in new_name):
+            raise ValueError(f"Il nome squadra non può contenere {' '.join(INVALID_NAME_CHARS)}")
+        others = self.supabase.table("fanta_teams").select("name").neq("id", team_id).execute().data or []
+        if any(Team(t["name"]).filename == Team(new_name).filename for t in others):
+            raise ValueError(f"Il nome '{new_name}' è già usato da un'altra squadra")
+        self._update_one("fanta_teams", team_id, {"name": new_name})
+
+    @staticmethod
+    def _validate_name(value: str, label: str) -> None:
+        if not value:
+            raise ValueError(f"{label} non può essere vuoto")
+        if len(value) > MAX_NAME_LENGTH:
+            raise ValueError(f"{label} può avere al massimo {MAX_NAME_LENGTH} caratteri")
+
+    def _update_one(self, table: str, row_id: str, values: dict) -> None:
+        """Aggiorna la riga con quell'id; RuntimeError se non è cambiato nulla (id inesistente o RLS)."""
+        if not self.supabase.table(table).update(values).eq("id", row_id).execute().data:
+            raise RuntimeError(f"Nessuna riga aggiornata in {table} (id {row_id})")
 
     def get_all_teams(self) -> list[dict]:
         """Restituisce {"id", "name"} di tutte le fanta-squadre, in ordine di nome."""

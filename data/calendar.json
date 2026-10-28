@@ -5,13 +5,13 @@
         "end_date": "2026-10-27",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Pippo",
                 "home_score": 362.39,
                 "away_score": 449.75,
                 "was_played": true,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -19,8 +19,8 @@
                 "home_score": 369.5,
                 "away_score": 350.49,
                 "was_played": true,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -28,8 +28,8 @@
                 "home_score": 353.79,
                 "away_score": 347.47,
                 "was_played": true,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -37,8 +37,8 @@
                 "home_score": 416.55,
                 "away_score": 383.03,
                 "was_played": true,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -483,39 +483,39 @@
         "matchups": [
             {
                 "home_team": "Freezer",
-                "away_team": "Bonaz",
-                "home_score": 0.0,
-                "away_score": 0.0,
+                "away_team": "Bonaz_team",
+                "home_score": 96.71,
+                "away_score": 42.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Testo",
                 "away_team": "Pippo",
-                "home_score": 0.0,
-                "away_score": 0.0,
+                "home_score": 73.85,
+                "away_score": 119.59,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
                 "away_team": "Mazen",
-                "home_score": 0.0,
-                "away_score": 0.0,
+                "home_score": 158.03,
+                "away_score": 65.78,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
                 "away_team": "Gents",
-                "home_score": 0.0,
+                "home_score": 81.71,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -523,33 +523,33 @@
                 {
                     "home_team": "BOS",
                     "away_team": "BKN",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 125,
+                    "away_score": 124,
+                    "status": "final",
                     "time": "00:30"
                 },
                 {
                     "home_team": "NYK",
                     "away_team": "DET",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 111,
+                    "away_score": 97,
+                    "status": "final",
                     "time": "01:00"
                 },
                 {
                     "home_team": "SAS",
                     "away_team": "SAC",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 130,
+                    "away_score": 103,
+                    "status": "final",
                     "time": "01:00"
                 },
                 {
                     "home_team": "LAL",
                     "away_team": "POR",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 129,
+                    "away_score": 136,
+                    "status": "final",
                     "time": "04:00"
                 }
             ],
@@ -981,13 +981,13 @@
         "end_date": "2026-11-10",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Testo",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -995,8 +995,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Pippo",
@@ -1004,8 +1004,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -1013,8 +1013,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -1415,12 +1415,12 @@
         "matchups": [
             {
                 "home_team": "Cile",
-                "away_team": "Bonaz",
+                "away_team": "Bonaz_team",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cola",
@@ -1428,8 +1428,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -1437,8 +1437,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -1446,8 +1446,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -1881,13 +1881,13 @@
         "end_date": "2026-11-24",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Cola",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -1895,8 +1895,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Testo",
@@ -1904,8 +1904,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -1913,8 +1913,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -2365,12 +2365,12 @@
         "matchups": [
             {
                 "home_team": "Gents",
-                "away_team": "Bonaz",
+                "away_team": "Bonaz_team",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Mazen",
@@ -2378,8 +2378,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Pippo",
@@ -2387,8 +2387,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -2396,8 +2396,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -2781,13 +2781,13 @@
         "end_date": "2026-12-08",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Mazen",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -2795,8 +2795,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -2804,8 +2804,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -2813,8 +2813,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -3042,13 +3042,13 @@
         "end_date": "2026-12-15",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Pippo",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -3056,8 +3056,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -3065,8 +3065,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -3074,8 +3074,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -3316,12 +3316,12 @@
         "matchups": [
             {
                 "home_team": "Freezer",
-                "away_team": "Bonaz",
+                "away_team": "Bonaz_team",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Testo",
@@ -3329,8 +3329,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -3338,8 +3338,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -3347,8 +3347,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -3806,13 +3806,13 @@
         "end_date": "2026-12-29",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Testo",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -3820,8 +3820,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Pippo",
@@ -3829,8 +3829,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -3838,8 +3838,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -4242,12 +4242,12 @@
         "matchups": [
             {
                 "home_team": "Cile",
-                "away_team": "Bonaz",
+                "away_team": "Bonaz_team",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cola",
@@ -4255,8 +4255,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -4264,8 +4264,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -4273,8 +4273,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -4732,13 +4732,13 @@
         "end_date": "2027-01-12",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Cola",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -4746,8 +4746,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Testo",
@@ -4755,8 +4755,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -4764,8 +4764,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -5224,12 +5224,12 @@
         "matchups": [
             {
                 "home_team": "Gents",
-                "away_team": "Bonaz",
+                "away_team": "Bonaz_team",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Mazen",
@@ -5237,8 +5237,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Pippo",
@@ -5246,8 +5246,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -5255,8 +5255,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -5706,13 +5706,13 @@
         "end_date": "2027-01-26",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Mazen",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -5720,8 +5720,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -5729,8 +5729,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -5738,8 +5738,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -6189,13 +6189,13 @@
         "end_date": "2027-02-02",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Pippo",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -6203,8 +6203,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -6212,8 +6212,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -6221,8 +6221,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -6673,12 +6673,12 @@
         "matchups": [
             {
                 "home_team": "Freezer",
-                "away_team": "Bonaz",
+                "away_team": "Bonaz_team",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Testo",
@@ -6686,8 +6686,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -6695,8 +6695,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -6704,8 +6704,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -7163,13 +7163,13 @@
         "end_date": "2027-02-16",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Testo",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -7177,8 +7177,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Pippo",
@@ -7186,8 +7186,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -7195,8 +7195,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -7655,12 +7655,12 @@
         "matchups": [
             {
                 "home_team": "Cile",
-                "away_team": "Bonaz",
+                "away_team": "Bonaz_team",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cola",
@@ -7668,8 +7668,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -7677,8 +7677,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -7686,8 +7686,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -8145,13 +8145,13 @@
         "end_date": "2027-03-08",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Cola",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -8159,8 +8159,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Testo",
@@ -8168,8 +8168,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -8177,8 +8177,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -8597,12 +8597,12 @@
         "matchups": [
             {
                 "home_team": "Gents",
-                "away_team": "Bonaz",
+                "away_team": "Bonaz_team",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Mazen",
@@ -8610,8 +8610,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Pippo",
@@ -8619,8 +8619,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -8628,8 +8628,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -9079,13 +9079,13 @@
         "end_date": "2027-03-22",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Mazen",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -9093,8 +9093,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -9102,8 +9102,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -9111,8 +9111,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -9554,13 +9554,13 @@
         "end_date": "2027-03-29",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Pippo",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -9568,8 +9568,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Gents",
@@ -9577,8 +9577,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -9586,8 +9586,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -10046,12 +10046,12 @@
         "matchups": [
             {
                 "home_team": "Freezer",
-                "away_team": "Bonaz",
+                "away_team": "Bonaz_team",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Testo",
@@ -10059,8 +10059,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cile",
@@ -10068,8 +10068,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Cola",
@@ -10077,8 +10077,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {
@@ -10544,13 +10544,13 @@
         "end_date": "2027-04-12",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Bonaz_team",
                 "away_team": "Testo",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "1-3-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Freezer",
@@ -10558,8 +10558,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Pippo",
@@ -10567,8 +10567,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             },
             {
                 "home_team": "Mazen",
@@ -10576,8 +10576,8 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "NULL",
-                "away_lineup": "NULL"
+                "home_lineup": "2-2-1",
+                "away_lineup": "2-2-1"
             }
         ],
         "nba_games": {

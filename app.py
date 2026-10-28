@@ -91,14 +91,14 @@ def main(page: ft.Page) -> None:
         page.add(ft.Text(text, color=color))
         page.update()
 
-    def load_user_data(user_data) -> tuple[dict | None, str | None]:
+    def load_user_data(user_data, sync: SupabaseSync) -> tuple[dict | None, str | None]:
         """
         Scarica (o legge dai file locali) tutto il necessario per la dashboard.
         Gira in un thread, quindi niente UI qui: restituisce (dati, None) oppure (None, errore).
+        La squadra arriva già col profilo (SupabaseSync.authenticate), insieme al client usato per il login.
         """
         try:
-            sync = SupabaseSync()
-            team_row = sync.get_team_by_user_id(user_data["id"])
+            team_row = (user_data.get("fanta_teams") or [None])[0]
             if not team_row:
                 return None, f"Nessuna squadra associata a {user_data['username']}"
 
@@ -122,7 +122,7 @@ def main(page: ft.Page) -> None:
             return None, f"Errore Roster: {team_row['name']}"
         return {"team_row": team_row, "last_update": last_update, "league": league, "teams": teams}, None
 
-    async def on_login_success(user_data):
+    async def on_login_success(user_data, sync: SupabaseSync):
         page.clean()
         page.add(ft.Column(
             [ft.ProgressRing(), ft.Text("Aggiornamento dati...")],
@@ -132,7 +132,7 @@ def main(page: ft.Page) -> None:
 
         # Il download gira in un thread: il loop di Flet resta libero, quindi lo spinner
         # arriva subito al client e continua a girare
-        data, error = await asyncio.to_thread(load_user_data, user_data)
+        data, error = await asyncio.to_thread(load_user_data, user_data, sync)
         if error:
             show_message(error, "red")
             return
@@ -145,6 +145,7 @@ def main(page: ft.Page) -> None:
 
         page.clean()
         page.add(MainDashboard(
+            user={"id": user_data["id"], "username": user_data["username"]}, team_row=team_row,
             current_team=teams.get(current_gw), current_gw=current_gw,
             edit_team=teams.get(league["edit_gw"]), edit_gw=league["edit_gw"],
             edit_deadline=league["deadline"],

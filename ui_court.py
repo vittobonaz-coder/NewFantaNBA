@@ -1,5 +1,6 @@
 import flet as ft
 import os
+import glob
 import json
 import asyncio
 from datetime import datetime
@@ -123,7 +124,8 @@ class LoadingOverlay(ft.Container):
 
 
 class Court(ft.Column):
-    def __init__(self, team_instance: Team, gameweek: int, edit_deadline: datetime | None = None, read_only: bool = False):
+    def __init__(self, team_instance: Team, gameweek: int, edit_deadline: datetime | None = None,
+                 read_only: bool = False, team_id: str | None = None):
         super().__init__()
         self.horizontal_alignment = "center"
         self.scroll = ft.ScrollMode.AUTO
@@ -136,7 +138,10 @@ class Court(ft.Column):
         self.editable = not read_only and edit_deadline is not None and TimeManager.now() < edit_deadline
         self.loading: LoadingOverlay | None = None  # Velo di caricamento, assegnato da TeamView
         self.lineup = self.team.lineup if self.team.lineup in LINEUP_ROLES else "2-2-1"
+        self.team_id = team_id  # UUID su Supabase; None = ricavato dal nome al salvataggio
 
+        # Nome squadra sopra il punteggio (solo nella propria squadra: tra le altre c'è già nella tab)
+        self.team_name_text = ft.Text(self.team.name, size=18, weight="bold", visible=not read_only)
         # Testo UI legato al campo 'score' del Team
         self.total_score_text = ft.Text(
             f"TOTAL SCORE: {self.team.score:.1f}",
@@ -285,11 +290,11 @@ class Court(ft.Column):
 
         sync = SupabaseSync()
         try:
-            team_id = sync.get_team_id_by_name(self.team.name)
+            team_id = self.team_id or sync.get_team_id_by_name(self.team.name)
             sync.update_roster_positions(self.team, team_id)
             # Tutti i giocatori, dalla giornata modificabile in poi (mai quella in corso):
             # riallinea anche eventuali righe disallineate delle giornate future
-            if not sync.update_lineup_slots(self.team, self.gameweek):
+            if not sync.update_lineup_slots(self.team, self.gameweek, team_id=team_id):
                 return False
             # Modulo in matchups, con la stessa regola: le giornate passate restano come storico
             sync.update_team_lineup(team_id, self.gameweek, self.team.lineup)
@@ -324,6 +329,12 @@ class Court(ft.Column):
         self.toggle_buttons(False)
         self.update()
     
+    def set_team_name(self, name: str):
+        """Dopo un cambio nome dalle Impostazioni: aggiorna titolo e file locale della formazione."""
+        self.team.name = name
+        self.team.filename = Team(name, gameweek=self.team.gameweek).filename
+        self.team_name_text.value = name
+
     def refresh_ui_and_data(self):
         """Sincronizza i ruoli nel Team in base alla posizione delle cards e ricalcola."""
         new_ordered_players = []
@@ -362,6 +373,8 @@ class Court(ft.Column):
     
     def setup_static_ui(self):
         self.controls = [
+            # Nome squadra
+            self.team_name_text,
             # Punteggio Squadra
             self.total_score_text,
             # Giornata e stato dei cambi
@@ -802,15 +815,125 @@ class StandingsView(ft.Column):
         ]
 
 
+class ProfileView(ft.ListView):
+    """Gestione Profilo: cambio di username, nome squadra e password, confermati dalla password attuale."""
+    def __init__(self, user: dict, team_row: dict, on_team_renamed=None):
+        super().__init__(expand=True, padding=15, spacing=10)
+        self.user = user                        # {"id", "username"}: aggiornato dopo ogni modifica
+        self.team_row = team_row                # {"id", "name"}
+        self.on_team_renamed = on_team_renamed  # (vecchio nome, nuovo nome) -> None
+
+        def field(label, value="", password=False):
+            return ft.TextField(label=label, value=value, password=password,
+                                can_reveal_password=password, bgcolor="#1a1a1a")
+
+        self.current_password = field("Password attuale", password=True)
+        self.username_field = field("Username", user["username"])
+        self.team_name_field = field("Nome squadra", team_row["name"])
+        self.new_password = field("Nuova password", password=True)
+        self.confirm_password = field("Conferma nuova password", password=True)
+
+        def section(title, fields, on_save):
+            return ft.Column([
+                ft.Text(title, size=14, weight="bold", color=ft.Colors.ORANGE),
+                *fields,
+                ft.ElevatedButton("Salva", icon=ft.Icons.SAVE, bgcolor=ft.Colors.GREEN_700,
+                                  color="white", on_click=on_save),
+            ])
+
+        self.controls = [
+            ft.Text("Ogni modifica va confermata con la password attuale", size=12, color="grey"),
+            self.current_password,
+            ft.Divider(color="grey_800"),
+            section("Username", [self.username_field], self.save_username),
+            section("Nome squadra", [self.team_name_field], self.save_team_name),
+            section("Password", [self.new_password, self.confirm_password], self.save_password),
+        ]
+
+    def show_message(self, text: str, color: str):
+        sb = ft.SnackBar(ft.Text(text), bgcolor=color)
+        self.page.overlay.append(sb)
+        sb.open = True
+        self.page.update()
+
+    async def _run(self, button, action, success: str) -> bool:
+        """Verifica la password attuale ed esegue action(sync) in un thread. True se è andato tutto bene."""
+        if not self.current_password.value:
+            self.show_message("Inserisci la password attuale", "red")
+            return False
+        button.disabled = True
+        button.update()
+        try:
+            await asyncio.to_thread(self._checked, action)
+        except ValueError as err:
+            self.show_message(str(err), "red")
+            return False
+        except Exception as err:
+            print(f"Errore durante l'aggiornamento del profilo: {err}")
+            self.show_message("Errore nel salvataggio, riprova", "red")
+            return False
+        finally:
+            button.disabled = False
+            button.update()
+        self.current_password.value = ""
+        self.update()
+        self.show_message(success, "green")
+        return True
+
+    def _checked(self, action):
+        """Eseguito in un thread: niente UI qui."""
+        from supabase_manager import SupabaseSync
+
+        sync = SupabaseSync()
+        if not sync.check_password(self.user["id"], self.current_password.value):
+            raise ValueError("Password attuale errata")
+        action(sync)
+
+    async def save_username(self, e):
+        new = (self.username_field.value or "").strip()
+        if new == self.user["username"]:
+            return
+        if await self._run(e.control, lambda sync: sync.update_username(self.user["id"], new), "Username aggiornato"):
+            self.user["username"] = new
+
+    async def save_team_name(self, e):
+        old, new = self.team_row["name"], (self.team_name_field.value or "").strip()
+        if new == old:
+            return
+
+        def action(sync):
+            sync.update_team_name(self.team_row["id"], new)
+            # Calendario e classifica locali hanno il vecchio nome fino al prossimo cron: li riscarichiamo
+            try:
+                sync.pull_calendar()
+                sync.sync_standings()
+            except Exception as err:
+                print(f"Calendario/classifica non aggiornati dopo il cambio nome: {err}")
+
+        if await self._run(e.control, action, "Nome squadra aggiornato"):
+            self.team_row["name"] = new
+            if self.on_team_renamed:
+                self.on_team_renamed(old, new)
+
+    async def save_password(self, e):
+        new = self.new_password.value or ""
+        if new != self.confirm_password.value:
+            self.show_message("Le due password non coincidono", "red")
+            return
+        if await self._run(e.control, lambda sync: sync.update_password(self.user["id"], new), "Password aggiornata"):
+            self.new_password.value = self.confirm_password.value = ""
+            self.update()
+
+
 class SettingsView(ft.Tabs):
-    def __init__(self):
+    def __init__(self, user: dict, team_row: dict, on_team_renamed=None):
         super().__init__(content=None, length=0)
         self.expand = True
         self.length = 5
         self.selected_index = 0
         self.animation_duration = 300
 
-        self.profile_view = ft.Text("Gestione Profilo - Prossimamente", size=20)
+        self.profile_view = ProfileView(user, team_row, on_team_renamed)
         self.rules_filepath = os.path.join("data", "rules.json")
         self.rules_view = self._build_multi_table_view(self.rules_filepath)
         
@@ -892,16 +1015,16 @@ class TeamView(ft.Column):
     """
     def __init__(self, current_team: Team | None, current_gw: int | None,
                  edit_team: Team | None = None, edit_gw: int | None = None,
-                 edit_deadline: datetime | None = None):
+                 edit_deadline: datetime | None = None, team_id: str | None = None):
         super().__init__()
         self.expand = True
         self.horizontal_alignment = "center"
 
         self.courts: list[tuple[str, Court]] = []
         if current_team is not None:
-            self.courts.append((f"Giornata {current_gw}", Court(current_team, current_gw)))
+            self.courts.append((f"Giornata {current_gw}", Court(current_team, current_gw, team_id=team_id)))
         if edit_team is not None:
-            self.courts.append((f"Formazione G{edit_gw}", Court(edit_team, edit_gw, edit_deadline)))
+            self.courts.append((f"Formazione G{edit_gw}", Court(edit_team, edit_gw, edit_deadline, team_id=team_id)))
 
         # Velo di caricamento sopra le formazioni (cambio giornata, Salva, Annulla)
         self.loading = LoadingOverlay()
@@ -942,6 +1065,18 @@ class TeamView(ft.Column):
             button.color = "black" if i == index else "white"
         if refresh:
             self.update()
+
+    def rename_team(self, old_name: str, new_name: str):
+        """
+        Aggiorna le formazioni col nuovo nome e cancella i file locali col vecchio: se la squadra
+        tornasse al nome precedente, si caricherebbero formazioni non più aggiornate.
+        """
+        for _, court in self.courts:
+            court.set_team_name(new_name)
+        key = os.path.basename(Team(old_name).filename).removesuffix("_state.json")
+        for path in glob.glob(os.path.join("data", f"{glob.escape(key)}_gw*_state.json")):
+            os.remove(path)
+        self.update()
 
 
 class LeagueView(ft.Column):
@@ -1006,7 +1141,8 @@ class LeagueView(ft.Column):
 
 
 class MainDashboard(ft.Tabs):
-    def __init__(self, current_team: Team | None, current_gw: int | None,
+    def __init__(self, user: dict, team_row: dict,
+                 current_team: Team | None, current_gw: int | None,
                  edit_team: Team | None = None, edit_gw: int | None = None,
                  edit_deadline: datetime | None = None, league_loader=None):
         super().__init__(content=None, length=0)
@@ -1017,11 +1153,11 @@ class MainDashboard(ft.Tabs):
         self.on_change = self.handle_tab_change
 
         # Inizializziamo le varie viste
-        self.team_view = TeamView(current_team, current_gw, edit_team, edit_gw, edit_deadline)
+        self.team_view = TeamView(current_team, current_gw, edit_team, edit_gw, edit_deadline, team_id=team_row["id"])
         self.league_view = LeagueView(current_gw, league_loader)
         self.calendar_view = CalendarView()
         self.championship_view = StandingsView()
-        self.settings_view = SettingsView()
+        self.settings_view = SettingsView(user, team_row, on_team_renamed=self.team_view.rename_team)
         
         self.content=ft.Column(
             expand=True,
@@ -1098,16 +1234,24 @@ class LoginView(ft.Column):
         ]
 
     async def _check_login(self, e):
-        with open("data/profiles.json", "r") as f:
-            profiles = json.load(f)
+        from supabase_manager import SupabaseSync
 
-        for user in profiles:
-            if user["username"] == self.username_field.value and user["password"] == self.password_field.value:
-                # Niente doppi click mentre si caricano i dati
-                self.login_button.disabled = True
-                self.update()
-                await self.on_login_success(user)
-                return
-        
-        self.error_text.value = "Credenziali errate"
+        # Niente doppi click mentre si verificano le credenziali e si caricano i dati
+        self.login_button.disabled = True
+        self.update()
+        try:
+            # Lo stesso client serve poi a caricare i dati: la connessione a Supabase resta aperta
+            sync = SupabaseSync()
+            user = await asyncio.to_thread(sync.authenticate,
+                                           (self.username_field.value or "").strip(),
+                                           self.password_field.value or "")
+            self.error_text.value = "" if user else "Credenziali errate"
+        except Exception as err:
+            print(f"Errore durante il login: {err}")
+            user, self.error_text.value = None, "Server non raggiungibile, riprova"
+
+        if user:
+            await self.on_login_success(user, sync)
+            return
+        self.login_button.disabled = False
         self.update()

@@ -10,7 +10,7 @@ Il nuovo giocatore prende il posto del vecchio con lo stesso ruolo e lo stesso s
 
 Cosa viene modificato:
 - Supabase: nba_players (inserisce il nuovo giocatore), rosters, lineup_players dalla giornata --from-gw in poi
-- data/fanta_teams.json, data/<squadra>_info.json, data/<squadra>_state.json,
+- data/fanta_teams.json (anche i nomi delle squadre rinominate dall'app), data/<squadra>_info.json, data/<squadra>_state.json,
   data/<squadra>_gw<N>_state.json delle giornate da --from-gw in poi, data/nba_to_espn_players.json
 - assets/players/<id>.png: foto del nuovo giocatore
 I punteggi passati restano invariati: le giornate precedenti a --from-gw (righe di lineup_players, matchups,
@@ -172,6 +172,8 @@ def main():
     team_id = sync.get_team_id_by_name(args.team)
     if not team_id:
         sys.exit(f"Squadra '{args.team}' non trovata su Supabase.")
+    # I nomi cambiati dall'app esistono solo su Supabase: riallineiamo prima i file locali
+    sync.align_fanta_teams_json(dry_run=args.dry_run)
 
     from_gw = args.from_gw or default_from_gw(sync)
     if from_gw is None:

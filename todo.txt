@@ -13,6 +13,12 @@ TO DO:
 
 - 1 giocatore Free agent ogni 4 giornate. L'ultimo in classifica ha la prima scelta.
 
+- Completare il regolamento
+
+- Quando un giocatore visualizza il calendario dovrebbe vedere subito la giornata corrente (non la 1)
+
+- Spostare orario cron chiusura cambi a mezzanotte
+
 
 
 
@@ -75,6 +81,9 @@ SCORCIATOIE UTILI:
 
 - Scrive automaticamente il file requirements.txt: 
         pip freeze > requirements.txt
+
+- Allinea nomi squadre fanta_teams.json con tabella supabase fanta_teams:
+        python -c "from supabase_manager import SupabaseSync; SupabaseSync().align_fanta_teams_json()"
 
 
 
