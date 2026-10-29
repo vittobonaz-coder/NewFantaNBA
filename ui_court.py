@@ -64,8 +64,7 @@ class PlayerCard(ft.Container):
         self.slot_index = slot_index
         self.show_swap = show_swap  # False nelle formazioni in sola lettura (squadre avversarie)
         self.schedules = schedules or {}  # Partite NBA della giornata per squadra (load_team_schedules)
-        self.ink = True
-        self.on_click = self.show_games
+        self.ink = True  # Al tocco il Court apre il dettaglio delle partite (Court.handle_card_click)
         # Swap Button
         self.swap_button = ft.PopupMenuButton(
             icon=ft.Icons.SWAP_VERT_CIRCLE, icon_color="white", bgcolor="black"
@@ -153,8 +152,8 @@ class PlayerCard(ft.Container):
             spacing=3, alignment=ft.MainAxisAlignment.CENTER, height=12,
         )
 
-    def show_games(self, e):
-        """Al tocco della card: le partite NBA del giocatore nella giornata, con risultato o orario."""
+    def show_games(self):
+        """Dettaglio aperto al tocco della card: le partite NBA del giocatore nella giornata, con risultato o orario."""
         def game_row(g):
             day = datetime.strptime(g["date"], "%Y-%m-%d")
             own, opp = g["own_score"], g["opp_score"]
@@ -258,6 +257,7 @@ class Court(ft.Column):
                 show_swap=not read_only,
                 schedules=schedules
             )
+            card.on_click = self.handle_card_click
             self.cards.append(card)
 
         # MODULI DISPONIBILI: solo quelli che la rosa riesce a schierare
@@ -399,6 +399,16 @@ class Court(ft.Column):
         except Exception as ex:
             print(f"Errore durante il salvataggio della formazione: {ex}")
             return False
+
+    async def handle_card_click(self, e):
+        """Dettaglio delle partite del giocatore toccato, con il velo di caricamento finché non si apre."""
+        if self.loading:
+            await self.loading.show()
+        try:
+            e.control.show_games()
+        finally:
+            if self.loading:
+                self.loading.hide()
 
     async def handle_cancel(self, e):
         """Ripristina l'ultimo salvataggio mostrando il velo di caricamento."""
@@ -951,7 +961,16 @@ class ProfileView(ft.Stack):
                 ft.Divider(color="grey_800"),
                 section("Username", [self.username_field], self.save_username),
                 section("Nome squadra", [self.team_name_field], self.save_team_name),
-                section("Password", [self.new_password, self.confirm_password], self.save_password),
+                section("Password", [
+                    # Avviso: una password riusata, se trapelasse, esporrebbe anche gli altri account
+                    ft.Row([
+                        ft.Icon(ft.Icons.WARNING_AMBER, color="amber", size=18),
+                        ft.Text("Non usare assolutamente una password che usi anche altrove "
+                                "(email, banca, social...): scegline una solo per FantaNBA.",
+                                size=12, color="amber", expand=True),
+                    ], vertical_alignment=ft.CrossAxisAlignment.START),
+                    self.new_password, self.confirm_password,
+                ], self.save_password),
                 ft.Divider(color="grey_800"),
                 ft.ElevatedButton("Esci", icon=ft.Icons.LOGOUT, bgcolor=ft.Colors.RED_700,
                                   color="white", on_click=self.handle_logout),
@@ -1235,10 +1254,15 @@ class LeagueView(ft.Column):
         if not teams:
             self.controls = [ft.Text("Nessuna formazione disponibile", size=16, color="grey")]
         else:
-            self.controls = [ft.Tabs(
+            # Velo di caricamento sopra le formazioni (apertura del dettaglio partite)
+            courts = [Court(t, self.gameweek, read_only=True) for t in teams]
+            loading = LoadingOverlay()
+            for court in courts:
+                court.loading = loading
+            tabs = ft.Tabs(
                 length=len(teams),
                 selected_index=0,
-                expand=True,
+                left=0, top=0, right=0, bottom=0,  # Riempie lo Stack
                 content=ft.Column(
                     expand=True,
                     controls=[
@@ -1249,13 +1273,11 @@ class LeagueView(ft.Column):
                             indicator_color=ft.Colors.ORANGE,
                             tabs=[ft.Tab(label=t.name) for t in teams]
                         ),
-                        ft.TabBarView(
-                            expand=True,
-                            controls=[Court(t, self.gameweek, read_only=True) for t in teams]
-                        ),
+                        ft.TabBarView(expand=True, controls=courts),
                     ],
                 ),
-            )]
+            )
+            self.controls = [ft.Stack([tabs, loading], expand=True)]
         self.update()
 
 
