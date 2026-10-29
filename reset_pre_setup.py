@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from supabase import create_client, Client
 
@@ -64,16 +63,16 @@ def clean_database():
             # Applichiamo il filtro corretto in base alla tipologia di ID della tabella
             if table == "nba_games":
                 # Chiave primaria testuale (id evento ESPN)
-                response = query.neq("game_id", "").execute()
+                query.neq("game_id", "").execute()
             elif table == "player_stats":
                 # Chiave primaria composta (player_id, game_id)
-                response = query.neq("player_id", -1).execute()
+                query.neq("player_id", -1).execute()
             elif table == "nba_players":
                 # L'id è un intero
-                response = query.neq("id", -1).execute()
+                query.neq("id", -1).execute()
             else:
                 # Tutte le altre tabelle hanno id di tipo UUID
-                response = query.neq("id", "00000000-0000-0000-0000-000000000000").execute()
+                query.neq("id", "00000000-0000-0000-0000-000000000000").execute()
             
             print(f"   [Tabella svuotata] {table}")
             

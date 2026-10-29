@@ -2,6 +2,4 @@ from api_nba import NbaDataManager
 
 
 nba = NbaDataManager(player_ids=[])
-# nba.download_all_players()
 nba.download_all_players_live()
-# nba.download_all_players_espn()

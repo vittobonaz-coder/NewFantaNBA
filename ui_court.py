@@ -246,7 +246,6 @@ class Court(ft.Column):
         # CARDS (con le partite NBA della giornata, mostrate sotto la squadra e al tocco)
         schedules = load_team_schedules(gameweek)
         self.cards = []
-        # ordered_players = self.team.get_ordered_roster()
         ordered_players = self.team.players
         for i, p in enumerate(ordered_players):
             card = PlayerCard(
