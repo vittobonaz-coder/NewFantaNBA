@@ -82,6 +82,29 @@ SCORCIATOIE UTILI:
 - Scrive automaticamente il file requirements.txt: 
         pip freeze > requirements.txt
 
+- Comandi per allineare la .venv (terminale PowerShell di VS Code)
+    Prima di cominciare, chiudi tutto quello che sta usando la .venv: app o script in esecuzione, e altri terminali con la .venv attiva. Altrimenti Windows non lascia cancellare i file.
+
+    - Disattiva la .venv, se nel prompt vedi (.venv) (se non è attiva il comando dà errore, puoi ignorarlo):
+        deactivate
+    - Cancella la vecchia .venv:
+        Remove-Item -Recurse -Force .venv
+    - Se dà errore --> 
+        - Ferma il processo di Pylint che usa la .venv (VS Code lo riavvia da solo quando serve):
+            Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -like "*New_FantaNBA\.venv\*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+        - Cancella quello che resta:
+            Remove-Item -Recurse -Force .venv
+    - Creane una nuova, con lo stesso Python 3.12 di prima:
+        python -m venv .venv
+    - Attivala:
+        .venv\Scripts\Activate.ps1
+    - Aggiorna pip e installa le dipendenze:
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+    - Controlla che non ci siano conflitti tra pacchetti e che app e script si carichino:
+        pip check
+        python -c "import app, cron_test_script, swap_players; print('OK')"
+
 - Allinea nomi squadre fanta_teams.json con tabella supabase fanta_teams:
         python -c "from supabase_manager import SupabaseSync; SupabaseSync().align_fanta_teams_json()"
 
