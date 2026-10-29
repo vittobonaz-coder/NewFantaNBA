@@ -5,7 +5,7 @@
         "end_date": "2026-10-27",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Pippo",
                 "home_score": 362.39,
                 "away_score": 449.75,
@@ -483,9 +483,9 @@
         "matchups": [
             {
                 "home_team": "Freezer",
-                "away_team": "Bonaz",
-                "home_score": 96.71,
-                "away_score": 42.0,
+                "away_team": "Minghie",
+                "home_score": 202.99,
+                "away_score": 261.75,
                 "was_played": false,
                 "home_lineup": "2-2-1",
                 "away_lineup": "1-3-1"
@@ -493,8 +493,8 @@
             {
                 "home_team": "Testo",
                 "away_team": "Pippo",
-                "home_score": 73.85,
-                "away_score": 119.59,
+                "home_score": 253.55,
+                "away_score": 241.69,
                 "was_played": false,
                 "home_lineup": "2-2-1",
                 "away_lineup": "2-2-1"
@@ -502,8 +502,8 @@
             {
                 "home_team": "Cile",
                 "away_team": "Mazen",
-                "home_score": 158.03,
-                "away_score": 65.78,
+                "home_score": 241.47,
+                "away_score": 224.17,
                 "was_played": false,
                 "home_lineup": "2-2-1",
                 "away_lineup": "2-2-1"
@@ -511,8 +511,8 @@
             {
                 "home_team": "Cola",
                 "away_team": "Gents",
-                "home_score": 81.71,
-                "away_score": 0.0,
+                "home_score": 204.82,
+                "away_score": 303.18,
                 "was_played": false,
                 "home_lineup": "2-2-1",
                 "away_lineup": "2-2-1"
@@ -557,97 +557,97 @@
                 {
                     "home_team": "ATL",
                     "away_team": "MIA",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 117,
+                    "away_score": 129,
+                    "status": "final",
                     "time": "00:00"
                 },
                 {
                     "home_team": "CLE",
                     "away_team": "WAS",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 121,
+                    "away_score": 111,
+                    "status": "final",
                     "time": "00:00"
                 },
                 {
                     "home_team": "DET",
                     "away_team": "CHA",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 97,
+                    "away_score": 89,
+                    "status": "final",
                     "time": "00:00"
                 },
                 {
                     "home_team": "IND",
                     "away_team": "PHI",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 109,
+                    "away_score": 114,
+                    "status": "final",
                     "time": "00:00"
                 },
                 {
                     "home_team": "TOR",
                     "away_team": "ORL",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 129,
+                    "away_score": 99,
+                    "status": "final",
                     "time": "00:30"
                 },
                 {
                     "home_team": "CHI",
                     "away_team": "NYK",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 127,
+                    "away_score": 133,
+                    "status": "final",
                     "time": "01:00"
                 },
                 {
                     "home_team": "MIL",
                     "away_team": "HOU",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 100,
+                    "away_score": 132,
+                    "status": "final",
                     "time": "01:00"
                 },
                 {
                     "home_team": "MIN",
                     "away_team": "GSW",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 114,
+                    "away_score": 119,
+                    "status": "final",
                     "time": "01:00"
                 },
                 {
                     "home_team": "NOP",
                     "away_team": "DEN",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 91,
+                    "away_score": 104,
+                    "status": "final",
                     "time": "01:00"
                 },
                 {
                     "home_team": "UTA",
                     "away_team": "SAS",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 111,
+                    "away_score": 117,
+                    "status": "final",
                     "time": "02:00"
                 },
                 {
                     "home_team": "DAL",
                     "away_team": "OKC",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 120,
+                    "away_score": 96,
+                    "status": "final",
                     "time": "02:30"
                 },
                 {
                     "home_team": "LAC",
                     "away_team": "LAL",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 87,
+                    "away_score": 103,
+                    "status": "final",
                     "time": "03:30"
                 }
             ],
@@ -981,7 +981,7 @@
         "end_date": "2026-11-10",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Testo",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -1415,7 +1415,7 @@
         "matchups": [
             {
                 "home_team": "Cile",
-                "away_team": "Bonaz",
+                "away_team": "Minghie",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
@@ -1881,7 +1881,7 @@
         "end_date": "2026-11-24",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Cola",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -2365,7 +2365,7 @@
         "matchups": [
             {
                 "home_team": "Gents",
-                "away_team": "Bonaz",
+                "away_team": "Minghie",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
@@ -2781,7 +2781,7 @@
         "end_date": "2026-12-08",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Mazen",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -3042,7 +3042,7 @@
         "end_date": "2026-12-15",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Pippo",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -3316,7 +3316,7 @@
         "matchups": [
             {
                 "home_team": "Freezer",
-                "away_team": "Bonaz",
+                "away_team": "Minghie",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
@@ -3806,7 +3806,7 @@
         "end_date": "2026-12-29",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Testo",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -4242,7 +4242,7 @@
         "matchups": [
             {
                 "home_team": "Cile",
-                "away_team": "Bonaz",
+                "away_team": "Minghie",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
@@ -4732,7 +4732,7 @@
         "end_date": "2027-01-12",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Cola",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -5224,7 +5224,7 @@
         "matchups": [
             {
                 "home_team": "Gents",
-                "away_team": "Bonaz",
+                "away_team": "Minghie",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
@@ -5706,7 +5706,7 @@
         "end_date": "2027-01-26",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Mazen",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -6189,7 +6189,7 @@
         "end_date": "2027-02-02",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Pippo",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -6673,7 +6673,7 @@
         "matchups": [
             {
                 "home_team": "Freezer",
-                "away_team": "Bonaz",
+                "away_team": "Minghie",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
@@ -7163,7 +7163,7 @@
         "end_date": "2027-02-16",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Testo",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -7655,7 +7655,7 @@
         "matchups": [
             {
                 "home_team": "Cile",
-                "away_team": "Bonaz",
+                "away_team": "Minghie",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
@@ -8145,7 +8145,7 @@
         "end_date": "2027-03-08",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Cola",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -8597,7 +8597,7 @@
         "matchups": [
             {
                 "home_team": "Gents",
-                "away_team": "Bonaz",
+                "away_team": "Minghie",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
@@ -9079,7 +9079,7 @@
         "end_date": "2027-03-22",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Mazen",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -9554,7 +9554,7 @@
         "end_date": "2027-03-29",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Pippo",
                 "home_score": 0.0,
                 "away_score": 0.0,
@@ -10046,7 +10046,7 @@
         "matchups": [
             {
                 "home_team": "Freezer",
-                "away_team": "Bonaz",
+                "away_team": "Minghie",
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
@@ -10544,7 +10544,7 @@
         "end_date": "2027-04-12",
         "matchups": [
             {
-                "home_team": "Bonaz",
+                "home_team": "Minghie",
                 "away_team": "Testo",
                 "home_score": 0.0,
                 "away_score": 0.0,

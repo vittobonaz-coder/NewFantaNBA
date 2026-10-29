@@ -9,22 +9,63 @@ from time_manager import TimeManager, ITA_TZ
 
 
 ROLE_CONFIGS = {
-    "STARTER": {"width": 100, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["STARTER"], "button_size": 20, "button_left": -5, "button_top": -5},
-    "SIXTH": {"width": 100, "height": 130, "avatar": 55, "font": 15, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["SIXTH"], "button_size": 20, "button_left": -5, "button_top": -5},
-    "BENCH": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["BENCH"], "button_size": 15, "button_left": -8, "button_top": -8},
-    "RESERVE": {"width": 80, "height": 110, "avatar": 40, "font": 13, "opacity": 0.6, "mult": ROLE_MULTIPLIERS["RESERVE"], "button_size": 15, "button_left": -8, "button_top": -8},
+    "STARTER": {"width": 100, "height": 142, "avatar": 55, "font": 15, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["STARTER"], "button_size": 20, "button_left": -5, "button_top": -5},
+    "SIXTH": {"width": 100, "height": 142, "avatar": 55, "font": 15, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["SIXTH"], "button_size": 20, "button_left": -5, "button_top": -5},
+    "BENCH": {"width": 80, "height": 122, "avatar": 40, "font": 13, "opacity": 1.0, "mult": ROLE_MULTIPLIERS["BENCH"], "button_size": 15, "button_left": -8, "button_top": -8},
+    "RESERVE": {"width": 80, "height": 122, "avatar": 40, "font": 13, "opacity": 0.6, "mult": ROLE_MULTIPLIERS["RESERVE"], "button_size": 15, "button_left": -8, "button_top": -8},
 }
+
+CALENDAR_PATH = os.path.join("data", "calendar.json")
+_schedules_cache: dict = {}  # (giornata, mtime del calendario) -> partite per squadra NBA
+
+def load_team_schedules(gameweek: int | None) -> dict[str, list[dict]]:
+    """
+    Partite NBA della giornata per ogni squadra NBA, in ordine di data, viste dalla parte della squadra
+    (avversario, casa/trasferta, punteggi propri e avversari). Dal calendar.json scaricato al login;
+    in cache finché il file non cambia, così le formazioni delle altre squadre non lo rileggono.
+    """
+    if gameweek is None or not os.path.exists(CALENDAR_PATH):
+        return {}
+    key = (gameweek, os.path.getmtime(CALENDAR_PATH))
+    if key in _schedules_cache:
+        return _schedules_cache[key]
+
+    with open(CALENDAR_PATH, "r", encoding="utf-8") as f:
+        calendar = json.load(f)
+    round_data = next((r for r in calendar if r.get("round_number") == gameweek), None) or {}
+    games_by_date = round_data.get("nba_games") or {}
+
+    schedules: dict[str, list[dict]] = {}
+    for ita_date in sorted(games_by_date):
+        for g in games_by_date[ita_date]:
+            for side, other in (("home", "away"), ("away", "home")):
+                schedules.setdefault(g[f"{side}_team"], []).append({
+                    "date": ita_date,
+                    "time": g.get("time"),
+                    "status": g.get("status"),
+                    "home": side == "home",
+                    "opponent": g[f"{other}_team"],
+                    "own_score": g.get(f"{side}_score"),
+                    "opp_score": g.get(f"{other}_score"),
+                })
+
+    _schedules_cache[key] = schedules
+    return schedules
 
 class PlayerCard(ft.Container):
     """Classe per le cards dei giocatori"""
 
-    def __init__(self, player: Player, score: float | None, role_type: str, slot_index: int, show_swap: bool = True):
+    def __init__(self, player: Player, score: float | None, role_type: str, slot_index: int, show_swap: bool = True,
+                 schedules: dict[str, list[dict]] | None = None):
         super().__init__()
         self.player = player
         self.score = score
         self.role_type = role_type
         self.slot_index = slot_index
         self.show_swap = show_swap  # False nelle formazioni in sola lettura (squadre avversarie)
+        self.schedules = schedules or {}  # Partite NBA della giornata per squadra (load_team_schedules)
+        self.ink = True
+        self.on_click = self.show_games
         # Swap Button
         self.swap_button = ft.PopupMenuButton(
             icon=ft.Icons.SWAP_VERT_CIRCLE, icon_color="white", bgcolor="black"
@@ -83,12 +124,66 @@ class PlayerCard(ft.Container):
                         ft.Image(src=self.player.get_avatar_img(), width=conf["avatar"], height=conf["avatar"]),
                         ft.Text(f"{first_initial}. {surname}", size=conf["font"], weight="bold", no_wrap=True),
                         ft.Text(f"{self.player.team_abbreviation} | {self.player.position}", size=9, color="grey"),
+                        self.build_games_indicator(),
                         score_control,
                     ]
                 ),
             ] + ([btn_container] if self.show_swap else [])
         )
-    
+
+    @property
+    def games(self) -> list[dict]:
+        """Partite della squadra NBA del giocatore nella giornata."""
+        return self.schedules.get(self.player.team_abbreviation, [])
+
+    def build_games_indicator(self) -> ft.Row:
+        """Un pallino per partita (pieno = giocata, ambra = in corso, vuoto = da giocare) e il numero di partite."""
+        def dot(status):
+            if status == "final":
+                return ft.Container(width=6, height=6, border_radius=3, bgcolor=ft.Colors.GREY_300)
+            if status == "in_progress":
+                return ft.Container(width=6, height=6, border_radius=3, bgcolor="amber")
+            # Da giocare (o rinviata, più tenue)
+            color = ft.Colors.GREY_700 if status == "postponed" else ft.Colors.GREY_300
+            return ft.Container(width=6, height=6, border_radius=3, border=ft.Border.all(1, color))
+
+        games = self.games
+        return ft.Row(
+            [dot(g["status"]) for g in games] + [ft.Text(f"{len(games)}G", size=9, color="grey")],
+            spacing=3, alignment=ft.MainAxisAlignment.CENTER, height=12,
+        )
+
+    def show_games(self, e):
+        """Al tocco della card: le partite NBA del giocatore nella giornata, con risultato o orario."""
+        def game_row(g):
+            day = datetime.strptime(g["date"], "%Y-%m-%d")
+            own, opp = g["own_score"], g["opp_score"]
+            if g["status"] in ("final", "in_progress") and own is not None and opp is not None:
+                outcome = ("V " if own > opp else "S ") if g["status"] == "final" else ""
+                result = f"{outcome}{own}-{opp}" + (" (in corso)" if g["status"] == "in_progress" else "")
+            elif g["status"] == "postponed":
+                result = "Rinviata"
+            else:
+                result = g.get("time") or "-"
+            return ft.Row([
+                ft.Text(f"{WEEKDAYS_IT[day.weekday()][:3]} {day:%d/%m}", size=13, color="grey", width=75),
+                ft.Text(f"{'vs' if g['home'] else '@'} {g['opponent']}", size=13, weight="bold", width=65),
+                ft.Text(result, size=13, color="amber" if g["status"] == "final" else None),
+            ], spacing=6)
+
+        games = self.games
+        count = f"{len(games)} partit{'a' if len(games) == 1 else 'e'}"
+        dialog = ft.AlertDialog(
+            title=ft.Text(self.player.name, size=18, weight="bold"),
+            content=ft.Column(
+                [ft.Text(f"{self.player.team_abbreviation} · {count}", size=12, color="grey")]
+                + ([game_row(g) for g in games] or [ft.Text("Nessuna partita in questa giornata", color="grey")]),
+                tight=True, spacing=8,
+            ),
+            actions=[ft.TextButton("Chiudi", on_click=lambda _: self.page.pop_dialog())],
+        )
+        self.page.show_dialog(dialog)
+
     def update_data(self, new_player: Player, new_score: float | None):
         """Aggiorna i dati della card e rinfresca solo questa"""
         self.player = new_player
@@ -149,7 +244,8 @@ class Court(ft.Column):
         )
         self.status_text = ft.Text("", size=12, color="grey")
 
-        # CARDS
+        # CARDS (con le partite NBA della giornata, mostrate sotto la squadra e al tocco)
+        schedules = load_team_schedules(gameweek)
         self.cards = []
         # ordered_players = self.team.get_ordered_roster()
         ordered_players = self.team.players
@@ -159,7 +255,8 @@ class Court(ft.Column):
                 score=p.score,
                 role_type=self.team.roles_map[p.id],
                 slot_index=i,
-                show_swap=not read_only
+                show_swap=not read_only,
+                schedules=schedules
             )
             self.cards.append(card)
 
