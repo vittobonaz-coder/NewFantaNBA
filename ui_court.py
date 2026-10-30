@@ -628,27 +628,36 @@ WEEKDAYS_IT = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sab
 
 class RoundTabs(ft.Tabs):
     """
-    Una tab per giornata (etichetta = numero); build_round costruisce il contenuto di ciascuna.
-    Con lazy=True una giornata si costruisce solo alla prima apertura: il calendario NBA completo
-    sono migliaia di controlli, troppi da spedire al browser tutti insieme al login.
-    In quel caso le giornate non stanno in un TabBarView (il client non ridisegna le pagine già
-    create) ma in un unico contenitore, a cui si cambia il contenuto quando cambia la giornata,
-    con il velo di caricamento sopra finché la nuova giornata non è stata spedita al browser.
+    Una tab per elemento (giornata o squadra); build_round costruisce il contenuto di ciascuna.
+    Con lazy=True un elemento si costruisce solo alla prima apertura: il calendario NBA completo
+    sono migliaia di controlli, troppi da spedire al browser tutti insieme.
+    In quel caso i contenuti non stanno in un TabBarView (il client non ridisegna le pagine già
+    create) ma in un unico contenitore, a cui si cambia il contenuto quando cambia la tab,
+    con il velo di caricamento sopra finché il nuovo contenuto non è stato spedito al browser.
+    initial_index: tab selezionata all'apertura (es. la giornata in corso).
+    labels: etichette delle tab (default: numero della giornata).
+    build_initial: con lazy, costruisce subito la tab iniziale (visibile appena la vista compare).
+    loading: velo di caricamento da usare (default: uno nuovo), se serve già dentro build_round.
     """
-    def __init__(self, rounds: list[dict], build_round, lazy: bool = False):
+    def __init__(self, rounds: list, build_round, lazy: bool = False, initial_index: int = 0,
+                 labels: list[str] | None = None, scrollable: bool = False, build_initial: bool = False,
+                 loading: "LoadingOverlay | None" = None):
         super().__init__(content=None, length=len(rounds))
-        self.selected_index = 0
+        initial_index = initial_index if 0 <= initial_index < len(rounds) else 0
+        self.selected_index = initial_index
         self.expand = True
         self.rounds = rounds
         self.build_round = build_round
         self.lazy = lazy
-        self.current = 0  # Giornata selezionata
-        self.built_views = {}  # Giornate già costruite (solo lazy), per indice
+        self.current = initial_index  # Tab selezionata
+        self.built_views = {}  # Tab già costruite (solo lazy), per indice
+        self.loading = loading or LoadingOverlay()
 
         if lazy:
             self.on_change = self.handle_change
-            self.loading = LoadingOverlay()
             self.body = ft.Container(left=0, top=0, right=0, bottom=0)  # Riempie lo Stack
+            if build_initial and rounds:
+                self.body.content = self.built_views[initial_index] = build_round(rounds[initial_index])
             body_area = ft.Stack([self.body, self.loading], expand=True)
         else:
             body_area = self.body = ft.TabBarView(expand=True, controls=[build_round(r) for r in rounds])
@@ -657,12 +666,13 @@ class RoundTabs(ft.Tabs):
             expand=True,
             controls=[
                 ft.TabBar(
+                    scrollable=scrollable,
                     label_text_style=ft.TextStyle(size=20),
                     unselected_label_text_style=ft.TextStyle(size=17),
                     label_color=ft.Colors.ORANGE,           # Colore testo selezionato
                     unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
                     indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
-                    tabs=[ft.Tab(label=f"{r['round_number']}") for r in rounds]
+                    tabs=[ft.Tab(label=label) for label in (labels or [f"{r['round_number']}" for r in rounds])]
                 ),
                 body_area,
             ],
@@ -693,8 +703,11 @@ class RoundTabs(ft.Tabs):
 
 
 class CalendarView(ft.Tabs):
-    """Calendario: scontri diretti della lega e partite NBA, divisi per giornata."""
-    def __init__(self):
+    """
+    Calendario: scontri diretti della lega e partite NBA, divisi per giornata.
+    Si apre sulla giornata indicata (quella in corso) e costruisce solo le giornate aperte.
+    """
+    def __init__(self, gameweek: int | None = None):
         super().__init__(content=None, length=2)
         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
         self.selected_index = 0
@@ -704,9 +717,14 @@ class CalendarView(ft.Tabs):
         if calendar_data is None:
             league_view = nba_view = ft.Text("Calendario non trovato.")
         else:
-            league_view = RoundTabs(calendar_data, self.build_league_round)
-            # Le giornate NBA si costruiscono solo quando si aprono (vedi RoundTabs)
-            nba_view = self.nba_tabs = RoundTabs(calendar_data, self.build_nba_round, lazy=True)
+            initial = next((i for i, r in enumerate(calendar_data) if r.get("round_number") == gameweek), 0)
+            # Calendario Lega visibile subito: si costruisce solo la giornata iniziale
+            # Barre delle giornate scorrevoli: 24 numeri non stanno nella larghezza di un telefono
+            league_view = RoundTabs(calendar_data, self.build_league_round, lazy=True,
+                                    initial_index=initial, scrollable=True, build_initial=True)
+            # Le giornate NBA si costruiscono solo quando si apre il Calendario NBA (vedi RoundTabs)
+            nba_view = self.nba_tabs = RoundTabs(calendar_data, self.build_nba_round, lazy=True,
+                                                 initial_index=initial, scrollable=True)
             self.on_change = self.handle_change
 
         self.content = ft.Column(
@@ -1257,30 +1275,16 @@ class LeagueView(ft.Column):
         if not teams:
             self.controls = [ft.Text("Nessuna formazione disponibile", size=16, color="grey")]
         else:
-            # Velo di caricamento sopra le formazioni (apertura del dettaglio partite)
-            courts = [Court(t, self.gameweek, read_only=True) for t in teams]
-            loading = LoadingOverlay()
-            for court in courts:
+            # Una tab per squadra: la formazione si costruisce solo alla prima apertura della tab
+            loading = LoadingOverlay()  # Velo sopra le formazioni (cambio squadra, dettaglio partite)
+
+            def build_court(team: Team) -> Court:
+                court = Court(team, self.gameweek, read_only=True)
                 court.loading = loading
-            tabs = ft.Tabs(
-                length=len(teams),
-                selected_index=0,
-                left=0, top=0, right=0, bottom=0,  # Riempie lo Stack
-                content=ft.Column(
-                    expand=True,
-                    controls=[
-                        ft.TabBar(
-                            scrollable=True,
-                            label_color=ft.Colors.ORANGE,
-                            unselected_label_color=ft.Colors.GREY,
-                            indicator_color=ft.Colors.ORANGE,
-                            tabs=[ft.Tab(label=t.name) for t in teams]
-                        ),
-                        ft.TabBarView(expand=True, controls=courts),
-                    ],
-                ),
-            )
-            self.controls = [ft.Stack([tabs, loading], expand=True)]
+                return court
+
+            self.controls = [RoundTabs(teams, build_court, lazy=True, labels=[t.name for t in teams],
+                                       scrollable=True, build_initial=True, loading=loading)]
         self.update()
 
 
@@ -1296,14 +1300,18 @@ class MainDashboard(ft.Tabs):
         self.animation_duration=300
         self.on_change = self.handle_tab_change
 
-        # Inizializziamo le varie viste
+        # Subito solo la Squadra (la prima vista). Le altre si costruiscono alla prima apertura del tab:
+        # al login si spediscono al browser meno controlli. Le Altre Squadre scaricano anche i dati.
         self.team_view = TeamView(current_team, current_gw, edit_team, edit_gw, edit_deadline, team_id=team_row["id"])
         self.league_view = LeagueView(current_gw, league_loader)
-        self.calendar_view = CalendarView()
-        self.championship_view = StandingsView()
-        self.settings_view = SettingsView(user, team_row, on_team_renamed=self.team_view.rename_team,
-                                          on_logout=on_logout)
-        
+        calendar_gw = current_gw if current_gw is not None else edit_gw  # Pre-campionato: la prima giornata
+        self.lazy_builders = {
+            2: lambda: CalendarView(calendar_gw),
+            3: StandingsView,
+            4: lambda: SettingsView(user, team_row, on_team_renamed=self.team_view.rename_team, on_logout=on_logout),
+        }
+        self.lazy_containers = {i: ft.Container() for i in self.lazy_builders}
+
         self.content=ft.Column(
             expand=True,
             controls=[
@@ -1327,33 +1335,28 @@ class MainDashboard(ft.Tabs):
                         # Squadra
                         self.team_view,
                         # Avversari
-                        ft.Container(
-                            content=self.league_view,
-                            padding=0
-                        ),
-                        # Calendario
-                        ft.Container(
-                            content=(
-                                self.calendar_view
-                            )
-                        ),
-                        # Campionato
-                        ft.Container(
-                            content=self.championship_view
-                        ),
-                        # Impostazioni
-                        ft.Container(
-                            content=self.settings_view
-                        ),
+                        ft.Container(content=self.league_view, padding=0),
+                        # Calendario, Campionato, Impostazioni (riempiti alla prima apertura)
+                        self.lazy_containers[2],
+                        self.lazy_containers[3],
+                        self.lazy_containers[4],
                     ],
                 ),
             ],
         )
 
     async def handle_tab_change(self, e):
-        """Al primo ingresso nel tab Avversari scarica le formazioni delle altre squadre."""
-        if int(e.data) == 1:  # e.data = indice del tab selezionato
+        """
+        Al primo ingresso nel tab Altre Squadre scarica le formazioni delle altre squadre;
+        al primo ingresso in Calendario, Campionato o Impostazioni costruisce la vista.
+        """
+        index = int(e.data)  # e.data = indice del tab selezionato
+        if index == 1:
             await self.league_view.load()
+        elif index in self.lazy_builders:
+            container = self.lazy_containers[index]
+            container.content = self.lazy_builders.pop(index)()
+            container.update()
 
 
 class LoginView(ft.Column):
