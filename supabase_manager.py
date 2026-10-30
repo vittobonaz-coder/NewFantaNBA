@@ -2,6 +2,8 @@ import os
 import json
 import hashlib
 import secrets
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from supabase import create_client, Client
 from fanta_obj import Player, Team, NOT_PLAYED_SCORE, ROLE_MULTIPLIERS, DEFAULT_LINEUP, LINEUP_ROLES, has_played, infer_lineup
 from pathlib import Path
@@ -16,13 +18,52 @@ INVALID_NAME_CHARS = '/\\:*?"<>|'  # Il nome squadra finisce nei nomi dei file l
 LOGIN_TOKEN_DAYS = 90              # Durata dell'accesso automatico ("Ricordami")
 
 
+# Client Supabase unico per tutto il processo: le connessioni (HTTP/2) restano aperte tra un'operazione
+# e l'altra, senza rifare ogni volta connessione e handshake TLS. Il client httpx è thread-safe.
+_client: Client | None = None
+_client_lock = threading.Lock()
+
+# Thread per lanciare in parallelo richieste indipendenti (es. gli UPDATE del salvataggio formazione)
+_POOL = ThreadPoolExecutor(max_workers=16, thread_name_prefix="supabase")
+
+
+def get_client() -> Client:
+    """Restituisce il client Supabase condiviso, creandolo alla prima chiamata."""
+    global _client
+    if _client is None:
+        with _client_lock:
+            if _client is None:
+                client = create_client(SUPABASE_URL, SUPABASE_KEY)
+                client.postgrest  # Creato subito: la creazione "lazy" non è protetta tra thread
+                _client = client
+    return _client
+
+
+def run_parallel(calls) -> list:
+    """
+    Esegue le chiamate (funzioni senza argomenti) in parallelo e aspetta che finiscano tutte.
+    Se qualcuna fallisce rilancia la prima eccezione, ma solo dopo che le altre sono terminate.
+    Da non chiamare dentro una funzione che sta già girando con run_parallel (i thread sono condivisi).
+    """
+    futures = [_POOL.submit(call) for call in calls]
+    results, error = [], None
+    for future in futures:
+        try:
+            results.append(future.result())
+        except Exception as e:
+            error = error or e
+    if error is not None:
+        raise error
+    return results
+
+
 def valid_lineup(value) -> str | None:
     """Il modulo se è uno di quelli previsti, altrimenti None (es. la stringa "NULL" dei vecchi calendari)."""
     return value if value in LINEUP_ROLES else None
 
 class SupabaseSync:
     def __init__(self):
-        self.supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        self.supabase: Client = get_client()
 
     def push_team(self, team: Team, court=None):
         """Salva l'intero stato del team su Supabase"""
@@ -337,6 +378,7 @@ class SupabaseSync:
         per la gameweek indicata e tutte le successive, in base all'ordine attuale di team.players.
         Se only_ids è indicato, aggiorna solo quei giocatori (quelli che hanno cambiato slot).
         Score e target_date non vengono toccati.
+        Gli UPDATE di ciascuna fase partono in parallelo: il tempo è quello di due richieste, non di 30.
         """
         players = [(slot, p) for slot, p in enumerate(team.players, start=1)
                    if only_ids is None or p.id in only_ids]
@@ -347,23 +389,21 @@ class SupabaseSync:
         if not team_id:
             print(f"Errore: Impossibile recuperare l'ID per il team {team.name}.")
             return False
+
+        def update(p: Player, values: dict):
+            return lambda: self.supabase.table("lineup_players") \
+                .update(values) \
+                .eq("fanta_team_id", team_id) \
+                .gte("gameweek", gameweek) \
+                .eq("nba_player_id", p.id) \
+                .execute()
+
         try:
-            # 1. Slot temporanei, per non violare il vincolo unico (team, gameweek, slot)
-            for slot, p in players:
-                self.supabase.table("lineup_players") \
-                    .update({"slot": slot + 100}) \
-                    .eq("fanta_team_id", team_id) \
-                    .gte("gameweek", gameweek) \
-                    .eq("nba_player_id", p.id) \
-                    .execute()
-            # 2. Slot e ruoli definitivi
-            for slot, p in players:
-                self.supabase.table("lineup_players") \
-                    .update({"slot": slot, "role": team.roles_map[p.id]}) \
-                    .eq("fanta_team_id", team_id) \
-                    .gte("gameweek", gameweek) \
-                    .eq("nba_player_id", p.id) \
-                    .execute()
+            # 1. Slot temporanei, per non violare il vincolo unico (team, gameweek, slot).
+            #    La fase 2 parte solo quando la 1 è finita per tutti i giocatori.
+            run_parallel([update(p, {"slot": slot + 100}) for slot, p in players])
+            # 2. Slot e ruoli definitivi (tutti diversi tra loro e dagli slot temporanei)
+            run_parallel([update(p, {"slot": slot, "role": team.roles_map[p.id]}) for slot, p in players])
             print(f"Lineup di '{team.name}' aggiornata dalla GW {gameweek} in poi.")
             return True
         except Exception as e:
@@ -1114,10 +1154,13 @@ class SupabaseSync:
         """
         if valid_lineup(lineup) is None:
             raise ValueError(f"Modulo non valido: {lineup}")
-        for side in ("home", "away"):
+
+        def update(side: str):
             query = self.supabase.table("matchups").update({f"{side}_lineup": lineup}).eq(f"{side}_team_id", team_id)
             query = query.gte("gameweek", gameweek) if following else query.eq("gameweek", gameweek)
-            query.execute()
+            return query.execute
+
+        run_parallel([update("home"), update("away")])
 
     def align_lineups_with_starters(self, gameweek: int, dry_run: bool = False) -> int:
         """

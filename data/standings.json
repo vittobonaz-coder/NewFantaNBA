@@ -6,7 +6,7 @@
         "wins": 2,
         "losses": 0,
         "total_score": 656.97,
-        "total_points_against": 552.29,
+        "total_points_against": 558.59,
         "best_scores": 1,
         "standing_points": 2.2
     },
@@ -17,7 +17,7 @@
         "wins": 1,
         "losses": 1,
         "total_score": 691.44,
-        "total_points_against": 615.94,
+        "total_points_against": 630.27,
         "best_scores": 1,
         "standing_points": 1.2
     },
@@ -27,8 +27,30 @@
         "played": 1,
         "wins": 1,
         "losses": 1,
-        "total_score": 624.5,
-        "total_points_against": 640.72,
+        "total_score": 671.36,
+        "total_points_against": 690.3,
+        "best_scores": 0,
+        "standing_points": 1.0
+    },
+    {
+        "fanta_team_id": "b8160e15-a779-4464-9168-3dde60c9b539",
+        "team_name": "Mazen",
+        "played": 1,
+        "wins": 1,
+        "losses": 1,
+        "total_score": 643.25,
+        "total_points_against": 638.82,
+        "best_scores": 0,
+        "standing_points": 1.0
+    },
+    {
+        "fanta_team_id": "2d6ebc93-e115-42c3-b9b8-8c6dc97e09df",
+        "team_name": "Cola",
+        "played": 1,
+        "wins": 1,
+        "losses": 1,
+        "total_score": 627.67,
+        "total_points_against": 686.21,
         "best_scores": 0,
         "standing_points": 1.0
     },
@@ -44,35 +66,13 @@
         "standing_points": 1.0
     },
     {
-        "fanta_team_id": "2d6ebc93-e115-42c3-b9b8-8c6dc97e09df",
-        "team_name": "Cola",
-        "played": 1,
-        "wins": 1,
-        "losses": 1,
-        "total_score": 621.37,
-        "total_points_against": 686.21,
-        "best_scores": 0,
-        "standing_points": 1.0
-    },
-    {
         "fanta_team_id": "c0152cdd-4318-4ee7-a982-b75db4a10ec4",
         "team_name": "Testo",
         "played": 1,
         "wins": 1,
         "losses": 1,
-        "total_score": 601.02,
+        "total_score": 615.35,
         "total_points_against": 595.48,
-        "best_scores": 0,
-        "standing_points": 1.0
-    },
-    {
-        "fanta_team_id": "b8160e15-a779-4464-9168-3dde60c9b539",
-        "team_name": "Mazen",
-        "played": 1,
-        "wins": 1,
-        "losses": 1,
-        "total_score": 593.67,
-        "total_points_against": 591.96,
         "best_scores": 0,
         "standing_points": 1.0
     },

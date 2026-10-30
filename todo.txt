@@ -76,9 +76,6 @@ SCORCIATOIE UTILI:
         2. git commit -m "messaggio"
         3. git push origin main
 
-- Supabase - Postgres database
-        Project password: DunkestSucks2026
-
 - Scrive automaticamente il file requirements.txt: 
         pip freeze > requirements.txt
 

@@ -493,7 +493,7 @@
             {
                 "home_team": "Testo",
                 "away_team": "Pippo",
-                "home_score": 253.55,
+                "home_score": 267.88,
                 "away_score": 241.69,
                 "was_played": false,
                 "home_lineup": "2-2-1",
@@ -502,8 +502,8 @@
             {
                 "home_team": "Cile",
                 "away_team": "Mazen",
-                "home_score": 241.47,
-                "away_score": 224.17,
+                "home_score": 288.33,
+                "away_score": 273.75,
                 "was_played": false,
                 "home_lineup": "2-2-1",
                 "away_lineup": "2-2-1"
@@ -511,7 +511,7 @@
             {
                 "home_team": "Cola",
                 "away_team": "Gents",
-                "home_score": 204.82,
+                "home_score": 211.12,
                 "away_score": 303.18,
                 "was_played": false,
                 "home_lineup": "2-2-1",
@@ -655,25 +655,25 @@
                 {
                     "home_team": "ATL",
                     "away_team": "CLE",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 114,
+                    "away_score": 111,
+                    "status": "final",
                     "time": "01:00"
                 },
                 {
                     "home_team": "NOP",
                     "away_team": "SAC",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 132,
+                    "away_score": 120,
+                    "status": "final",
                     "time": "01:00"
                 },
                 {
                     "home_team": "POR",
                     "away_team": "MEM",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 103,
+                    "away_score": 124,
+                    "status": "final",
                     "time": "03:00"
                 }
             ],

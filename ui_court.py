@@ -381,7 +381,11 @@ class Court(ft.Column):
         self.show_message(f"Formazione di {self.team.name} salvata!", "green")
 
     def _push_lineup(self) -> bool:
-        """Scrive rosa e formazione su Supabase (eseguito in un thread: niente UI qui)."""
+        """
+        Scrive rosa e formazione su Supabase (eseguito in un thread: niente UI qui).
+        Il client è quello condiviso (connessione già aperta); gli UPDATE della formazione e dei moduli
+        partono in parallelo: in tutto 4 giri di richieste invece di 33 in fila.
+        """
         from supabase_manager import SupabaseSync
 
         sync = SupabaseSync()
