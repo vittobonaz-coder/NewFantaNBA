@@ -298,10 +298,12 @@ class SupabaseSync:
             print(f"Errore durante il recupero della gameweek per la data {date_str}: {e}")
             raise e
 
-    def update_lineup_player_score(self, gameweek: int, score: float | None, nba_player_id: int = None, player_name: str = None) -> bool:
+    def update_lineup_player_score(self, gameweek: int, score: float | None, nba_player_id: int = None, player_name: str = None,
+                                   entered_game: bool | None = None) -> bool:
         """
         Aggiorna il campo 'score' nella tabella lineup_players per un giocatore in una determinata gameweek.
         Utilizza nba_player_id (consigliato) o player_name per identificare il giocatore.
+        Se entered_game è indicato aggiorna anche quello (True = sceso in campo almeno una volta nella giornata).
         """
         if nba_player_id is None and player_name is None:
             print("Errore: Devi fornire nba_player_id o player_name per aggiornare lo score.")
@@ -309,7 +311,10 @@ class SupabaseSync:
             
         try:
             # Prepariamo l'update di base con la gameweek
-            query = self.supabase.table("lineup_players").update({"score": score}).eq("gameweek", gameweek)
+            values = {"score": score}
+            if entered_game is not None:
+                values["entered_game"] = entered_game
+            query = self.supabase.table("lineup_players").update(values).eq("gameweek", gameweek)
             
             # Aggiungiamo il filtro per il giocatore
             if nba_player_id is not None:
@@ -475,7 +480,9 @@ class SupabaseSync:
                 "team": nba_info.get("nba_team", ""),
                 "pos": nba_info.get("position", ""),
                 "score": float(row["score"]) if row.get("score") is not None else NOT_PLAYED_SCORE,
-                "role": row.get("role", "RESERVE")
+                "role": row.get("role", "RESERVE"),
+                "entered_game": bool(row.get("entered_game")),
+                "auto_sub": row.get("auto_sub")
             })
 
         # 2. Totale ricalcolato dai punteggi scaricati (come fa il cron)
@@ -764,12 +771,13 @@ class SupabaseSync:
         """
         Resetta il campo 'score' a NULL (= squadra NBA non ancora scesa in campo)
         per tutti i giocatori schierati nella tabella lineup_players per la gameweek specificata.
+        Azzera anche entered_game e auto_sub (sostituzioni automatiche di fine giornata).
         """
         print(f"Resettaggio punteggi nella tabella lineup_players per la gameweek {gameweek}...")
         try:
             response = (
                 self.supabase.table("lineup_players")
-                .update({"score": NOT_PLAYED_SCORE})
+                .update({"score": NOT_PLAYED_SCORE, "entered_game": False, "auto_sub": None})
                 .eq("gameweek", gameweek)
                 .execute()
             )
@@ -963,15 +971,61 @@ class SupabaseSync:
         """Righe di lineup_players di TUTTE le squadre per la gameweek, con la squadra NBA del giocatore."""
         return (
             self.supabase.table("lineup_players")
-            .select("fanta_team_id, nba_player_id, player_name, slot, role, score, "
+            .select("fanta_team_id, nba_player_id, player_name, slot, role, score, entered_game, auto_sub, "
                     "nba_players(full_name, nba_team, position)")
             .eq("gameweek", gameweek)
             .execute()
         ).data or []
 
+    def apply_gameweek_substitutions(self, team_id: str, gameweek: int, changes: list[dict]) -> None:
+        """
+        Scrive le sostituzioni automatiche di fine giornata SOLO per la gameweek indicata (le successive non cambiano).
+        changes: [{"nba_player_id", "slot", "role", "auto_sub"}] dei soli giocatori che cambiano slot.
+        Come update_lineup_slots passa da slot temporanei per non violare il vincolo unico (team, gameweek, slot).
+        """
+        def update(p_id: int, values: dict):
+            return lambda: self.supabase.table("lineup_players") \
+                .update(values) \
+                .eq("fanta_team_id", team_id) \
+                .eq("gameweek", gameweek) \
+                .eq("nba_player_id", p_id) \
+                .execute()
+
+        run_parallel([update(c["nba_player_id"], {"slot": c["slot"] + 100}) for c in changes])
+        run_parallel([update(c["nba_player_id"], {"slot": c["slot"], "role": c["role"], "auto_sub": c["auto_sub"]})
+                      for c in changes])
+
     def set_gameweek_played(self, gameweek: int, was_played: bool = True) -> None:
         """Imposta was_played per tutti i matchups della gameweek."""
         self.supabase.table("matchups").update({"was_played": was_played}).eq("gameweek", gameweek).execute()
+
+    def replace_injuries(self, rows: list[dict]) -> None:
+        """
+        Sostituisce l'intero contenuto di player_injuries con gli infortuni attuali
+        ({"nba_player_id", "status", "fantasy_status", "injury_type", "return_date"}):
+        chi non è più nell'elenco ESPN (guarito) sparisce.
+        """
+        now = datetime.now(timezone.utc).isoformat()
+        rows = [{**r, "updated_at": now} for r in rows]
+        if rows:
+            self.supabase.table("player_injuries").upsert(rows, on_conflict="nba_player_id").execute()
+        # Elimina i guariti: tutte le righe non aggiornate in questo run
+        self.supabase.table("player_injuries").delete().lt("updated_at", now).execute()
+
+    def pull_injuries(self, filepath: str = os.path.join("data", "injuries.json")) -> dict[str, dict]:
+        """Scarica player_injuries e la salva in locale come {nba_player_id (str): {...}}."""
+        rows = self.supabase.table("player_injuries") \
+            .select("nba_player_id, status, fantasy_status, injury_type, return_date") \
+            .execute().data or []
+        injuries = {str(r["nba_player_id"]): r for r in rows}
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(injuries, f, ensure_ascii=False, indent=4)
+        return injuries
+
+    def get_nba_players(self) -> list[dict]:
+        """Giocatori della tabella nba_players: [{"id", "full_name"}]."""
+        return self.supabase.table("nba_players").select("id, full_name").execute().data or []
 
     def update_nba_player_team(self, nba_player_id: int, nba_team: str) -> None:
         """Aggiorna la squadra NBA di un giocatore nella tabella nba_players."""

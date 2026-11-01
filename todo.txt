@@ -1,8 +1,8 @@
 TO DO:
-- Far vedere in qualche modo i matchup della giornata per ogni giocatore
+- Provare modalità in cui tutti i caricamneti utili immediatamente sono fatti al login
 
 - Far vedere in qualche modo i punteggi fatti dai giocatori (se non sono maggiori dei precedenti e quindi non
-		vengono aggiornati)
+		vengono aggiornati) - e.g. nella scheda di dettaglio con i matchup
 
 - Visualizzare formazione e punteggio squadra avversaria
 

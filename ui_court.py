@@ -4,7 +4,8 @@ import glob
 import json
 import asyncio
 from datetime import datetime
-from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS, LINEUP_ROLES, find_starter_assignment, infer_lineup
+from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS, LINEUP_ROLES, find_starter_assignment, infer_lineup, \
+    find_auto_substitutions, STARTER_SLOTS
 from time_manager import TimeManager, ITA_TZ
 
 
@@ -56,7 +57,8 @@ class PlayerCard(ft.Container):
     """Classe per le cards dei giocatori"""
 
     def __init__(self, player: Player, score: float | None, role_type: str, slot_index: int, show_swap: bool = True,
-                 schedules: dict[str, list[dict]] | None = None):
+                 schedules: dict[str, list[dict]] | None = None, injuries: dict[str, dict] | None = None,
+                 sub_hints: dict[int, str] | None = None):
         super().__init__()
         self.player = player
         self.score = score
@@ -64,6 +66,8 @@ class PlayerCard(ft.Container):
         self.slot_index = slot_index
         self.show_swap = show_swap  # False nelle formazioni in sola lettura (squadre avversarie)
         self.schedules = schedules or {}  # Partite NBA della giornata per squadra (load_team_schedules)
+        self.injuries = injuries or {}    # Infortuni attuali per ID NBA (load_injuries)
+        self.sub_hints = sub_hints or {}  # Sostituzioni automatiche per ID NBA: "IN"/"OUT" (Court.compute_sub_hints)
         self.ink = True  # Al tocco il Court apre il dettaglio delle partite (Court.handle_card_click)
         # Swap Button
         self.swap_button = ft.PopupMenuButton(
@@ -107,11 +111,29 @@ class PlayerCard(ft.Container):
             italic=is_reserve,
             color="grey" if is_reserve else None,
         )
+        # Sostituzione automatica di fine giornata (fatta o prevista): freccina accanto al punteggio
+        hint = self.sub_hints.get(self.player.id)
+        if hint in ("IN", "OUT"):
+            score_control = ft.Row(
+                [score_control, ft.Icon(ft.Icons.ARROW_UPWARD if hint == "IN" else ft.Icons.ARROW_DOWNWARD,
+                                        size=conf["font"] - 2,
+                                        color=ft.Colors.GREEN_400 if hint == "IN" else ft.Colors.RED_400)],
+                spacing=1, alignment=ft.MainAxisAlignment.CENTER, tight=True,
+            )
 
         btn_container = ft.Container(
             content=self.swap_button,
             left=conf["button_left"], top=conf["button_top"]
         )
+
+        # Infortunio: piccolo badge nell'angolo in alto a destra (il pulsante di scambio è a sinistra)
+        label = injury_label(self.injuries.get(str(self.player.id)))
+        badge = [ft.Container(
+            content=ft.Text(label, size=8, weight="bold", color="white"),
+            bgcolor=INJURY_COLORS[label], border_radius=3,
+            padding=ft.Padding.symmetric(horizontal=3, vertical=0),
+            right=0, top=0,
+        )] if label else []
 
         return ft.Stack(
             alignment=ft.alignment.Alignment.TOP_CENTER,
@@ -127,7 +149,7 @@ class PlayerCard(ft.Container):
                         score_control,
                     ]
                 ),
-            ] + ([btn_container] if self.show_swap else [])
+            ] + ([btn_container] if self.show_swap else []) + badge
         )
 
     @property
@@ -176,12 +198,29 @@ class PlayerCard(ft.Container):
             title=ft.Text(self.player.name, size=18, weight="bold"),
             content=ft.Column(
                 [ft.Text(f"{self.player.team_abbreviation} · {count}", size=12, color="grey")]
+                + self.injury_rows()
                 + ([game_row(g) for g in games] or [ft.Text("Nessuna partita in questa giornata", color="grey")]),
                 tight=True, spacing=8,
             ),
             actions=[ft.TextButton("Chiudi", on_click=lambda _: self.page.pop_dialog())],
         )
         self.page.show_dialog(dialog)
+
+    def injury_rows(self) -> list[ft.Control]:
+        """Riga dell'infortunio nel dettaglio: stato, tipo e (solo per gli OUT) rientro stimato."""
+        injury = self.injuries.get(str(self.player.id))
+        label = injury_label(injury)
+        if not label:
+            return []
+        parts = ["Out" if label == "OUT" else "Day-to-day"]
+        if injury.get("injury_type"):
+            parts.append(injury["injury_type"])
+        if label == "OUT" and injury.get("return_date"):
+            try:
+                parts.append(f"rientro stimato {datetime.strptime(injury['return_date'], '%Y-%m-%d'):%d/%m/%Y}")
+            except ValueError:
+                pass
+        return [ft.Text(" · ".join(parts), size=13, weight="bold", color=INJURY_COLORS[label])]
 
     def update_data(self, new_player: Player, new_score: float | None):
         """Aggiorna i dati della card e rinfresca solo questa"""
@@ -217,6 +256,36 @@ class LoadingOverlay(ft.Container):
         self.update()
 
 
+INJURIES_PATH = os.path.join("data", "injuries.json")
+_injuries_cache: dict = {}  # mtime del file -> infortuni
+
+def load_injuries() -> dict[str, dict]:
+    """Infortuni attuali {nba_player_id (str): {...}} dal file scaricato al login (in cache finché non cambia)."""
+    if not os.path.exists(INJURIES_PATH):
+        return {}
+    key = os.path.getmtime(INJURIES_PATH)
+    if key not in _injuries_cache:
+        try:
+            with open(INJURIES_PATH, "r", encoding="utf-8") as f:
+                _injuries_cache.clear()
+                _injuries_cache[key] = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return {}
+    return _injuries_cache[key]
+
+def injury_label(injury: dict | None) -> str | None:
+    """'OUT' (anche fuori per la stagione), 'DTD' (day-to-day / game-time decision) oppure None."""
+    if not injury:
+        return None
+    if injury.get("fantasy_status") in ("OUT", "OFS") or injury.get("status") == "Out":
+        return "OUT"
+    if injury.get("fantasy_status") == "GTD" or injury.get("status") == "Day-To-Day":
+        return "DTD"
+    return None
+
+INJURY_COLORS = {"OUT": ft.Colors.RED_700, "DTD": ft.Colors.AMBER_700}
+
+
 class Court(ft.Column):
     def __init__(self, team_instance: Team, gameweek: int, edit_deadline: datetime | None = None,
                  read_only: bool = False, team_id: str | None = None):
@@ -245,6 +314,8 @@ class Court(ft.Column):
 
         # CARDS (con le partite NBA della giornata, mostrate sotto la squadra e al tocco)
         schedules = load_team_schedules(gameweek)
+        injuries = load_injuries()
+        sub_hints = self.compute_sub_hints(schedules)
         self.cards = []
         ordered_players = self.team.players
         for i, p in enumerate(ordered_players):
@@ -254,7 +325,9 @@ class Court(ft.Column):
                 role_type=self.team.roles_map[p.id],
                 slot_index=i,
                 show_swap=not read_only,
-                schedules=schedules
+                schedules=schedules,
+                injuries=injuries,
+                sub_hints=sub_hints
             )
             card.on_click = self.handle_card_click
             self.cards.append(card)
@@ -314,6 +387,33 @@ class Court(ft.Column):
         self.refresh_menus()
         self.refresh_ui_and_data()
 
+
+    def compute_sub_hints(self, schedules: dict[str, list[dict]]) -> dict[int, str]:
+        """
+        Frecce delle sostituzioni automatiche di fine giornata: {ID NBA: "IN"/"OUT"}.
+        - Fatte dal cron (giornata chiusa): auto_sub salvato in lineup_players.
+        - Giornata in corso (cambi chiusi): anteprima con la stessa regola del cron, considerando assenti
+          solo i titolari mai scesi in campo che non hanno più partite da giocare nella giornata.
+        Nessuna freccia nella formazione ancora modificabile.
+        """
+        saved = {p.id: p.auto_sub for p in self.team.players if p.auto_sub in ("IN", "OUT")}
+        if saved or self.editable:
+            return saved
+
+        def has_games_left(p: Player) -> bool:
+            return any(g.get("status") not in ("final", "postponed") for g in schedules.get(p.team_abbreviation, []))
+
+        preview = [Player(id=p.id, position=p.position,
+                          entered_game=p.entered_game or (i in STARTER_SLOTS and has_games_left(p)))
+                   for i, p in enumerate(self.team.players)]
+        result = find_auto_substitutions(preview, self.lineup)
+        if result is None:
+            return {}
+        hints = {}
+        for out_idx, in_idx in result["swaps"]:
+            hints[preview[out_idx].id] = "OUT"
+            hints[preview[in_idx].id] = "IN"
+        return hints
 
     def _capture_current_state(self):
         """Memorizza la posizione attuale dei giocatori e la formazione."""

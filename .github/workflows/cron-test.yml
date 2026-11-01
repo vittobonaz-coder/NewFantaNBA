@@ -4,19 +4,22 @@ name: Cron punteggi
 # - daily    -> ogni giorno 08:00 UTC: scarica i tabellini e aggiorna i punteggi
 # - rollover -> ogni giorno 21:59 e 22:59 UTC: lavora solo il run delle 23:59 italiane (l'altro esce subito);
 #               se domani inizia una nuova giornata, chiude oggi e azzera domani
+# - injuries -> ogni giorno 21:10 e 22:10 UTC: aggiorna gli infortuni da ESPN (tabella player_injuries)
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "daily oppure rollover"
+        description: "daily, rollover oppure injuries"
         required: true
         default: daily
         type: choice
-        options: [daily, rollover]
+        options: [daily, rollover, injuries]
 
-# Due run non girano mai in contemporanea
+# Due run dei punteggi (daily/rollover) non girano mai in contemporanea. Gli infortuni hanno un gruppo
+# a parte: non toccano le formazioni e così non possono far cancellare un rollover in coda
+# (GitHub tiene in coda un solo run per gruppo e cancella quello in attesa se ne arriva un altro).
 concurrency:
-  group: cron-punteggi
+  group: ${{ inputs.mode == 'injuries' && 'cron-infortuni' || 'cron-punteggi' }}
   cancel-in-progress: false
 
 jobs:

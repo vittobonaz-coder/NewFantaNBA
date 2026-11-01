@@ -394,6 +394,46 @@ class NbaDataManager:
             month = (month + timedelta(days=32)).replace(day=1)
         return [g for g in games if first_nba_date <= g["nba_date"] <= last_nba_date]
 
+    @staticmethod
+    def fetch_injuries():
+        """
+        Infortuni attuali di tutta la NBA dall'endpoint ESPN /injuries: lista di
+        {"espn_id", "name", "status", "fantasy_status", "injury_type", "return_date"}.
+        - status: "Out" oppure "Day-To-Day" (ESPN)
+        - fantasy_status: "OUT", "GTD" (game-time decision) oppure "OFS" (fuori per la stagione)
+        - return_date: rientro stimato (YYYY-MM-DD) o None; per i Day-To-Day di solito è la partita successiva
+        In questo endpoint athlete.id è null: l'ID ESPN si ricava dal link alla scheda del giocatore.
+        Solleva un'eccezione se ESPN non risponde (meglio non aggiornare che cancellare tutti gli infortuni).
+        """
+        url = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries"
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        if "injuries" not in data:
+            raise RuntimeError("Risposta ESPN /injuries senza il campo 'injuries'")
+
+        result = []
+        for team in data["injuries"]:
+            for inj in team.get("injuries", []):
+                athlete = inj.get("athlete") or {}
+                espn_id = athlete.get("id")
+                if not espn_id:
+                    for link in athlete.get("links", []):
+                        match = re.search(r"/id/(\d+)", link.get("href", ""))
+                        if match:
+                            espn_id = match.group(1)
+                            break
+                details = inj.get("details") or {}
+                result.append({
+                    "espn_id": str(espn_id) if espn_id else None,
+                    "name": athlete.get("displayName", ""),
+                    "status": inj.get("status", ""),
+                    "fantasy_status": (details.get("fantasyStatus") or {}).get("abbreviation", ""),
+                    "injury_type": details.get("type", ""),
+                    "return_date": details.get("returnDate"),
+                })
+        return result
+
     # ==========================================
     # SEZIONE 3: METODI NBA_API (Dati Statici)
     # ==========================================

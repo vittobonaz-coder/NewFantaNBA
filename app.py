@@ -16,6 +16,7 @@ from supabase_manager import SupabaseSync
 
 CALENDAR_PATH = os.path.join("data", "calendar.json")
 STANDINGS_PATH = os.path.join("data", "standings.json")
+INJURIES_PATH = os.path.join("data", "injuries.json")
 SYNC_META_PATH = os.path.join("data", "sync_meta.json")  # Da non committare (.gitignore)
 LOGIN_TOKEN_KEY = "fantanba.login_token"  # Chiave del token "Ricordami" nello storage del browser
 
@@ -35,8 +36,15 @@ def get_last_update(sync: SupabaseSync) -> datetime:
     """Fine dell'ultimo cron che ha scritto su Supabase (se non tracciato: ultimo orario programmato + margine)."""
     return sync.get_last_cron_run() or TimeManager.last_scheduled_cron()
 
+def sync_injuries(sync: SupabaseSync) -> None:
+    """Infortuni (aggiornati dal cron injuries): un errore non blocca l'app, al limite mancano i badge."""
+    try:
+        sync.pull_injuries(INJURIES_PATH)
+    except Exception as e:
+        print(f"Infortuni non scaricati: {e}")
+
 def sync_league_data(sync: SupabaseSync, last_update: datetime) -> list[dict]:
-    """Calendario (con i punteggi di tutte le squadre) e classifica: riscaricati solo se è girato un cron."""
+    """Calendario (con i punteggi di tutte le squadre), classifica e infortuni: riscaricati solo se è girato un cron."""
     meta = {}
     if os.path.exists(SYNC_META_PATH):
         try:
@@ -48,11 +56,14 @@ def sync_league_data(sync: SupabaseSync, last_update: datetime) -> list[dict]:
     files_exist = os.path.exists(CALENDAR_PATH) and os.path.exists(STANDINGS_PATH)
     if files_exist and not is_stale(meta.get("league_data_as_of"), last_update):
         print("Calendario e classifica locali già aggiornati")
+        if not os.path.exists(INJURIES_PATH):
+            sync_injuries(sync)
         with open(CALENDAR_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
 
     calendar = sync.pull_calendar()
     sync.sync_standings()
+    sync_injuries(sync)
     with open(SYNC_META_PATH, "w", encoding="utf-8") as f:
         json.dump({"league_data_as_of": last_update.isoformat()}, f, indent=4)
     return calendar

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from itertools import combinations
 import os
 import json
 
@@ -25,6 +26,8 @@ class Player:
     team_abbreviation: str = ""
     position: str = ""
     score: float | None = 0.0
+    entered_game: bool = False   # True se è sceso in campo almeno una volta nella giornata (non solo DNP)
+    auto_sub: str | None = None  # "IN"/"OUT" se è entrato/uscito con una sostituzione automatica di fine giornata
 
     def __post_init__(self):
         # Ogni volta che l'oggetto viene istanziato, pulisce la posizione
@@ -45,6 +48,8 @@ class Player:
         )
         obj.position = obj.get_clean_position()
         obj.score = data.get("score", 0.0)
+        obj.entered_game = bool(data.get("entered_game", False))
+        obj.auto_sub = data.get("auto_sub")
         return obj
     
     def get_clean_position(self) -> str:
@@ -247,6 +252,51 @@ def infer_lineup(players: list[Player], preferred: str) -> str | None:
     return None
 
 
+# Slot (indici 0-based) di titolari e panchina: il sesto uomo (5) e le riserve (10-14) non partecipano alle sostituzioni
+STARTER_SLOTS = range(0, 5)
+BENCH_SLOTS = range(6, 10)
+
+
+def find_auto_substitutions(players: list[Player], current_lineup: str) -> dict | None:
+    """
+    Sostituzioni automatiche di fine giornata. players: i 15 giocatori della squadra ordinati per slot.
+    - Assenti: titolari che non sono mai scesi in campo nella giornata (entered_game False).
+    - Candidati: giocatori di panchina scesi in campo almeno una volta, in ordine di slot.
+    Si cerca la combinazione con più sostituzioni possibili e, a parità, quella con i panchinari di slot più basso.
+    I nuovi 5 titolari devono rispettare un modulo (prima quello attuale): altrimenti la combinazione è scartata.
+    Ogni panchinaro entrato lascia il suo slot di panchina a un assente.
+    Restituisce None se non c'è nessuna sostituzione possibile, altrimenti:
+      {"order": indici (in players) del giocatore che va in ciascuno slot, "lineup": modulo,
+       "swaps": [(indice assente, indice panchinaro), ...]}
+    """
+    if len(players) < max(BENCH_SLOTS) + 1:
+        return None
+    absent = [i for i in STARTER_SLOTS if not players[i].entered_game]
+    candidates = [j for j in BENCH_SLOTS if players[j].entered_game]
+    if not absent or not candidates:
+        return None
+
+    modules = [current_lineup] + [l for l in LINEUP_ROLES if l != current_lineup]
+    for k in range(min(len(absent), len(candidates)), 0, -1):
+        for subs in combinations(candidates, k):        # ordine lessicografico: prima i panchinari di slot più basso
+            for outs in combinations(absent, k):
+                # Il panchinaro prende lo slot dell'assente (find_starter_assignment preferisce chi è già nello slot)
+                new_starters = list(STARTER_SLOTS)
+                for out_idx, in_idx in zip(outs, subs):
+                    new_starters[out_idx] = in_idx
+                for lineup in modules:
+                    assignment = find_starter_assignment(LINEUP_ROLES[lineup], [players[i] for i in new_starters])
+                    if assignment is None:
+                        continue
+                    order = list(range(len(players)))
+                    for slot, src in enumerate(assignment):
+                        order[slot] = new_starters[src]
+                    for out_idx, in_idx in zip(outs, subs):
+                        order[in_idx] = out_idx  # l'assente va nello slot di panchina lasciato libero
+                    return {"order": order, "lineup": lineup, "swaps": list(zip(outs, subs))}
+    return None
+
+
 class Team:
     """Gestisce il roster, la validazione e l'interfacciamento con i dati API e la UI."""
     
@@ -342,6 +392,8 @@ class Team:
                 "team": p.team_abbreviation,
                 "pos": p.position,
                 "score": p.score,
-                "role": self.roles_map[p.id]
+                "role": self.roles_map[p.id],
+                "entered_game": p.entered_game,
+                "auto_sub": p.auto_sub
             })
         return ui_list

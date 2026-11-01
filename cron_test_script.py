@@ -5,10 +5,16 @@ Cron job dei punteggi (GitHub Actions, lanciato da Supabase pg_cron).
   python cron_test_script.py rollover   ogni sera alle 23:59 italiane: se domani inizia una nuova
                                         giornata, chiude quella di oggi e azzera la successiva
                                         (lanciato alle 21:59 e alle 22:59 UTC, prosegue solo dalle 23:59)
+  python cron_test_script.py injuries   ogni sera (21:10 e 22:10 UTC): aggiorna gli infortuni da ESPN
+
+Chiusura di una giornata (rollover, oppure il daily successivo se il rollover non ci è riuscito):
+  ricalcolo delle ultime due date NBA, sostituzioni automatiche (titolari mai scesi in campo
+  sostituiti dai panchinari che hanno giocato), totali, modulo, was_played = True.
 
 Opzioni per test e recuperi:
   --date YYYY-MM-DD   (daily) data NBA da elaborare al posto di ieri
   --days N            (daily) quante date NBA elaborare all'indietro (default: 2, oppure 1 con --date)
+  --gw N              (daily) rielabora tutte le date NBA già giocate della giornata N (dalla prima)
   --today YYYY-MM-DD  data italiana da considerare come oggi (salta il controllo dell'orario del rollover)
   --force             (rollover) esegue subito, senza controllare l'orario
   --dry-run           calcola e stampa senza scrivere su Supabase
@@ -18,8 +24,9 @@ import sys
 import time
 from datetime import date, datetime, timedelta, timezone
 
-from api_nba import NbaDataManager, NBA_TO_ESPN_TEAM, ESPN_TO_NBA_TEAM
-from fanta_obj import Player, Team, ROLE_MULTIPLIERS
+from api_nba import NbaDataManager, NBA_TO_ESPN_TEAM, ESPN_TO_NBA_TEAM, normalize_name
+from fanta_obj import Player, Team, ROLE_MULTIPLIERS, ROSTER_SIZE, DEFAULT_LINEUP, STARTER_SLOTS, BENCH_SLOTS, \
+    find_auto_substitutions
 from supabase_manager import SupabaseSync
 from time_manager import TimeManager, ITA_TZ
 
@@ -132,10 +139,13 @@ def process_nba_date(sync: SupabaseSync, manager: NbaDataManager, nba_date: str,
     played_ids = {b["PLAYER_ID"] for b in boxscores if not b.get("DNP")}
     dnp_ids = {b["PLAYER_ID"] for b in boxscores if b.get("DNP")}
 
-    # Ogni giocatore tiene la prestazione migliore della giornata:
-    # si scrive solo se il nuovo punteggio supera quello salvato (o se non ce n'era uno).
+    # Ogni giocatore tiene la prestazione migliore tra le partite in cui è sceso in campo:
+    # - partita giocata: si scrive se non c'era un punteggio, se quello salvato era solo un DNP
+    #   (entered_game False) o se è migliore; entered_game diventa True
+    # - DNP / non a referto: 0.0 solo se non c'era ancora nessun punteggio, altrimenti non conta
+    #   (es. DNP lunedì e -2 mercoledì -> -2; -2 lunedì e DNP mercoledì -> -2)
     # Nel log compaiono tutti i giocatori schierati la cui squadra NBA ha giocato,
-    # anche quelli il cui punteggio non migliora.
+    # anche quelli il cui punteggio non cambia.
     updated = 0
     for row in rows:
         p_id = int(row["nba_player_id"])
@@ -144,35 +154,168 @@ def process_nba_date(sync: SupabaseSync, manager: NbaDataManager, nba_date: str,
             continue  # la sua squadra NBA non ha giocato (o la partita non è conclusa)
         new_score = round(new_score, 2)
         old_score = float(row["score"]) if row["score"] is not None else None
+        old_entered = bool(row.get("entered_game"))
+        entered = p_id in played_ids
 
-        if p_id in played_ids:
+        if entered:
             note = ""
-        elif p_id in dnp_ids:
-            note = " [DNP]"
+            improves = old_score is None or not old_entered or new_score > old_score
         else:
-            note = " [non a referto]"
+            note = " [DNP]" if p_id in dnp_ids else " [non a referto]"
+            improves = old_score is None
 
-        if old_score is not None and new_score <= old_score:
-            esito = "invariato" if new_score == old_score else "non migliorato"
+        if not improves:
+            if entered:
+                esito = "invariato" if new_score == old_score else "non migliorato"
+            else:
+                esito = "non conta" if old_entered else "invariato"
             print(f"  {row['player_name']}: {old_score} (questa data {new_score}{note}, {esito})")
             continue
 
         print(f"  {row['player_name']}: {old_score} -> {new_score}{note}")
         row["score"] = new_score
+        row["entered_game"] = old_entered or entered
         updated += 1
-        if not dry_run and not sync.update_lineup_player_score(gameweek, new_score, nba_player_id=p_id):
+        if not dry_run and not sync.update_lineup_player_score(gameweek, new_score, nba_player_id=p_id,
+                                                               entered_game=row["entered_game"]):
             errors.append(f"Scrittura fallita per {row['player_name']} (GW {gameweek})")
 
-    print(f"[{nba_date}] GW {gameweek}: {len(boxscores)} tabellini, {updated} punteggi migliorati.")
+    print(f"[{nba_date}] GW {gameweek}: {len(boxscores)} tabellini, {updated} punteggi aggiornati.")
     update_team_scores(sync, gameweek, rows, dry_run)
     return errors
 
 
-def run_daily(sync: SupabaseSync, nba_dates: list[str], dry_run: bool) -> list[str]:
+def apply_substitutions(sync: SupabaseSync, gameweek: int, dry_run: bool) -> list[str]:
+    """
+    Sostituzioni automatiche di fine giornata (fanta_obj.find_auto_substitutions), squadra per squadra:
+    i titolari mai scesi in campo nella giornata vengono sostituiti dai panchinari che hanno giocato,
+    se il modulo lo permette (anche cambiandolo). Scrive solo la giornata indicata. Restituisce gli errori.
+    Rilanciarla non fa nulla: dopo le sostituzioni tra i titolari non resta nessun assente sostituibile.
+    """
+    rows = sync.get_lineup_rows_for_gameweek(gameweek)
+    lineups = sync.get_team_lineups(gameweek)
+    names = {t["id"]: t["name"] for t in sync.get_all_teams()}
+    by_team: dict[str, list[dict]] = {}
+    for row in rows:
+        by_team.setdefault(row["fanta_team_id"], []).append(row)
+
+    errors = []
+    for team_id, team_rows in by_team.items():
+        name = names.get(team_id, team_id)
+        team_rows.sort(key=lambda r: r["slot"])
+        roles = [r["role"] for r in team_rows]
+        if [r["slot"] for r in team_rows] != list(range(1, ROSTER_SIZE + 1)) \
+                or any(roles[i] != "STARTER" for i in STARTER_SLOTS) or any(roles[i] != "BENCH" for i in BENCH_SLOTS):
+            errors.append(f"GW {gameweek}, {name}: slot o ruoli inattesi, sostituzioni automatiche saltate")
+            continue
+
+        players = [Player(id=int(r["nba_player_id"]), name=r["player_name"],
+                          position=(r.get("nba_players") or {}).get("position", ""),
+                          entered_game=bool(r.get("entered_game")))
+                   for r in team_rows]
+        current = lineups.get(team_id) or DEFAULT_LINEUP
+        result = find_auto_substitutions(players, current)
+        if result is None:
+            absent = [p.name for i, p in enumerate(players) if i in STARTER_SLOTS and not p.entered_game]
+            if absent:
+                print(f"GW {gameweek}, {name}: titolari mai scesi in campo {absent}, nessuna sostituzione possibile")
+            continue
+
+        ins = {players[i].id for _, i in result["swaps"]}
+        outs = {players[o].id for o, _ in result["swaps"]}
+        for o, i in result["swaps"]:
+            print(f"GW {gameweek}, {name}: esce {players[o].name}, entra {players[i].name}")
+        if result["lineup"] != current:
+            print(f"GW {gameweek}, {name}: modulo {current} -> {result['lineup']}")
+
+        changes = [{
+            "nba_player_id": players[src].id,
+            "slot": slot + 1,
+            "role": roles[slot],  # il ruolo è quello dello slot di arrivo
+            "auto_sub": "IN" if players[src].id in ins else "OUT" if players[src].id in outs else None,
+        } for slot, src in enumerate(result["order"]) if src != slot]
+        if dry_run:
+            continue
+        try:
+            sync.apply_gameweek_substitutions(team_id, gameweek, changes)
+            if result["lineup"] != current:
+                sync.update_team_lineup(team_id, gameweek, result["lineup"], following=False)
+        except Exception as e:
+            errors.append(f"GW {gameweek}, {name}: sostituzioni automatiche non scritte ({e})")
+    return errors
+
+
+def close_gameweek(sync: SupabaseSync, gameweek: int, dry_run: bool) -> list[str]:
+    """
+    Chiude la giornata: ricalcola le sue ultime due date NBA (recupera un daily fallito), applica le
+    sostituzioni automatiche, ricalcola i totali, allinea il modulo e imposta was_played = True.
+    Se i tabellini non sono disponibili la giornata resta aperta: la richiude il prossimo daily.
+    """
+    print(f"Chiusura GW {gameweek}...")
+    manager = NbaDataManager(player_ids=[])
+    errors = []
+    try:
+        for nba_date in sync.get_gameweek_nba_dates(gameweek)[-2:]:
+            errors += process_nba_date(sync, manager, nba_date, dry_run)
+    except Exception as e:
+        return errors + [f"GW {gameweek} NON chiusa: tabellini delle ultime date non disponibili ({e}). "
+                         f"Verrà chiusa dal prossimo daily"]
+
+    errors += apply_substitutions(sync, gameweek, dry_run)
+    update_team_scores(sync, gameweek, sync.get_lineup_rows_for_gameweek(gameweek), dry_run)
+    # Storico dei moduli: quello della giornata chiusa deve corrispondere ai titolari che hanno giocato
+    sync.align_lineups_with_starters(gameweek, dry_run)
+    if not dry_run:
+        sync.set_gameweek_played(gameweek)
+    return errors
+
+
+def close_overdue_gameweeks(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
+    """Chiude le giornate già finite (end_date prima di oggi) rimaste aperte perché il rollover non ci è riuscito."""
+    errors = []
+    for r in sync.get_gameweek_ranges():
+        if r["end_date"] < today and not sync.get_gameweek_info(r["gameweek"])["was_played"]:
+            print(f"GW {r['gameweek']} finita il {r['end_date']} ma ancora aperta: la chiudo ora.")
+            errors += close_gameweek(sync, r["gameweek"], dry_run)
+    return errors
+
+
+def run_injuries(sync: SupabaseSync, dry_run: bool) -> list[str]:
+    """Aggiorna player_injuries con gli infortuni ESPN dei giocatori presenti in nba_players."""
+    manager = NbaDataManager(player_ids=[])
+    injuries = NbaDataManager.fetch_injuries()
+    known = sync.get_nba_players()
+    ids = {int(p["id"]) for p in known}
+    by_name = {normalize_name(p["full_name"]): int(p["id"]) for p in known if p.get("full_name")}
+
+    rows: dict[int, dict] = {}
+    for inj in injuries:
+        nba_id = manager.espn_to_nba_map.get(inj["espn_id"]) if inj["espn_id"] else None
+        nba_id = int(nba_id) if nba_id else by_name.get(normalize_name(inj["name"]))
+        if nba_id is None or nba_id not in ids:
+            continue  # non è in nessuna fanta-squadra
+        rows[nba_id] = {
+            "nba_player_id": nba_id,
+            "status": inj["status"],
+            "fantasy_status": inj["fantasy_status"],
+            "injury_type": inj["injury_type"],
+            "return_date": inj["return_date"],
+        }
+        print(f"  {inj['name']}: {inj['status']} ({inj['fantasy_status']}) {inj['injury_type']} "
+              f"rientro {inj['return_date'] or '-'}")
+
+    print(f"Infortuni ESPN: {len(injuries)}, di giocatori delle fanta-squadre: {len(rows)}.")
+    if not dry_run:
+        sync.replace_injuries(list(rows.values()))
+    return []
+
+
+def run_daily(sync: SupabaseSync, nba_dates: list[str], today: str, dry_run: bool) -> list[str]:
     manager = NbaDataManager(player_ids=[])  # nessun filtro: tabellini di tutta la NBA
     errors = []
     for nba_date in nba_dates:
         errors += process_nba_date(sync, manager, nba_date, dry_run)
+    errors += close_overdue_gameweeks(sync, today, dry_run)
 
     # Calendario NBA: risultati delle stesse date (non influisce sui punteggi)
     if dry_run:
@@ -210,9 +353,10 @@ def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
     """
     Lanciato ogni giorno alle 23:59 italiane, agisce solo se domani inizia una nuova giornata
     (la giornata di domani comprende anche le partite che iniziano stasera, data NBA = oggi):
-    - chiude la giornata di oggi: ultimo ricalcolo dei totali e was_played = True
+    - chiude la giornata di oggi (close_gameweek): ricalcolo delle ultime date, sostituzioni automatiche,
+      totali, modulo e was_played = True
     - azzera la giornata di domani: score dei giocatori NULL, punteggi delle squadre 0.0
-    - allinea ai titolari il modulo in matchups di entrambe (storico dei moduli; i cambi di domani ora sono chiusi)
+    - allinea ai titolari il modulo in matchups della giornata di domani (i cambi ora sono chiusi)
     - riscarica le partite NBA della giornata di domani (rinvii e cambi d'orario)
     """
     current_gw = sync.get_gameweek_by_date(today, before_start_as_first=False)
@@ -221,16 +365,12 @@ def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
         print(f"[{today}] Nessun cambio di giornata: niente da fare.")
         return []
 
-    if current_gw is not None:
-        print(f"Chiusura GW {current_gw}...")
-        update_team_scores(sync, current_gw, sync.get_lineup_rows_for_gameweek(current_gw), dry_run)
-        # Storico dei moduli: quello della giornata chiusa deve corrispondere ai titolari che hanno giocato
-        sync.align_lineups_with_starters(current_gw, dry_run)
-        if not dry_run:
-            sync.set_gameweek_played(current_gw)
+    errors = []
+    if current_gw is not None and not sync.get_gameweek_info(current_gw)["was_played"]:
+        errors += close_gameweek(sync, current_gw, dry_run)
 
     if sync.get_gameweek_info(next_gw)["was_played"]:
-        return [f"GW {next_gw} risulta già giocata: azzeramento annullato"]
+        return errors + [f"GW {next_gw} risulta già giocata: azzeramento annullato"]
 
     print(f"Azzeramento GW {next_gw}...")
     if not dry_run:
@@ -241,8 +381,8 @@ def run_rollover(sync: SupabaseSync, today: str, dry_run: bool) -> list[str]:
         try:
             sync.sync_nba_games(sync.get_gameweek_nba_dates(next_gw))
         except Exception as e:
-            return [f"Calendario NBA della GW {next_gw} non aggiornato: {e}"]
-    return []
+            errors.append(f"Calendario NBA della GW {next_gw} non aggiornato: {e}")
+    return errors
 
 
 def main():
@@ -250,9 +390,10 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")
 
     parser = argparse.ArgumentParser(description="Cron job punteggi FantaNBA")
-    parser.add_argument("mode", nargs="?", default="daily", choices=["daily", "rollover"])
+    parser.add_argument("mode", nargs="?", default="daily", choices=["daily", "rollover", "injuries"])
     parser.add_argument("--date", help="(daily) data NBA da elaborare, YYYY-MM-DD")
     parser.add_argument("--days", type=int, help="(daily) quante date NBA elaborare all'indietro")
+    parser.add_argument("--gw", type=int, help="(daily) rielabora tutte le date NBA già giocate della giornata")
     parser.add_argument("--today", help="data italiana da considerare come oggi, YYYY-MM-DD")
     parser.add_argument("--force", action="store_true", help="(rollover) esegue senza controllare l'orario")
     parser.add_argument("--dry-run", action="store_true", help="non scrive su Supabase")
@@ -276,11 +417,17 @@ def main():
     try:
         if args.mode == "rollover":
             errors = run_rollover(sync, today, args.dry_run)
+        elif args.mode == "injuries":
+            errors = run_injuries(sync, args.dry_run)
         else:
             last_nba_date = args.date or TimeManager.italian_date_to_nba_date(today)
-            days = args.days or (1 if args.date else 2)
-            nba_dates = [shift_date(last_nba_date, -i) for i in reversed(range(days))]  # dalla più vecchia
-            errors = run_daily(sync, nba_dates, args.dry_run)
+            if args.gw:
+                # Dalla più vecchia: con la regola "conta la migliore partita giocata" il risultato è quello giusto
+                nba_dates = [d for d in sync.get_gameweek_nba_dates(args.gw) if d <= last_nba_date]
+            else:
+                days = args.days or (1 if args.date else 2)
+                nba_dates = [shift_date(last_nba_date, -i) for i in reversed(range(days))]  # dalla più vecchia
+            errors = run_daily(sync, nba_dates, today, args.dry_run)
     finally:
         # Anche un run fallito può aver scritto qualcosa: l'app deve comunque riscaricare i dati
         if not args.dry_run:
