@@ -109,8 +109,14 @@ def update_team_scores(sync: SupabaseSync, gameweek: int, rows: list[dict], dry_
             sync.update_team_score_for_gameweek(team_id, gameweek, total)
 
 
-def process_nba_date(sync: SupabaseSync, manager: NbaDataManager, nba_date: str, dry_run: bool) -> list[str]:
-    """Aggiorna lineup_players e matchups con le partite della data NBA indicata. Restituisce gli errori."""
+def process_nba_date(sync: SupabaseSync, manager: NbaDataManager, nba_date: str, dry_run: bool,
+                     rows_cache: dict[int, list[dict]] | None = None) -> list[str]:
+    """
+    Aggiorna lineup_players e matchups con le partite della data NBA indicata. Restituisce gli errori.
+    rows_cache ({giornata: righe}) va condiviso tra più date della stessa elaborazione: le righe si leggono
+    una volta sola e punteggi ed entered_game passano da una data all'altra anche in dry-run (senza,
+    ogni data rileggerebbe da Supabase lo stato di prima dell'elaborazione).
+    """
     ita_date = TimeManager.nba_date_to_italian_date(nba_date)
     gameweek = sync.get_gameweek_by_date(ita_date, before_start_as_first=False)
     if gameweek is None:
@@ -120,7 +126,12 @@ def process_nba_date(sync: SupabaseSync, manager: NbaDataManager, nba_date: str,
         print(f"[{nba_date}] GW {gameweek} già chiusa: punteggi non modificati.")
         return []
 
-    rows = sync.get_lineup_rows_for_gameweek(gameweek)
+    if rows_cache is not None and gameweek in rows_cache:
+        rows = rows_cache[gameweek]
+    else:
+        rows = sync.get_lineup_rows_for_gameweek(gameweek)
+        if rows_cache is not None:
+            rows_cache[gameweek] = rows
     if not rows:
         return [f"GW {gameweek}: nessuna riga in lineup_players"]
 
@@ -254,9 +265,10 @@ def close_gameweek(sync: SupabaseSync, gameweek: int, dry_run: bool) -> list[str
     print(f"Chiusura GW {gameweek}...")
     manager = NbaDataManager(player_ids=[])
     errors = []
+    rows_cache: dict[int, list[dict]] = {}
     try:
         for nba_date in sync.get_gameweek_nba_dates(gameweek)[-2:]:
-            errors += process_nba_date(sync, manager, nba_date, dry_run)
+            errors += process_nba_date(sync, manager, nba_date, dry_run, rows_cache)
     except Exception as e:
         return errors + [f"GW {gameweek} NON chiusa: tabellini delle ultime date non disponibili ({e}). "
                          f"Verrà chiusa dal prossimo daily"]
@@ -313,8 +325,9 @@ def run_injuries(sync: SupabaseSync, dry_run: bool) -> list[str]:
 def run_daily(sync: SupabaseSync, nba_dates: list[str], today: str, dry_run: bool) -> list[str]:
     manager = NbaDataManager(player_ids=[])  # nessun filtro: tabellini di tutta la NBA
     errors = []
+    rows_cache: dict[int, list[dict]] = {}
     for nba_date in nba_dates:
-        errors += process_nba_date(sync, manager, nba_date, dry_run)
+        errors += process_nba_date(sync, manager, nba_date, dry_run, rows_cache)
     errors += close_overdue_gameweeks(sync, today, dry_run)
 
     # Calendario NBA: risultati delle stesse date (non influisce sui punteggi)
