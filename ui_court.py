@@ -391,20 +391,20 @@ class Court(ft.Column):
     def compute_sub_hints(self, schedules: dict[str, list[dict]]) -> dict[int, str]:
         """
         Frecce delle sostituzioni automatiche di fine giornata: {ID NBA: "IN"/"OUT"}.
-        - Fatte dal cron (giornata chiusa): auto_sub salvato in lineup_players.
-        - Giornata in corso (cambi chiusi): anteprima con la stessa regola del cron, considerando assenti
-          solo i titolari mai scesi in campo che non hanno più partite da giocare nella giornata.
+        - Già eseguite dal cron (dopo l'ultima data della giornata): auto_sub salvato in lineup_players.
+        - Giornata in corso (cambi chiusi): sostituzioni programmate, con la stessa regola del cron sui dati
+          attuali: ogni titolare con un DNP (punteggio 0.0, mai sceso in campo) e il panchinaro (già sceso
+          in campo) che lo sostituirebbe. Finché la sua squadra non ha giocato (punteggio "-") il titolare
+          non viene considerato assente; se poi gioca, al successivo aggiornamento la freccia sparisce.
         Nessuna freccia nella formazione ancora modificabile.
         """
         saved = {p.id: p.auto_sub for p in self.team.players if p.auto_sub in ("IN", "OUT")}
         if saved or self.editable:
             return saved
 
-        def has_games_left(p: Player) -> bool:
-            return any(g.get("status") not in ("final", "postponed") for g in schedules.get(p.team_abbreviation, []))
-
+        # Un titolare col punteggio "-" (squadra non ancora scesa in campo) non è assente: niente freccia
         preview = [Player(id=p.id, position=p.position,
-                          entered_game=p.entered_game or (i in STARTER_SLOTS and has_games_left(p)))
+                          entered_game=p.entered_game or (i in STARTER_SLOTS and not has_played(p.score)))
                    for i, p in enumerate(self.team.players)]
         result = find_auto_substitutions(preview, self.lineup)
         if result is None:

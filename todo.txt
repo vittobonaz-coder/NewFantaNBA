@@ -19,6 +19,10 @@ TO DO:
 
 - Spostare orario cron chiusura cambi a mezzanotte
 
+- Cambi automatici infortunati: C’è un caso raro in cui anteprima e risultato finale divergono: un titolare 
+    la cui squadra non gioca nessuna partita nella giornata (ad esempio per un rinvio) resta con “-” e non 
+    avrà mai la freccia, ma a fine giornata verrà comunque sostituito, perché non è mai sceso in campo.
+
 
 
 

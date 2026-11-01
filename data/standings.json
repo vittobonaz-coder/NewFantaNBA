@@ -16,7 +16,7 @@
         "played": 1,
         "wins": 1,
         "losses": 1,
-        "total_score": 731.52,
+        "total_score": 729.02,
         "total_points_against": 707.46,
         "best_scores": 1,
         "standing_points": 1.2
@@ -28,7 +28,7 @@
         "wins": 1,
         "losses": 1,
         "total_score": 729.01,
-        "total_points_against": 706.23,
+        "total_points_against": 706.02,
         "best_scores": 1,
         "standing_points": 1.2
     },
@@ -61,7 +61,7 @@
         "wins": 1,
         "losses": 1,
         "total_score": 692.54,
-        "total_points_against": 635.56,
+        "total_points_against": 633.06,
         "best_scores": 0,
         "standing_points": 1.0
     },
@@ -82,7 +82,7 @@
         "played": 1,
         "wins": 0,
         "losses": 2,
-        "total_score": 606.97,
+        "total_score": 606.76,
         "total_points_against": 736.12,
         "best_scores": 0,
         "standing_points": 0.0

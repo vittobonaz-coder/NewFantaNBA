@@ -7,9 +7,12 @@ Cron job dei punteggi (GitHub Actions, lanciato da Supabase pg_cron).
                                         (lanciato alle 21:59 e alle 22:59 UTC, prosegue solo dalle 23:59)
   python cron_test_script.py injuries   ogni sera (21:10 e 22:10 UTC): aggiorna gli infortuni da ESPN
 
+Sostituzioni automatiche (titolari mai scesi in campo sostituiti dai panchinari che hanno giocato):
+  eseguite dal daily che elabora l'ultima data NBA della giornata (se tutte le partite di quella data
+  sono concluse), così gli utenti vedono subito formazione e punteggio finali; la chiusura della
+  giornata le ripete comunque (senza effetto se già fatte).
 Chiusura di una giornata (rollover, oppure il daily successivo se il rollover non ci è riuscito):
-  ricalcolo delle ultime due date NBA, sostituzioni automatiche (titolari mai scesi in campo
-  sostituiti dai panchinari che hanno giocato), totali, modulo, was_played = True.
+  ricalcolo delle ultime due date NBA, sostituzioni automatiche, totali, modulo, was_played = True.
 
 Opzioni per test e recuperi:
   --date YYYY-MM-DD   (daily) data NBA da elaborare al posto di ieri
@@ -196,14 +199,17 @@ def process_nba_date(sync: SupabaseSync, manager: NbaDataManager, nba_date: str,
     return errors
 
 
-def apply_substitutions(sync: SupabaseSync, gameweek: int, dry_run: bool) -> list[str]:
+def apply_substitutions(sync: SupabaseSync, gameweek: int, dry_run: bool, rows: list[dict] | None = None) -> list[str]:
     """
     Sostituzioni automatiche di fine giornata (fanta_obj.find_auto_substitutions), squadra per squadra:
     i titolari mai scesi in campo nella giornata vengono sostituiti dai panchinari che hanno giocato,
     se il modulo lo permette (anche cambiandolo). Scrive solo la giornata indicata. Restituisce gli errori.
     Rilanciarla non fa nulla: dopo le sostituzioni tra i titolari non resta nessun assente sostituibile.
+    rows: righe già lette (rows_cache di process_nba_date); vengono aggiornate con slot, ruoli e auto_sub
+    nuovi, così i totali calcolati subito dopo sono quelli giusti anche in dry-run.
     """
-    rows = sync.get_lineup_rows_for_gameweek(gameweek)
+    if rows is None:
+        rows = sync.get_lineup_rows_for_gameweek(gameweek)
     lineups = sync.get_team_lineups(gameweek)
     names = {t["id"]: t["name"] for t in sync.get_all_teams()}
     by_team: dict[str, list[dict]] = {}
@@ -245,6 +251,9 @@ def apply_substitutions(sync: SupabaseSync, gameweek: int, dry_run: bool) -> lis
             "role": roles[slot],  # il ruolo è quello dello slot di arrivo
             "auto_sub": "IN" if players[src].id in ins else "OUT" if players[src].id in outs else None,
         } for slot, src in enumerate(result["order"]) if src != slot]
+        row_by_id = {int(r["nba_player_id"]): r for r in team_rows}
+        for c in changes:
+            row_by_id[c["nba_player_id"]].update(slot=c["slot"], role=c["role"], auto_sub=c["auto_sub"])
         if dry_run:
             continue
         try:
@@ -273,8 +282,9 @@ def close_gameweek(sync: SupabaseSync, gameweek: int, dry_run: bool) -> list[str
         return errors + [f"GW {gameweek} NON chiusa: tabellini delle ultime date non disponibili ({e}). "
                          f"Verrà chiusa dal prossimo daily"]
 
-    errors += apply_substitutions(sync, gameweek, dry_run)
-    update_team_scores(sync, gameweek, sync.get_lineup_rows_for_gameweek(gameweek), dry_run)
+    rows = rows_cache.get(gameweek) or sync.get_lineup_rows_for_gameweek(gameweek)
+    errors += apply_substitutions(sync, gameweek, dry_run, rows)
+    update_team_scores(sync, gameweek, rows, dry_run)
     # Storico dei moduli: quello della giornata chiusa deve corrispondere ai titolari che hanno giocato
     sync.align_lineups_with_starters(gameweek, dry_run)
     if not dry_run:
@@ -322,12 +332,51 @@ def run_injuries(sync: SupabaseSync, dry_run: bool) -> list[str]:
     return []
 
 
+def all_games_completed(nba_date: str) -> bool:
+    """True se tutte le partite NBA della data sono concluse (o rinviate): nessun titolare può più scendere in campo."""
+    games = NbaDataManager.fetch_scoreboard_games(nba_date.replace("-", ""))
+    pending = [f"{g['away_team']}@{g['home_team']}" for g in games if g["status"] not in ("final", "postponed")]
+    if pending:
+        print(f"[{nba_date}] Partite non ancora concluse: {pending}")
+    return not pending
+
+
+def substitute_after_last_date(sync: SupabaseSync, nba_date: str, dry_run: bool,
+                               rows_cache: dict[int, list[dict]]) -> list[str]:
+    """
+    Se nba_date è l'ultima data NBA di una giornata ancora aperta e le sue partite sono tutte concluse,
+    esegue subito le sostituzioni automatiche e ricalcola i totali: gli utenti vedono formazione e
+    punteggio finali senza aspettare il rollover (la giornata resta aperta fino ad allora).
+    """
+    gameweek = sync.get_gameweek_by_date(TimeManager.nba_date_to_italian_date(nba_date), before_start_as_first=False)
+    if gameweek is None or sync.get_gameweek_info(gameweek)["was_played"]:
+        return []
+    gw_dates = sync.get_gameweek_nba_dates(gameweek)
+    if not gw_dates or nba_date != gw_dates[-1]:
+        return []
+    try:
+        if not all_games_completed(nba_date):
+            print(f"GW {gameweek}: sostituzioni automatiche rimandate alla chiusura della giornata.")
+            return []
+    except Exception as e:
+        print(f"GW {gameweek}: stato delle partite non disponibile ({e}), sostituzioni rimandate alla chiusura.")
+        return []
+
+    print(f"GW {gameweek}: ultima data elaborata, sostituzioni automatiche...")
+    rows = rows_cache.get(gameweek) or sync.get_lineup_rows_for_gameweek(gameweek)
+    errors = apply_substitutions(sync, gameweek, dry_run, rows)
+    update_team_scores(sync, gameweek, rows, dry_run)
+    sync.align_lineups_with_starters(gameweek, dry_run)
+    return errors
+
+
 def run_daily(sync: SupabaseSync, nba_dates: list[str], today: str, dry_run: bool) -> list[str]:
     manager = NbaDataManager(player_ids=[])  # nessun filtro: tabellini di tutta la NBA
     errors = []
     rows_cache: dict[int, list[dict]] = {}
     for nba_date in nba_dates:
         errors += process_nba_date(sync, manager, nba_date, dry_run, rows_cache)
+        errors += substitute_after_last_date(sync, nba_date, dry_run, rows_cache)
     errors += close_overdue_gameweeks(sync, today, dry_run)
 
     # Calendario NBA: risultati delle stesse date (non influisce sui punteggi)

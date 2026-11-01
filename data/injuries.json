@@ -1,1 +1,177 @@
-{}
+{
+    "1630552": {
+        "nba_player_id": 1630552,
+        "status": "Day-To-Day",
+        "fantasy_status": "GTD",
+        "injury_type": "Ankle",
+        "return_date": "2026-11-02"
+    },
+    "1642856": {
+        "nba_player_id": 1642856,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Leg",
+        "return_date": "2026-11-07"
+    },
+    "1642851": {
+        "nba_player_id": 1642851,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Hamstring",
+        "return_date": "2026-11-02"
+    },
+    "1629632": {
+        "nba_player_id": 1629632,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Calf",
+        "return_date": "2026-11-02"
+    },
+    "1629651": {
+        "nba_player_id": 1629651,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Hamstring",
+        "return_date": "2026-11-04"
+    },
+    "1631105": {
+        "nba_player_id": 1631105,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Hamstring",
+        "return_date": "2026-11-09"
+    },
+    "201939": {
+        "nba_player_id": 201939,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Rest",
+        "return_date": "2026-11-02"
+    },
+    "202710": {
+        "nba_player_id": 202710,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Knee",
+        "return_date": "2027-01-02"
+    },
+    "1627832": {
+        "nba_player_id": 1627832,
+        "status": "Day-To-Day",
+        "fantasy_status": "GTD",
+        "injury_type": "Knee",
+        "return_date": "2026-11-02"
+    },
+    "1627826": {
+        "nba_player_id": 1627826,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Ankle",
+        "return_date": "2026-11-02"
+    },
+    "1630169": {
+        "nba_player_id": 1630169,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Hamstring",
+        "return_date": "2026-11-13"
+    },
+    "1627742": {
+        "nba_player_id": 1627742,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Achilles",
+        "return_date": "2026-11-08"
+    },
+    "1629660": {
+        "nba_player_id": 1629660,
+        "status": "Day-To-Day",
+        "fantasy_status": "GTD",
+        "injury_type": "Back",
+        "return_date": "2026-11-02"
+    },
+    "203497": {
+        "nba_player_id": 203497,
+        "status": "Day-To-Day",
+        "fantasy_status": "GTD",
+        "injury_type": "Back",
+        "return_date": "2026-11-02"
+    },
+    "1630162": {
+        "nba_player_id": 1630162,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Knee",
+        "return_date": "2026-12-21"
+    },
+    "1627749": {
+        "nba_player_id": 1627749,
+        "status": "Day-To-Day",
+        "fantasy_status": "GTD",
+        "injury_type": "Personal",
+        "return_date": "2026-11-02"
+    },
+    "1631096": {
+        "nba_player_id": 1631096,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Knee",
+        "return_date": "2027-01-02"
+    },
+    "1631114": {
+        "nba_player_id": 1631114,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Leg",
+        "return_date": "2027-03-02"
+    },
+    "1631094": {
+        "nba_player_id": 1631094,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Ankle",
+        "return_date": "2026-11-22"
+    },
+    "203954": {
+        "nba_player_id": 203954,
+        "status": "Day-To-Day",
+        "fantasy_status": "GTD",
+        "injury_type": "Foot",
+        "return_date": "2026-11-02"
+    },
+    "2544": {
+        "nba_player_id": 2544,
+        "status": "Day-To-Day",
+        "fantasy_status": "GTD",
+        "injury_type": "Back",
+        "return_date": "2026-11-02"
+    },
+    "1629630": {
+        "nba_player_id": 1629630,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Hamstring",
+        "return_date": "2026-12-01"
+    },
+    "202695": {
+        "nba_player_id": 202695,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Knee",
+        "return_date": "2026-11-23"
+    },
+    "1628991": {
+        "nba_player_id": 1628991,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Knee",
+        "return_date": "2026-12-14"
+    },
+    "203994": {
+        "nba_player_id": 203994,
+        "status": "Out",
+        "fantasy_status": "OUT",
+        "injury_type": "Foot",
+        "return_date": "2026-11-04"
+    }
+}
