@@ -1027,6 +1027,12 @@ class SupabaseSync:
         """Giocatori della tabella nba_players: [{"id", "full_name"}]."""
         return self.supabase.table("nba_players").select("id, full_name").execute().data or []
 
+    def get_rostered_players(self) -> dict[int, str]:
+        """Giocatori delle fanta-squadre (rosters attuali): {nba_player_id: nome della fanta-squadra}."""
+        teams = {t["id"]: t["name"] for t in self.get_all_teams()}
+        rows = self.supabase.table("rosters").select("fanta_team_id, nba_player_id").execute().data or []
+        return {int(r["nba_player_id"]): teams.get(r["fanta_team_id"], "?") for r in rows}
+
     def update_nba_player_team(self, nba_player_id: int, nba_team: str) -> None:
         """Aggiorna la squadra NBA di un giocatore nella tabella nba_players."""
         self.supabase.table("nba_players").update({"nba_team": nba_team}).eq("id", nba_player_id).execute()

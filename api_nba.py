@@ -463,34 +463,41 @@ class NbaDataManager:
         except Exception as e:
             print(f"Download Live Players Error: {e}")
 
-    def fetch_players_info(self, player_ids, filename=None):
-        """Usa NBA API (CommonPlayerInfo) per scaricare dettagli statici (Nome, Team, Ruolo)"""
+    def fetch_players_info(self, player_ids, filename=None, pause=0.25, retries=3):
+        """
+        Usa NBA API (CommonPlayerInfo) per scaricare dettagli statici (Nome, Team, Ruolo).
+        :param pause: secondi di attesa tra un giocatore e l'altro (la richiesta stessa dura già ~0.5s)
+        :param retries: tentativi per giocatore; dopo un errore (es. limite di richieste NBA API)
+                        l'attesa raddoppia a ogni tentativo (2s, 4s, ...)
+        """
         if filename is None:
             filename = os.path.join(self.data_dir, "giocatori_nba.json")
 
         players_list = []
 
         for p_id in player_ids:
-            try:
-                player_data = commonplayerinfo.CommonPlayerInfo(
-                    player_id=p_id
-                ).get_dict()
-                data_row = player_data["resultSets"][0]["rowSet"][0]
-                headers = player_data["resultSets"][0]["headers"]
-                p_info = dict(zip(headers, data_row))
+            for attempt in range(retries):
+                try:
+                    player_data = commonplayerinfo.CommonPlayerInfo(
+                        player_id=p_id, timeout=15
+                    ).get_dict()
+                    data_row = player_data["resultSets"][0]["rowSet"][0]
+                    headers = player_data["resultSets"][0]["headers"]
+                    p_info = dict(zip(headers, data_row))
 
-                player = {
-                    "PLAYER_ID": p_id,
-                    "PLAYER_NAME": p_info.get("DISPLAY_FIRST_LAST"),
-                    "TEAM": p_info.get("TEAM_ABBREVIATION"),
-                    "POSITION": p_info.get("POSITION"),
-                }
-                players_list.append(player)
-                time.sleep(0.6)  # Pausa precauzionale per NBA API
+                    player = {
+                        "PLAYER_ID": p_id,
+                        "PLAYER_NAME": p_info.get("DISPLAY_FIRST_LAST"),
+                        "TEAM": p_info.get("TEAM_ABBREVIATION"),
+                        "POSITION": p_info.get("POSITION"),
+                    }
+                    players_list.append(player)
+                    time.sleep(pause)  # Pausa precauzionale per NBA API
+                    break
 
-            except Exception as e:
-                print(f"Errore con l'ID NBA {p_id}: {e}")
-                time.sleep(1.5)
+                except Exception as e:
+                    print(f"Errore con l'ID NBA {p_id} (tentativo {attempt + 1}/{retries}): {e}")
+                    time.sleep(2 * 2 ** attempt)
 
         if not filename.endswith(".json"):
             filename += ".json"

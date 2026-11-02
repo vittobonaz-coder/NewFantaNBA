@@ -485,7 +485,7 @@
                 "home_team": "Freezer",
                 "away_team": "Minghie",
                 "home_score": 256.27,
-                "away_score": 366.62,
+                "away_score": 379.2,
                 "was_played": false,
                 "home_lineup": "2-2-1",
                 "away_lineup": "1-3-1"
@@ -493,8 +493,8 @@
             {
                 "home_team": "Testo",
                 "away_team": "Pippo",
-                "home_score": 345.07,
-                "away_score": 279.27,
+                "home_score": 355.57,
+                "away_score": 313.18,
                 "was_played": false,
                 "home_lineup": "2-2-1",
                 "away_lineup": "2-2-1"
@@ -511,7 +511,7 @@
             {
                 "home_team": "Cola",
                 "away_team": "Gents",
-                "home_score": 307.27,
+                "home_score": 339.71,
                 "away_score": 354.4,
                 "was_played": false,
                 "home_lineup": "2-2-1",
@@ -819,17 +819,17 @@
                 {
                     "home_team": "ORL",
                     "away_team": "BOS",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 97,
+                    "away_score": 108,
+                    "status": "final",
                     "time": "21:30"
                 },
                 {
                     "home_team": "IND",
                     "away_team": "BKN",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 90,
+                    "away_score": 98,
+                    "status": "final",
                     "time": "23:00"
                 }
             ],
@@ -837,17 +837,17 @@
                 {
                     "home_team": "GSW",
                     "away_team": "LAC",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 124,
+                    "away_score": 112,
+                    "status": "final",
                     "time": "02:30"
                 },
                 {
                     "home_team": "LAL",
                     "away_team": "TOR",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 131,
+                    "away_score": 125,
+                    "status": "final",
                     "time": "03:00"
                 }
             ],
@@ -995,7 +995,7 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
+                "home_lineup": "1-3-1",
                 "away_lineup": "2-2-1"
             },
             {
@@ -1438,7 +1438,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cile",
@@ -1905,7 +1905,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Minghie",
@@ -2378,7 +2378,7 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
+                "home_lineup": "1-3-1",
                 "away_lineup": "2-2-1"
             },
             {
@@ -2787,7 +2787,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cola",
@@ -3075,7 +3075,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "1-3-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             }
         ],
         "nba_games": {
@@ -3321,7 +3321,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cile",
@@ -3820,7 +3820,7 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
+                "home_lineup": "1-3-1",
                 "away_lineup": "2-2-1"
             },
             {
@@ -4265,7 +4265,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cile",
@@ -4756,7 +4756,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Minghie",
@@ -5237,7 +5237,7 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
+                "home_lineup": "1-3-1",
                 "away_lineup": "2-2-1"
             },
             {
@@ -5712,7 +5712,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cola",
@@ -6222,7 +6222,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "1-3-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             }
         ],
         "nba_games": {
@@ -6678,7 +6678,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cile",
@@ -7177,7 +7177,7 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
+                "home_lineup": "1-3-1",
                 "away_lineup": "2-2-1"
             },
             {
@@ -7678,7 +7678,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cile",
@@ -8178,7 +8178,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             }
         ],
         "nba_games": {
@@ -8619,7 +8619,7 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
+                "home_lineup": "1-3-1",
                 "away_lineup": "2-2-1"
             },
             {
@@ -9094,7 +9094,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cola",
@@ -9560,7 +9560,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "1-3-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Mazen",
@@ -10060,7 +10060,7 @@
                 "away_score": 0.0,
                 "was_played": false,
                 "home_lineup": "2-2-1",
-                "away_lineup": "2-2-1"
+                "away_lineup": "1-3-1"
             },
             {
                 "home_team": "Cile",
@@ -10567,7 +10567,7 @@
                 "home_score": 0.0,
                 "away_score": 0.0,
                 "was_played": false,
-                "home_lineup": "2-2-1",
+                "home_lineup": "1-3-1",
                 "away_lineup": "2-2-1"
             },
             {
