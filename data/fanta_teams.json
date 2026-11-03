@@ -1,5 +1,5 @@
 {
-    "Bonaz_team": {
+    "Minghie": {
         "Jalen Duren": "STARTER",
         "Giannis Antetokounmpo": "STARTER",
         "Paolo Banchero": "STARTER",
@@ -8,7 +8,7 @@
         "Evan Mobley": "SIXTH",
         "Julius Randle": "BENCH",
         "Keyonte George": "BENCH",
-        "Mikal Bridges": "BENCH",
+        "Ayo Dosunmu": "BENCH",
         "Ausar Thompson": "BENCH",
         "Payton Pritchard": "RESERVE",
         "Jabari Smith Jr.": "RESERVE",
@@ -31,7 +31,7 @@
         "Desmond Bane": "RESERVE",
         "DeMar DeRozan": "RESERVE",
         "Simone Fontecchio": "RESERVE",
-        "Jusuf Nurki\u0107": "RESERVE"
+        "Mitchell Robinson": "RESERVE"
     },
     "Gents": {
         "Nikola Joki\u0107": "STARTER",
@@ -81,7 +81,7 @@
         "Matas Buzelis": "RESERVE",
         "Dylan Harper": "RESERVE",
         "Jonathan Kuminga": "RESERVE",
-        "Egor D\u00ebmin": "RESERVE",
+        "Cedric Coward": "RESERVE",
         "Cameron Boozer": "RESERVE"
     },
     "Testo": {
@@ -99,7 +99,7 @@
         "Coby White": "RESERVE",
         "AJ Dybantsa": "RESERVE",
         "Darryn Peterson": "RESERVE",
-        "Ryan Rollins": "RESERVE"
+        "Darius Acuff Jr.": "RESERVE"
     },
     "Freezer": {
         "Karl-Anthony Towns": "STARTER",
@@ -133,6 +133,6 @@
         "Ivica Zubac": "RESERVE",
         "Aday Mara": "RESERVE",
         "Yaxel Lendeborg": "RESERVE",
-        "Marvin Bagley III": "RESERVE"
+        "Davion Mitchell": "RESERVE"
     }
 }
