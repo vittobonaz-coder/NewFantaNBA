@@ -484,7 +484,7 @@
             {
                 "home_team": "Freezer",
                 "away_team": "Minghie",
-                "home_score": 256.27,
+                "home_score": 302.69,
                 "away_score": 379.2,
                 "was_played": false,
                 "home_lineup": "2-2-1",
@@ -493,8 +493,8 @@
             {
                 "home_team": "Testo",
                 "away_team": "Pippo",
-                "home_score": 355.57,
-                "away_score": 313.18,
+                "home_score": 378.92,
+                "away_score": 323.49,
                 "was_played": false,
                 "home_lineup": "2-2-1",
                 "away_lineup": "2-2-1"
@@ -502,8 +502,8 @@
             {
                 "home_team": "Cile",
                 "away_team": "Mazen",
-                "home_score": 338.3,
-                "away_score": 322.39,
+                "home_score": 359.78,
+                "away_score": 353.98,
                 "was_played": false,
                 "home_lineup": "2-2-1",
                 "away_lineup": "2-2-1"
@@ -511,10 +511,10 @@
             {
                 "home_team": "Cola",
                 "away_team": "Gents",
-                "home_score": 339.71,
-                "away_score": 354.4,
+                "home_score": 416.13,
+                "away_score": 360.77,
                 "was_played": false,
-                "home_lineup": "2-2-1",
+                "home_lineup": "2-1-2",
                 "away_lineup": "2-2-1"
             }
         ],
@@ -855,121 +855,121 @@
                 {
                     "home_team": "CLE",
                     "away_team": "OKC",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 112,
+                    "away_score": 117,
+                    "status": "final",
                     "time": "01:00"
                 },
                 {
                     "home_team": "CHA",
                     "away_team": "DET",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 91,
+                    "away_score": 124,
+                    "status": "final",
                     "time": "01:30"
                 },
                 {
                     "home_team": "IND",
                     "away_team": "ATL",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 104,
+                    "away_score": 108,
+                    "status": "final",
                     "time": "01:30"
                 },
                 {
                     "home_team": "NYK",
                     "away_team": "BKN",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 103,
+                    "away_score": 90,
+                    "status": "final",
                     "time": "01:30"
                 },
                 {
                     "home_team": "ORL",
                     "away_team": "WAS",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 94,
+                    "away_score": 103,
+                    "status": "final",
                     "time": "01:30"
                 },
                 {
                     "home_team": "PHI",
                     "away_team": "CHI",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 126,
+                    "away_score": 107,
+                    "status": "final",
                     "time": "01:30"
                 },
                 {
                     "home_team": "DAL",
                     "away_team": "SAC",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 100,
+                    "away_score": 115,
+                    "status": "final",
                     "time": "02:00"
                 },
                 {
                     "home_team": "MEM",
                     "away_team": "NOP",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 134,
+                    "away_score": 135,
+                    "status": "final",
                     "time": "02:00"
                 },
                 {
                     "home_team": "MIN",
                     "away_team": "MIL",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 112,
+                    "away_score": 100,
+                    "status": "final",
                     "time": "02:00"
                 },
                 {
                     "home_team": "HOU",
                     "away_team": "BOS",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 109,
+                    "away_score": 93,
+                    "status": "final",
                     "time": "02:30"
                 },
                 {
                     "home_team": "SAS",
                     "away_team": "UTA",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 119,
+                    "away_score": 97,
+                    "status": "final",
                     "time": "02:30"
                 },
                 {
                     "home_team": "DEN",
                     "away_team": "POR",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 110,
+                    "away_score": 118,
+                    "status": "final",
                     "time": "03:00"
                 },
                 {
                     "home_team": "GSW",
                     "away_team": "PHX",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 116,
+                    "away_score": 113,
+                    "status": "final",
                     "time": "04:00"
                 },
                 {
                     "home_team": "LAC",
                     "away_team": "TOR",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 118,
+                    "away_score": 125,
+                    "status": "final",
                     "time": "04:00"
                 },
                 {
                     "home_team": "LAL",
                     "away_team": "MIA",
-                    "home_score": null,
-                    "away_score": null,
-                    "status": "scheduled",
+                    "home_score": 138,
+                    "away_score": 117,
+                    "status": "final",
                     "time": "04:00"
                 }
             ]

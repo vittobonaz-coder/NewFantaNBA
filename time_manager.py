@@ -1,3 +1,4 @@
+import os
 from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -93,7 +94,27 @@ class TimeManager:
             next_round = upcoming[0]
             eve = date.fromisoformat(next_round["start_date"]) - timedelta(days=1)
             context.update(edit_gw=next_round["round_number"], deadline=cls.rollover_instant(eve))
+
+        # Deroga: cambi riaperti sulla giornata in corso fino all'orario indicato
+        override = cls.edit_override()
+        if override and context["current_gw"] == override[0] and now < override[1]:
+            context.update(edit_gw=override[0], deadline=override[1])
         return context
+
+    @staticmethod
+    def edit_override() -> tuple[int, datetime] | None:
+        """
+        Riapertura straordinaria dei cambi per la giornata in corso, da variabili d'ambiente:
+        EDIT_OVERRIDE_GW=3, EDIT_OVERRIDE_UNTIL=2026-11-04 23:59 (ora italiana).
+        """
+        gw, until = os.environ.get("EDIT_OVERRIDE_GW"), os.environ.get("EDIT_OVERRIDE_UNTIL")
+        if not gw or not until:
+            return None
+        try:
+            return int(gw), datetime.fromisoformat(until).replace(tzinfo=ITA_TZ).astimezone(UTC)
+        except ValueError:
+            print(f"EDIT_OVERRIDE non valido: {gw!r} / {until!r}")
+            return None
 
     @staticmethod
     def get_today_str(fmt: str = "%Y-%m-%d") -> str:

@@ -176,7 +176,7 @@ async def main(page: ft.Page) -> None:
         page.clean()
         page.add(MainDashboard(
             user={"id": user_data["id"], "username": user_data["username"], "token": token}, team_row=team_row,
-            current_team=teams.get(current_gw), current_gw=current_gw,
+            current_team=teams.get(current_gw) if current_gw != league["edit_gw"] else None, current_gw=current_gw,
             edit_team=teams.get(league["edit_gw"]), edit_gw=league["edit_gw"],
             edit_deadline=league["deadline"],
             league_loader=league_loader,
