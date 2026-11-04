@@ -466,12 +466,12 @@ class Court(ft.Column):
         if self.loading:
             await self.loading.show()
         try:
-            saved = await asyncio.to_thread(self._push_lineup)
+            error = await asyncio.to_thread(self._push_lineup)
         finally:
             if self.loading:
                 self.loading.hide()
-        if not saved:
-            self.show_message("Errore nel salvataggio della formazione, riprova", "red")
+        if error:
+            self.show_message(error, "red")
             return
 
         self.team.save_to_json()
@@ -480,28 +480,45 @@ class Court(ft.Column):
         self.toggle_buttons(False)
         self.show_message(f"Formazione di {self.team.name} salvata!", "green")
 
-    def _push_lineup(self) -> bool:
+    def _push_lineup(self) -> str | None:
         """
         Scrive rosa e formazione su Supabase (eseguito in un thread: niente UI qui).
         Il client è quello condiviso (connessione già aperta); gli UPDATE della formazione e dei moduli
-        partono in parallelo: in tutto 4 giri di richieste invece di 33 in fila.
+        partono in parallelo. Restituisce None se il salvataggio è riuscito, altrimenti il messaggio d'errore.
         """
         from supabase_manager import SupabaseSync
 
+        generic_error = "Errore nel salvataggio della formazione, riprova"
         sync = SupabaseSync()
         try:
             team_id = self.team_id or sync.get_team_id_by_name(self.team.name)
+            if not team_id:
+                return generic_error
+            # La rosa in app deve coincidere con quella su Supabase: se nel frattempo è cambiata
+            # (es. swap_players.py) gli UPDATE per ID lascerebbero la formazione a metà. Niente scritture:
+            # si cancella la copia locale, così al prossimo caricamento viene riscaricata.
+            db_ids = sync.get_lineup_player_ids(team_id, self.gameweek)
+            app_ids = {p.id for p in self.team.players}
+            if db_ids != app_ids:
+                print(f"Rosa di {self.team.name} non aggiornata (GW {self.gameweek}): "
+                      f"solo in app {sorted(app_ids - db_ids)}, solo su Supabase {sorted(db_ids - app_ids)}")
+                try:
+                    os.remove(self.team.filename)
+                except OSError:
+                    pass
+                return "La tua rosa è cambiata: ricarica la pagina e rifai i cambi"
+
             sync.update_roster_positions(self.team, team_id)
             # Tutti i giocatori, dalla giornata modificabile in poi (mai quella in corso):
             # riallinea anche eventuali righe disallineate delle giornate future
             if not sync.update_lineup_slots(self.team, self.gameweek, team_id=team_id):
-                return False
+                return generic_error
             # Modulo in matchups, con la stessa regola: le giornate passate restano come storico
             sync.update_team_lineup(team_id, self.gameweek, self.team.lineup)
-            return True
+            return None
         except Exception as ex:
             print(f"Errore durante il salvataggio della formazione: {ex}")
-            return False
+            return generic_error
 
     async def handle_card_click(self, e):
         """Dettaglio delle partite del giocatore toccato, con il velo di caricamento finché non si apre."""

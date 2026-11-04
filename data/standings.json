@@ -2,7 +2,11 @@
     {
         "fanta_team_id": "2d6ebc93-e115-42c3-b9b8-8c6dc97e09df",
         "team_name": "Cola",
+<<<<<<< Updated upstream
         "played": 1,
+=======
+        "played": 2,
+>>>>>>> Stashed changes
         "wins": 2,
         "losses": 0,
         "total_score": 832.68,
@@ -13,7 +17,7 @@
     {
         "fanta_team_id": "d97fa18d-a8b3-496a-bb56-f2282c125716",
         "team_name": "Pippo",
-        "played": 1,
+        "played": 2,
         "wins": 1,
         "losses": 1,
         "total_score": 773.24,
@@ -24,7 +28,11 @@
     {
         "fanta_team_id": "491c4b46-1483-4527-8b97-26017d17a476",
         "team_name": "Cile",
+<<<<<<< Updated upstream
         "played": 1,
+=======
+        "played": 2,
+>>>>>>> Stashed changes
         "wins": 1,
         "losses": 1,
         "total_score": 742.81,
@@ -35,7 +43,11 @@
     {
         "fanta_team_id": "391f1683-fac7-435c-8b48-457e5117fc30",
         "team_name": "Minghie",
+<<<<<<< Updated upstream
         "played": 1,
+=======
+        "played": 2,
+>>>>>>> Stashed changes
         "wins": 1,
         "losses": 1,
         "total_score": 741.59,
@@ -46,7 +58,7 @@
     {
         "fanta_team_id": "c0152cdd-4318-4ee7-a982-b75db4a10ec4",
         "team_name": "Testo",
-        "played": 1,
+        "played": 2,
         "wins": 1,
         "losses": 1,
         "total_score": 726.39,
@@ -57,7 +69,7 @@
     {
         "fanta_team_id": "b8160e15-a779-4464-9168-3dde60c9b539",
         "team_name": "Mazen",
-        "played": 1,
+        "played": 2,
         "wins": 1,
         "losses": 1,
         "total_score": 723.48,
@@ -68,7 +80,11 @@
     {
         "fanta_team_id": "78ab202d-9e35-44c8-994b-39748e123384",
         "team_name": "Gents",
+<<<<<<< Updated upstream
         "played": 1,
+=======
+        "played": 2,
+>>>>>>> Stashed changes
         "wins": 1,
         "losses": 1,
         "total_score": 714.56,
@@ -79,7 +95,7 @@
     {
         "fanta_team_id": "96aab004-e06a-4b5a-a188-6034afa89f8b",
         "team_name": "Freezer",
-        "played": 1,
+        "played": 2,
         "wins": 0,
         "losses": 2,
         "total_score": 653.18,

@@ -1182,15 +1182,49 @@ class SupabaseSync:
         except Exception as e:
             print(f"Impossibile registrare il run in cron_runs: {e}")
 
+    def mark_data_changed(self) -> bool:
+        """
+        Segnala alle app che i dati su Supabase sono cambiati fuori dal cron (es. swap_players.py):
+        registra un run "manual" in cron_runs, così al prossimo accesso riscaricano formazioni e calendario.
+        Richiede sql/2026-11_cron_runs_manual.sql. Restituisce False se la scrittura non riesce.
+        """
+        try:
+            self.supabase.table("cron_runs").upsert({
+                "mode": "manual",
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "ok": True,
+            }).execute()
+            return True
+        except Exception as e:
+            print(f"Impossibile registrare la modifica in cron_runs: {e}")
+            return False
+
+    def get_lineup_player_ids(self, team_id: str, gameweek: int) -> set[int]:
+        """ID NBA dei giocatori della squadra in lineup_players per la gameweek (la rosa attuale su Supabase)."""
+        rows = (
+            self.supabase.table("lineup_players")
+            .select("nba_player_id")
+            .eq("fanta_team_id", team_id)
+            .eq("gameweek", gameweek)
+            .execute()
+        ).data or []
+        return {int(r["nba_player_id"]) for r in rows}
+
     def update_roster_positions(self, team: Team, team_id: str) -> None:
-        """Aggiorna solo assigned_position in rosters (nba_players non si tocca: la tiene allineata il cron)."""
-        rows = [{
-            "fanta_team_id": team_id,
-            "nba_player_id": p.id,
-            "player_name": p.name,
-            "assigned_position": team.roles_map[p.id],
-        } for p in team.players]
-        self.supabase.table("rosters").upsert(rows, on_conflict="nba_player_id").execute()
+        """
+        Aggiorna solo assigned_position in rosters (nba_players non si tocca: la tiene allineata il cron).
+        Solo UPDATE delle righe già della squadra: un giocatore che non è più in rosa non viene mai
+        reinserito né tolto a un'altra squadra (come poteva fare l'upsert con una rosa non aggiornata).
+        Gli UPDATE partono in parallelo, come in update_lineup_slots.
+        """
+        def update(p: Player):
+            return lambda: self.supabase.table("rosters") \
+                .update({"assigned_position": team.roles_map[p.id]}) \
+                .eq("fanta_team_id", team_id) \
+                .eq("nba_player_id", p.id) \
+                .execute()
+
+        run_parallel([update(p) for p in team.players])
 
     def get_team_lineups(self, gameweek: int) -> dict[str, str | None]:
         """Modulo di ogni fanta-squadra nella gameweek, da matchups: {team_id: modulo} (None se non salvato)."""

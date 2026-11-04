@@ -13,6 +13,7 @@ Cosa viene modificato:
 - data/fanta_teams.json (anche i nomi delle squadre rinominate dall'app), data/<squadra>_info.json, data/<squadra>_state.json,
   data/<squadra>_gw<N>_state.json delle giornate da --from-gw in poi, data/nba_to_espn_players.json
 - assets/players/<id>.png: foto del nuovo giocatore
+- cron_runs: un run "manual", così le app online riscaricano le formazioni al prossimo accesso
 I punteggi passati restano invariati: le giornate precedenti a --from-gw (righe di lineup_players, matchups,
 file locali) continuano a riferirsi al vecchio giocatore, che resta anche in nba_players.
 
@@ -248,6 +249,10 @@ def main():
             .execute().data or []
         print(f"Supabase: {s['old_name']} -> {new.name} (rosters + {len(rows)} righe di lineup_players)")
 
+    # Le app online tengono una copia locale delle formazioni: segnaliamo la modifica, così al prossimo
+    # accesso la riscaricano invece di salvare cambi su una rosa vecchia
+    data_marked = sync.mark_data_changed()
+
     # 4. File locali, mappa NBA -> ESPN (usata dal cron per i tabellini) e foto
     update_local_files(args.team, from_gw, swaps)
     not_mapped = NbaDataManager(player_ids=[]).map_missing_players({s["new_id"]: s["new_player"].name for s in swaps})
@@ -256,7 +261,11 @@ def main():
     for s in swaps:
         download_avatar(s["new_id"])
 
-    print("\nSostituzioni completate. L'app online riscarica le formazioni dopo il prossimo run del cron.")
+    if data_marked:
+        print("\nSostituzioni completate. L'app online riscarica le formazioni al prossimo accesso.")
+    else:
+        print("\nSostituzioni completate, ma l'app online non è stata avvisata (manca sql/2026-11_cron_runs_manual.sql?):"
+              "\nriscarica le formazioni solo dopo il prossimo run del cron. Lancia a mano il cron daily da GitHub Actions.")
 
 
 if __name__ == "__main__":
