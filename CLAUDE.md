@@ -19,7 +19,7 @@ App per gestire un campionato privato di fantabasket NBA: una decina di squadre 
 
 ## Lavoro in corso
 
-Migrazione ad **app nativa con `flet build`** (Android e Windows). Il piano a fasi e lo stato di avanzamento sono in `docs/piano_migrazione_C1.md`: leggilo all'inizio di ogni sessione che riguarda la migrazione.
+Migrazione ad **app nativa con `flet build`**. Android e Windows sono entrambe piattaforme obbligatorie: ogni modifica va verificata su tutte e due (dettagli nella sezione "Piattaforme" del piano). Il piano a fasi e lo stato di avanzamento sono in `docs/piano_migrazione_C1.md`: leggilo all'inizio di ogni sessione che riguarda la migrazione.
 
 ## Regole di lavoro
 

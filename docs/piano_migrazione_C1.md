@@ -15,6 +15,16 @@ Con **`flet build`** lo stesso codice Python gira sul dispositivo (Android e Win
 
 App nativa **veloce e fluida**: avvio rapido, interazioni senza attese, al massimo 1-2 richieste a Supabase al login, nessun server applicativo. La versione web su Render resta attiva, con lo stesso codice.
 
+## Piattaforme (requisito, non facoltativo)
+
+L'app deve essere pienamente utilizzabile **sia da telefono Android sia da PC Windows**: stesse funzioni, stessi dati, stesso account.
+
+- **Windows è una piattaforma principale, non un ripiego.** Ogni fase si considera conclusa solo se è verificata sia su Android sia sull'app Windows (`flet build windows`).
+- **Layout desktop:** finestra ridimensionabile e massimizzabile, contenuto leggibile su schermi larghi (non una striscia da telefono stirata), uso con mouse e tastiera (Invio per confermare il login, rotellina per scorrere, niente azioni raggiungibili solo con gesti touch).
+- **Dati e accesso su Windows:** cache nella cartella dati dell'utente (es. `%APPDATA%`), non nella cartella del programma. Il "Ricordami" deve funzionare anche sul desktop. Installazione e avvio senza diritti di amministratore.
+- **Mac e Linux:** non obbligatori. Se servissero, `flet build macos` richiede un Mac: solo un report su cosa servirebbe.
+- **Riserva:** da qualunque PC resta sempre utilizzabile anche la versione web su Render, dal browser.
+
 Già fatto in un'analisi precedente (ottobre 2026): client Supabase unico, salvataggio formazione in parallelo, tab costruiti alla prima apertura.
 
 Situazione da tenere presente:
@@ -32,7 +42,7 @@ Situazione da tenere presente:
    - Se non compila, confronta:
      a) chiamate dirette all'API REST di Supabase (PostgREST e RPC) con `httpx` o `requests`, con un piccolo modulo che sostituisce le poche funzioni di supabase-py usate dall'app;
      b) altre versioni dei pacchetti.
-4. Misura l'avvio a freddo della mini-app sul telefono (dal tocco dell'icona alla prima schermata).
+4. Misura l'avvio a freddo della mini-app sul telefono (dal tocco dell'icona alla prima schermata) e sul PC Windows (dal doppio clic alla prima schermata).
 5. Dimmi cosa serve installare sul mio PC Windows per compilare (Flutter SDK, Android SDK/JDK, Visual Studio per Windows) e se conviene compilare su GitHub Actions invece che in locale.
 
 **Fine fase:** report di fattibilità e scelta del client Supabase.
@@ -77,7 +87,7 @@ Situazione da tenere presente:
    - `main.py` resta solo per Render; l'app nativa ha il suo punto d'ingresso;
    - aggiungi `pyproject.toml` per `flet build`: nome, versione, icona, dipendenze, permesso di rete Android.
 4. **Interfaccia:**
-   - finestra non fissa a 358×757 sul desktop;
+   - finestra non fissa a 358×757 sul desktop: layout adattivo per PC secondo la sezione "Piattaforme";
    - layout corretto su telefoni di dimensioni diverse;
    - tasto Indietro su Android;
    - ripresa dal background: dati vecchi → aggiornamento silenzioso.
@@ -85,7 +95,7 @@ Situazione da tenere presente:
 
 ### Fase 4 — Fluidità dell'interfaccia (ora la CPU è quella del telefono)
 
-1. Misura sul telefono login, apertura dei tab e scambio di giocatori, e individua cosa costa di più.
+1. Misura sul telefono e sul PC Windows login, apertura dei tab e scambio di giocatori, e individua cosa costa di più.
 2. **Menu di scambio:** `refresh_menus` crea circa 150 `PopupMenuItem` per formazione e li ricrea a ogni scambio, e `update_data` ricostruisce tutta la card. Proponi e implementa l'alternativa migliore:
    - interazione "tocca A, poi tocca B";
    - oppure aggiornamento solo delle card cambiate, modificando i controlli esistenti.
