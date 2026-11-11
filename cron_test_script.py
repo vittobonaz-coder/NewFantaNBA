@@ -7,7 +7,8 @@ Cron job dei punteggi (GitHub Actions, lanciato da Supabase pg_cron).
                                         (lanciato alle 21:59 e alle 22:59 UTC, prosegue solo dalle 23:59)
   python cron_test_script.py injuries   ogni sera (21:10 e 22:10 UTC): aggiorna gli infortuni da ESPN
 
-Sostituzioni automatiche (titolari mai scesi in campo sostituiti dai panchinari che hanno giocato):
+Sostituzione automatica (al massimo una per squadra: un titolare o il sesto uomo mai scesi in campo
+  sostituito dal primo giocatore della tribuna, in ordine di slot, che ha giocato ed è compatibile):
   eseguite dal daily che elabora l'ultima data NBA della giornata (se tutte le partite di quella data
   sono concluse), così gli utenti vedono subito formazione e punteggio finali; la chiusura della
   giornata le ripete comunque (senza effetto se già fatte).
@@ -28,8 +29,8 @@ import time
 from datetime import date, datetime, timedelta, timezone
 
 from api_nba import NbaDataManager, NBA_TO_ESPN_TEAM, ESPN_TO_NBA_TEAM, normalize_name
-from fanta_obj import Player, Team, ROLE_MULTIPLIERS, ROSTER_SIZE, DEFAULT_LINEUP, STARTER_SLOTS, BENCH_SLOTS, \
-    find_auto_substitutions
+from fanta_obj import Player, Team, ROLE_MULTIPLIERS, ROSTER_SIZE, DEFAULT_LINEUP, LINEUP_ROLES, STARTER_SLOTS, \
+    SIXTH_SLOT, RESERVE_SLOTS, find_auto_substitutions, infer_lineup
 from supabase_manager import SupabaseSync
 from time_manager import TimeManager, ITA_TZ
 
@@ -201,10 +202,11 @@ def process_nba_date(sync: SupabaseSync, manager: NbaDataManager, nba_date: str,
 
 def apply_substitutions(sync: SupabaseSync, gameweek: int, dry_run: bool, rows: list[dict] | None = None) -> list[str]:
     """
-    Sostituzioni automatiche di fine giornata (fanta_obj.find_auto_substitutions), squadra per squadra:
-    i titolari mai scesi in campo nella giornata vengono sostituiti dai panchinari che hanno giocato,
-    se il modulo lo permette (anche cambiandolo). Scrive solo la giornata indicata. Restituisce gli errori.
-    Rilanciarla non fa nulla: dopo le sostituzioni tra i titolari non resta nessun assente sostituibile.
+    Sostituzione automatica di fine giornata (fanta_obj.find_auto_substitutions), squadra per squadra:
+    al massimo un cambio, tra un titolare o il sesto uomo mai scesi in campo e il primo giocatore della
+    tribuna (in ordine di slot) che ha giocato ed è compatibile. Il modulo non cambia.
+    Scrive solo la giornata indicata. Restituisce gli errori.
+    Rilanciarla non fa nulla: con un cambio già fatto (auto_sub) la squadra viene saltata.
     rows: righe già lette (rows_cache di process_nba_date); vengono aggiornate con slot, ruoli e auto_sub
     nuovi, così i totali calcolati subito dopo sono quelli giusti anche in dry-run.
     """
@@ -222,35 +224,39 @@ def apply_substitutions(sync: SupabaseSync, gameweek: int, dry_run: bool, rows: 
         team_rows.sort(key=lambda r: r["slot"])
         roles = [r["role"] for r in team_rows]
         if [r["slot"] for r in team_rows] != list(range(1, ROSTER_SIZE + 1)) \
-                or any(roles[i] != "STARTER" for i in STARTER_SLOTS) or any(roles[i] != "BENCH" for i in BENCH_SLOTS):
-            errors.append(f"GW {gameweek}, {name}: slot o ruoli inattesi, sostituzioni automatiche saltate")
+                or any(roles[i] != "STARTER" for i in STARTER_SLOTS) or roles[SIXTH_SLOT] != "SIXTH" \
+                or any(roles[i] != "RESERVE" for i in RESERVE_SLOTS):
+            errors.append(f"GW {gameweek}, {name}: slot o ruoli inattesi, sostituzione automatica saltata")
             continue
 
         players = [Player(id=int(r["nba_player_id"]), name=r["player_name"],
                           position=(r.get("nba_players") or {}).get("position", ""),
-                          entered_game=bool(r.get("entered_game")))
+                          entered_game=bool(r.get("entered_game")), auto_sub=r.get("auto_sub"))
                    for r in team_rows]
-        current = lineups.get(team_id) or DEFAULT_LINEUP
-        result = find_auto_substitutions(players, current)
-        if result is None:
-            absent = [p.name for i, p in enumerate(players) if i in STARTER_SLOTS and not p.entered_game]
-            if absent:
-                print(f"GW {gameweek}, {name}: titolari mai scesi in campo {absent}, nessuna sostituzione possibile")
+        if any(p.auto_sub for p in players):
+            continue  # cambio già fatto (es. dal daily dell'ultima data): uno solo per giornata
+
+        # Modulo della giornata: quello salvato se i titolari lo rispettano, altrimenti ricavato da loro
+        lineup = infer_lineup(players[:len(STARTER_SLOTS)], lineups.get(team_id) or DEFAULT_LINEUP)
+        if lineup is None:
+            errors.append(f"GW {gameweek}, {name}: i titolari non rispettano nessun modulo, sostituzione saltata")
             continue
 
-        ins = {players[i].id for _, i in result["swaps"]}
-        outs = {players[o].id for o, _ in result["swaps"]}
-        for o, i in result["swaps"]:
-            print(f"GW {gameweek}, {name}: esce {players[o].name}, entra {players[i].name}")
-        if result["lineup"] != current:
-            print(f"GW {gameweek}, {name}: modulo {current} -> {result['lineup']}")
+        result = find_auto_substitutions(players, lineup)
+        absent = [players[i].name for i in (*STARTER_SLOTS, SIXTH_SLOT) if not players[i].entered_game]
+        if result is None:
+            if absent:
+                print(f"GW {gameweek}, {name}: mai scesi in campo {absent}, nessun giocatore compatibile in tribuna")
+            continue
 
-        changes = [{
-            "nba_player_id": players[src].id,
-            "slot": slot + 1,
-            "role": roles[slot],  # il ruolo è quello dello slot di arrivo
-            "auto_sub": "IN" if players[src].id in ins else "OUT" if players[src].id in outs else None,
-        } for slot, src in enumerate(result["order"]) if src != slot]
+        out_i, in_i = result["out"], result["in"]
+        where = f"titolare, slot {LINEUP_ROLES[lineup][out_i]}" if out_i in STARTER_SLOTS else "sesto uomo"
+        print(f"GW {gameweek}, {name}: esce {players[out_i].name} ({where}), entra {players[in_i].name} dalla tribuna")
+
+        changes = [
+            {"nba_player_id": players[in_i].id, "slot": out_i + 1, "role": roles[out_i], "auto_sub": "IN"},
+            {"nba_player_id": players[out_i].id, "slot": in_i + 1, "role": roles[in_i], "auto_sub": "OUT"},
+        ]
         row_by_id = {int(r["nba_player_id"]): r for r in team_rows}
         for c in changes:
             row_by_id[c["nba_player_id"]].update(slot=c["slot"], role=c["role"], auto_sub=c["auto_sub"])
@@ -258,10 +264,8 @@ def apply_substitutions(sync: SupabaseSync, gameweek: int, dry_run: bool, rows: 
             continue
         try:
             sync.apply_gameweek_substitutions(team_id, gameweek, changes)
-            if result["lineup"] != current:
-                sync.update_team_lineup(team_id, gameweek, result["lineup"], following=False)
         except Exception as e:
-            errors.append(f"GW {gameweek}, {name}: sostituzioni automatiche non scritte ({e})")
+            errors.append(f"GW {gameweek}, {name}: sostituzione automatica non scritta ({e})")
     return errors
 
 

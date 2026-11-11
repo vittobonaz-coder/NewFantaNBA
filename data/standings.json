@@ -1,90 +1,90 @@
 [
     {
-        "fanta_team_id": "2d6ebc93-e115-42c3-b9b8-8c6dc97e09df",
-        "team_name": "Cola",
-        "played": 1,
-        "wins": 2,
-        "losses": 0,
-        "total_score": 832.68,
-        "total_points_against": 743.8,
-        "best_scores": 1,
-        "standing_points": 2.2
-    },
-    {
         "fanta_team_id": "d97fa18d-a8b3-496a-bb56-f2282c125716",
         "team_name": "Pippo",
-        "played": 1,
-        "wins": 1,
+        "played": 3,
+        "wins": 3,
         "losses": 1,
-        "total_score": 773.24,
-        "total_points_against": 741.31,
+        "total_score": 1234.31,
+        "total_points_against": 1148.36,
         "best_scores": 1,
-        "standing_points": 1.2
-    },
-    {
-        "fanta_team_id": "491c4b46-1483-4527-8b97-26017d17a476",
-        "team_name": "Cile",
-        "played": 1,
-        "wins": 1,
-        "losses": 1,
-        "total_score": 742.81,
-        "total_points_against": 770.53,
-        "best_scores": 0,
-        "standing_points": 1.0
-    },
-    {
-        "fanta_team_id": "391f1683-fac7-435c-8b48-457e5117fc30",
-        "team_name": "Minghie",
-        "played": 1,
-        "wins": 1,
-        "losses": 1,
-        "total_score": 741.59,
-        "total_points_against": 752.44,
-        "best_scores": 0,
-        "standing_points": 1.0
-    },
-    {
-        "fanta_team_id": "c0152cdd-4318-4ee7-a982-b75db4a10ec4",
-        "team_name": "Testo",
-        "played": 1,
-        "wins": 1,
-        "losses": 1,
-        "total_score": 726.39,
-        "total_points_against": 677.28,
-        "best_scores": 0,
-        "standing_points": 1.0
+        "standing_points": 3.2
     },
     {
         "fanta_team_id": "b8160e15-a779-4464-9168-3dde60c9b539",
         "team_name": "Mazen",
-        "played": 1,
-        "wins": 1,
+        "played": 3,
+        "wins": 3,
         "losses": 1,
-        "total_score": 723.48,
-        "total_points_against": 710.27,
-        "best_scores": 0,
-        "standing_points": 1.0
+        "total_score": 1206.96,
+        "total_points_against": 1170.95,
+        "best_scores": 1,
+        "standing_points": 3.2
     },
     {
-        "fanta_team_id": "78ab202d-9e35-44c8-994b-39748e123384",
-        "team_name": "Gents",
-        "played": 1,
-        "wins": 1,
+        "fanta_team_id": "c0152cdd-4318-4ee7-a982-b75db4a10ec4",
+        "team_name": "Testo",
+        "played": 3,
+        "wins": 3,
         "losses": 1,
-        "total_score": 714.56,
-        "total_points_against": 763.6,
+        "total_score": 1182.55,
+        "total_points_against": 1097.44,
         "best_scores": 0,
-        "standing_points": 1.0
+        "standing_points": 3.0
+    },
+    {
+        "fanta_team_id": "2d6ebc93-e115-42c3-b9b8-8c6dc97e09df",
+        "team_name": "Cola",
+        "played": 3,
+        "wins": 2,
+        "losses": 2,
+        "total_score": 1229.05,
+        "total_points_against": 1198.71,
+        "best_scores": 1,
+        "standing_points": 2.2
+    },
+    {
+        "fanta_team_id": "491c4b46-1483-4527-8b97-26017d17a476",
+        "team_name": "Cile",
+        "played": 3,
+        "wins": 2,
+        "losses": 2,
+        "total_score": 1177.52,
+        "total_points_against": 1219.78,
+        "best_scores": 0,
+        "standing_points": 2.0
+    },
+    {
+        "fanta_team_id": "391f1683-fac7-435c-8b48-457e5117fc30",
+        "team_name": "Minghie",
+        "played": 3,
+        "wins": 2,
+        "losses": 2,
+        "total_score": 1174.56,
+        "total_points_against": 1173.37,
+        "best_scores": 0,
+        "standing_points": 2.0
     },
     {
         "fanta_team_id": "96aab004-e06a-4b5a-a188-6034afa89f8b",
         "team_name": "Freezer",
-        "played": 1,
-        "wins": 0,
-        "losses": 2,
-        "total_score": 653.18,
-        "total_points_against": 748.7,
+        "played": 3,
+        "wins": 1,
+        "losses": 3,
+        "total_score": 1122.12,
+        "total_points_against": 1137.48,
+        "best_scores": 1,
+        "standing_points": 1.2
+    },
+    {
+        "fanta_team_id": "78ab202d-9e35-44c8-994b-39748e123384",
+        "team_name": "Gents",
+        "played": 3,
+        "wins": 1,
+        "losses": 3,
+        "total_score": 1087.92,
+        "total_points_against": 1268.9,
         "best_scores": 0,
-        "standing_points": 0.0
+        "standing_points": 1.0
     }
 ]

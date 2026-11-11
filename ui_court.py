@@ -5,7 +5,7 @@ import json
 import asyncio
 from datetime import datetime
 from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS, LINEUP_ROLES, find_starter_assignment, infer_lineup, \
-    find_auto_substitutions, STARTER_SLOTS
+    find_auto_substitutions, STARTER_SLOTS, SIXTH_SLOT
 from time_manager import TimeManager, ITA_TZ
 
 
@@ -315,7 +315,7 @@ class Court(ft.Column):
         # CARDS (con le partite NBA della giornata, mostrate sotto la squadra e al tocco)
         schedules = load_team_schedules(gameweek)
         injuries = load_injuries()
-        sub_hints = self.compute_sub_hints(schedules)
+        sub_hints = self.compute_sub_hints(schedules, injuries)
         self.cards = []
         ordered_players = self.team.players
         for i, p in enumerate(ordered_players):
@@ -388,32 +388,43 @@ class Court(ft.Column):
         self.refresh_ui_and_data()
 
 
-    def compute_sub_hints(self, schedules: dict[str, list[dict]]) -> dict[int, str]:
+    def compute_sub_hints(self, schedules: dict[str, list[dict]], injuries: dict[str, dict]) -> dict[int, str]:
         """
-        Frecce delle sostituzioni automatiche di fine giornata: {ID NBA: "IN"/"OUT"}.
-        - Già eseguite dal cron (dopo l'ultima data della giornata): auto_sub salvato in lineup_players.
-        - Giornata in corso (cambi chiusi): sostituzioni programmate, con la stessa regola del cron sui dati
-          attuali: ogni titolare con un DNP (punteggio 0.0, mai sceso in campo) e il panchinaro (già sceso
-          in campo) che lo sostituirebbe. Finché la sua squadra non ha giocato (punteggio "-") il titolare
-          non viene considerato assente; se poi gioca, al successivo aggiornamento la freccia sparisce.
+        Frecce della sostituzione automatica di fine giornata (al massimo una): {ID NBA: "IN"/"OUT"}.
+        - Già eseguita dal cron (dopo l'ultima data della giornata): auto_sub salvato in lineup_players.
+        - Giornata in corso (cambi chiusi): sostituzione programmata, con la regola del cron sui dati attuali.
+          Assente: titolare o sesto uomo mai sceso in campo che ha un DNP (punteggio 0.0) oppure è OUT; col
+          punteggio "-" (squadra non ancora scesa in campo) e senza OUT non è assente. Candidati della tribuna: chi ha già giocato e
+          anche chi deve ancora giocare (ha partite rimaste nella giornata), tranne chi è OUT.
+          Le frecce cambiano o spariscono ai successivi aggiornamenti (l'assente gioca, il candidato non gioca...).
         Nessuna freccia nella formazione ancora modificabile.
         """
         saved = {p.id: p.auto_sub for p in self.team.players if p.auto_sub in ("IN", "OUT")}
         if saved or self.editable:
             return saved
 
-        # Un titolare col punteggio "-" (squadra non ancora scesa in campo) non è assente: niente freccia
-        preview = [Player(id=p.id, position=p.position,
-                          entered_game=p.entered_game or (i in STARTER_SLOTS and not has_played(p.score)))
+        def has_games_left(p: Player) -> bool:
+            return any(g.get("status") not in ("final", "postponed") for g in schedules.get(p.team_abbreviation, []))
+
+        def can_enter(p: Player) -> bool:
+            if p.entered_game:
+                return True
+            return has_games_left(p) and not is_out(p)
+
+        def is_out(p: Player) -> bool:
+            return injury_label(injuries.get(str(p.id))) == "OUT"
+
+        # Titolare / sesto uomo assente: mai sceso in campo e con un DNP oppure OUT (anche col punteggio "-")
+        absent_slots = (*STARTER_SLOTS, SIXTH_SLOT)
+        preview = [Player(id=p.id, team_abbreviation=p.team_abbreviation, position=p.position,
+                          entered_game=p.entered_game
+                          or (i in absent_slots and not has_played(p.score) and not is_out(p)))
                    for i, p in enumerate(self.team.players)]
-        result = find_auto_substitutions(preview, self.lineup)
+        lineup = infer_lineup(preview[:len(STARTER_SLOTS)], self.lineup) or self.lineup
+        result = find_auto_substitutions(preview, lineup, can_enter=can_enter)
         if result is None:
             return {}
-        hints = {}
-        for out_idx, in_idx in result["swaps"]:
-            hints[preview[out_idx].id] = "OUT"
-            hints[preview[in_idx].id] = "IN"
-        return hints
+        return {preview[result["out"]].id: "OUT", preview[result["in"]].id: "IN"}
 
     def _capture_current_state(self):
         """Memorizza la posizione attuale dei giocatori e la formazione."""
@@ -1521,4 +1532,4 @@ class LoginView(ft.Column):
             await self.on_login_success(user, sync, remember=bool(self.remember_checkbox.value))
             return
         self.login_button.disabled = False
-        self.update()
+        self.update()

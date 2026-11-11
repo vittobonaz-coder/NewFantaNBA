@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from itertools import combinations
 import os
 import json
 
@@ -252,48 +251,57 @@ def infer_lineup(players: list[Player], preferred: str) -> str | None:
     return None
 
 
-# Slot (indici 0-based) di titolari e panchina: il sesto uomo (5) e le riserve (10-14) non partecipano alle sostituzioni
+# Slot (indici 0-based) della rosa: titolari 0-4, sesto uomo 5, panchina 6-9, tribuna (riserve) 10-14
 STARTER_SLOTS = range(0, 5)
+SIXTH_SLOT = 5
 BENCH_SLOTS = range(6, 10)
+RESERVE_SLOTS = range(10, 15)
 
 
-def find_auto_substitutions(players: list[Player], current_lineup: str) -> dict | None:
+def positions_of(player: Player) -> set[str]:
+    """Posizioni del giocatore, es. 'G/A' -> {'G', 'A'}."""
+    return {p for p in player.position.split('/') if p}
+
+
+def find_auto_substitutions(players: list[Player], lineup: str, can_enter=None) -> dict | None:
     """
-    Sostituzioni automatiche di fine giornata. players: i 15 giocatori della squadra ordinati per slot.
-    - Assenti: titolari che non sono mai scesi in campo nella giornata (entered_game False).
-    - Candidati: giocatori di panchina scesi in campo almeno una volta, in ordine di slot.
-    Si cerca la combinazione con più sostituzioni possibili e, a parità, quella con i panchinari di slot più basso.
-    I nuovi 5 titolari devono rispettare un modulo (prima quello attuale): altrimenti la combinazione è scartata.
-    Ogni panchinaro entrato lascia il suo slot di panchina a un assente.
-    Restituisce None se non c'è nessuna sostituzione possibile, altrimenti:
-      {"order": indici (in players) del giocatore che va in ciascuno slot, "lineup": modulo,
-       "swaps": [(indice assente, indice panchinaro), ...]}
+    Sostituzione automatica di fine giornata (al massimo UNA per squadra e per giornata).
+    players: i 15 giocatori della squadra ordinati per slot; lineup: modulo della giornata.
+    - Assenti: titolari (slot 0-4) e sesto uomo (slot 5) mai scesi in campo nella giornata (entered_game False).
+      I panchinari non vengono sostituiti.
+    - Candidati: giocatori della tribuna (slot 10-14) che possono entrare, di default quelli scesi in campo
+      almeno una volta (can_enter permette all'app di mostrare anche le sostituzioni ancora possibili).
+    - Compatibilità: per un titolare il candidato deve avere la posizione richiesta dallo slot nel modulo;
+      per il sesto uomo deve avere almeno una posizione in comune con lui.
+    - Priorità (ordine della tribuna): entra il primo candidato, in ordine di slot, compatibile con almeno
+      un assente; se è compatibile con più assenti prende il posto di quello con lo slot più basso.
+    Il giocatore della tribuna prende lo slot dell'assente, l'assente va in tribuna: il modulo non cambia.
+    Se nella squadra c'è già una sostituzione automatica (auto_sub) non se ne fanno altre.
+    Restituisce None se non c'è nessuna sostituzione, altrimenti {"out": slot dell'assente, "in": slot del candidato}.
     """
-    if len(players) < max(BENCH_SLOTS) + 1:
+    roles = LINEUP_ROLES.get(lineup)
+    if roles is None or len(players) < max(RESERVE_SLOTS) + 1:
         return None
-    absent = [i for i in STARTER_SLOTS if not players[i].entered_game]
-    candidates = [j for j in BENCH_SLOTS if players[j].entered_game]
-    if not absent or not candidates:
+    if any(p.auto_sub for p in players):
         return None
+    absent = [i for i in (*STARTER_SLOTS, SIXTH_SLOT) if not players[i].entered_game]
+    if not absent:
+        return None
+    if can_enter is None:
+        can_enter = lambda p: p.entered_game
 
-    modules = [current_lineup] + [l for l in LINEUP_ROLES if l != current_lineup]
-    for k in range(min(len(absent), len(candidates)), 0, -1):
-        for subs in combinations(candidates, k):        # ordine lessicografico: prima i panchinari di slot più basso
-            for outs in combinations(absent, k):
-                # Il panchinaro prende lo slot dell'assente (find_starter_assignment preferisce chi è già nello slot)
-                new_starters = list(STARTER_SLOTS)
-                for out_idx, in_idx in zip(outs, subs):
-                    new_starters[out_idx] = in_idx
-                for lineup in modules:
-                    assignment = find_starter_assignment(LINEUP_ROLES[lineup], [players[i] for i in new_starters])
-                    if assignment is None:
-                        continue
-                    order = list(range(len(players)))
-                    for slot, src in enumerate(assignment):
-                        order[slot] = new_starters[src]
-                    for out_idx, in_idx in zip(outs, subs):
-                        order[in_idx] = out_idx  # l'assente va nello slot di panchina lasciato libero
-                    return {"order": order, "lineup": lineup, "swaps": list(zip(outs, subs))}
+    for j in RESERVE_SLOTS:
+        candidate = players[j]
+        if not can_enter(candidate):
+            continue
+        cand_pos = positions_of(candidate)
+        for i in absent:
+            if i in STARTER_SLOTS:
+                compatible = roles[i] in cand_pos
+            else:
+                compatible = bool(cand_pos & positions_of(players[i]))
+            if compatible:
+                return {"out": i, "in": j}
     return None
 
 
