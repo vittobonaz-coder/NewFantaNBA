@@ -1,7 +1,8 @@
 -- Schema di riferimento del database Supabase di FantaNBA (tabelle dello schema public).
 -- SOLO CONTESTO: non è pensato per essere eseguito (ordine delle tabelle e vincoli possono non essere validi).
 -- Esportato da Supabase il 09/11/2026, prima della migrazione all'app nativa.
--- Non comprende: stato delle RLS e policy, funzioni/RPC, trigger, job di pg_cron.
+-- RLS, permessi, funzioni, vincoli, indici, estensioni e job di pg_cron: in fondo al file
+-- (risultato di sql/2026-11_ricognizione_schema.sql del 12/11/2026).
 -- La vista v_standings è in sql/v_standings.sql.
 -- Da aggiornare ogni volta che una migrazione in sql/ cambia tabelle o colonne.
 
@@ -140,3 +141,50 @@ CREATE TABLE public.standings_adjustments (
   CONSTRAINT standings_adjustments_pkey PRIMARY KEY (id),
   CONSTRAINT standings_adjustments_fanta_team_id_fkey FOREIGN KEY (fanta_team_id) REFERENCES public.fanta_teams(id)
 );
+
+-- =====================================================================================================
+-- RICOGNIZIONE DEL 12/11/2026 (sql/2026-11_ricognizione_schema.sql), prima della Fase 1
+-- =====================================================================================================
+--
+-- RLS
+--   Disattivata su tutte le tabelle tranne standings_adjustments (attiva, ma senza policy: la legge
+--   solo la vista v_standings, che gira con i permessi del proprietario).
+--   Nessuna policy definita.
+--
+-- Permessi
+--   anon e authenticated hanno TUTTI i privilegi (SELECT, INSERT, UPDATE, DELETE, TRUNCATE,
+--   REFERENCES, TRIGGER) su tutte le tabelle e su v_standings.
+--   Con la chiave pubblicabile si può quindi leggere profiles (password comprese) e svuotare qualunque tabella.
+--
+-- Funzioni di public
+--   update_updated_at_column(): trigger function (NEW.updated_at = NOW()), SECURITY INVOKER.
+--   Non è collegata a nessun trigger. Nessuna RPC.
+--
+-- Trigger
+--   Nessuno (esclusi quelli interni di Postgres).
+--
+-- Vincoli e indici non riportati (o riportati diversamente) nelle CREATE TABLE sopra
+--   fanta_teams.user_id      -> profiles(id)     ON DELETE CASCADE
+--   rosters.fanta_team_id    -> fanta_teams(id)  ON DELETE CASCADE
+--   rosters.nba_player_id    -> nba_players(id)  ON DELETE CASCADE
+--   lineup_players.fanta_team_id -> fanta_teams(id) ON DELETE CASCADE
+--   login_tokens.user_id     -> profiles(id)     ON DELETE CASCADE
+--   lineup_players_team_gw_slot_key  UNIQUE (fanta_team_id, gameweek, slot)          -- non DEFERRABLE (Fase 2)
+--   unique_lineup_entry              UNIQUE (fanta_team_id, gameweek, nba_player_id)
+--   unique_matchup_per_gameweek      UNIQUE (gameweek, home_team_id, away_team_id)
+--   idx_lineup_players_gw            (gameweek)
+--   idx_lineup_players_gw_team       (gameweek, fanta_team_id)
+--   idx_matchups_gameweek            (gameweek)
+--   nba_games_gameweek_idx           (gameweek)
+--
+-- Estensioni
+--   pg_cron 1.6.4 (pg_catalog), pg_net 0.20.4 (public), pg_stat_statements 1.11 (extensions),
+--   pgcrypto 1.3 (extensions: crypt() e gen_salt() vanno chiamate come extensions.crypt / extensions.gen_salt
+--   oppure con extensions nel search_path), plpgsql, supabase_vault 0.3.1 (vault), uuid-ossp 1.1 (extensions).
+--
+-- Job di pg_cron (orari UTC). Tutti fanno net.http_post verso il workflow_dispatch di
+-- .github/workflows/cron-test.yml (ref main), con il token GitHub letto dal Vault (secret 'github_token').
+--   7  fanta-daily                 0 8 * * *          mode=daily
+--   8  fanta-rollover              59 21,22 * * *     mode=rollover
+--   9  github-cron-injuries-2110   10 21 * * *        mode=injuries
+--   10 github-cron-injuries-2210   10 22 * * *        mode=injuries

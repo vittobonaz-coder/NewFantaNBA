@@ -141,9 +141,12 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - su Windows la cartella dati predefinita di Flet è Documenti (OneDrive): l'app vera userà `%APPDATA%`;
     - la repository GitHub è pubblica, con password versionate.
   - **Versione web:** a server addormentato servono 32,6 s solo per la prima risposta; a server sveglio, circa 4,5 s per scaricare il client Flutter.
-  - **Da fare da parte mia:**
-    - eseguire la query di schema e passare il risultato;
-    - cambiare la password del database su Supabase (Settings > Database).
+  - **Fatto da me (12/11):**
+    - password del database cambiata;
+    - query di schema eseguita, risultato in `sql/schema_riferimento.sql`;
+    - verifiche Windows (finestra, Invio) OK.
+  - **Database:** RLS spenta quasi ovunque e `anon` con tutti i privilegi. Con la chiave pubblicabile (pubblica) oggi si leggono le password da `profiles` e si può svuotare qualunque tabella: priorità della Fase 1.
+  - **Da fare:** niente per la Fase 0.
 - **Fase 1:** —
 - **Fase 2:** —
 - **Fase 3:** —

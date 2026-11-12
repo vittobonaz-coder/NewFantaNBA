@@ -82,7 +82,27 @@ Un sostituto con chiamate dirette a REST resterebbe quindi piccolo.
     - Riscrivere la cronologia non è necessario: dopo il cambio, la vecchia password del database non vale più.
 
 ## 3. Database
-Query di ricognizione: `sql/2026-11_ricognizione_schema.sql`. Il risultato va aggiunto a `sql/schema_riferimento.sql`.
+Query di ricognizione: `sql/2026-11_ricognizione_schema.sql`, eseguita dall'utente il 12/11/2026. Il risultato è in fondo a `sql/schema_riferimento.sql`.
+
+**Cosa risulta (punto di partenza della Fase 1)**
+- **RLS disattivata su tutte le tabelle** tranne `standings_adjustments` (attiva, senza policy). Nessuna policy.
+- **`anon` ha tutti i privilegi su tutte le tabelle**, compresi `DELETE` e `TRUNCATE`. La chiave pubblicabile è nella repository pubblica, quindi oggi chiunque può:
+  - **leggere tutte le password** da `profiles` via REST: è la stessa cosa che fa il login dell'app, senza filtro;
+  - modificare o svuotare qualunque tabella.
+
+  È il rischio principale rimasto dopo il cambio della password del database, e la Fase 1 lo chiude.
+- **Nessuna RPC e nessun trigger.** `update_updated_at_column()` esiste ma non è collegata a nessun trigger.
+- **`pgcrypto` è già installata** (schema `extensions`): serve per l'hash delle password della Fase 1.
+- **Vincolo** `UNIQUE (fanta_team_id, gameweek, slot)`: **non** DEFERRABLE (vedi Fase 2). Ci sono anche diversi `ON DELETE CASCADE` non riportati nelle CREATE TABLE di riferimento.
+- **pg_cron**, orari UTC; tutti i job avviano il workflow `cron-test.yml` su `main`, con il token GitHub preso dal Vault:
+
+  | Job | Orario UTC |
+  |---|---|
+  | daily | 08:00 |
+  | rollover | 21:59 e 22:59 |
+  | injuries | 21:10 e 22:10 |
+
+  - **Il token GitHub non compare in nessun file.**
 
 ## 4. Prova tecnica (`spike_android/`)
 
