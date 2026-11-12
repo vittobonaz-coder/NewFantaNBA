@@ -1,0 +1,32 @@
+# Prova tecnica della Fase 0: configurazione per `flet build apk` / `flet build windows`.
+[project]
+name = "fantanba-spike"
+version = "0.1.0"
+description = "Prova tecnica FantaNBA: login e lettura da Supabase"
+requires-python = ">=3.12"
+# Stesse versioni dell'app vera (requirements.txt)
+dependencies = [
+    "flet==0.82.0",
+    "supabase==2.31.0",
+    "tzdata==2025.3",
+    # Per Android serve una ruota di pydantic-core compilata da Flet (pypi.flet.dev): l'ultima è 2.46.4,
+    # che corrisponde a pydantic 2.13.4 (sul PC oggi c'è 2.14.2 -> pydantic-core 2.50.2, senza ruota Android)
+    "pydantic==2.13.4",
+]
+
+[tool.flet]
+org = "it.fantanba"
+product = "FantaNBA Spike"
+company = "FantaNBA"
+copyright = "FantaNBA"
+
+[tool.flet.app]
+path = "."
+exclude = ["build", ".venv", "config.example.py"]
+
+[tool.flet.android]
+# Solo telefoni reali (64 e 32 bit) ed emulatore x86_64: per x86 a 32 bit pydantic-core 2.46.4 non ha ruota
+target_arch = ["arm64-v8a", "armeabi-v7a", "x86_64"]
+
+[tool.flet.android.permission]
+"android.permission.INTERNET" = true

@@ -128,7 +128,23 @@ Situazione da tenere presente:
 
 Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da fare da parte mia, decisioni prese.
 
-- **Fase 0:** da iniziare.
+- **Fase 0 (12/11/2026):** fattibilità confermata, dettagli in `docs/fase0_report.md`.
+  - **Fatto:**
+    - ricognizione dei flussi;
+    - query di schema `sql/2026-11_ricognizione_schema.sql`;
+    - mini-app `spike_android/` compilata e provata su Android (Galaxy A52s, Android 14) e Windows 11;
+    - misure di avvio a freddo con supabase-py e REST diretto.
+  - **Esiti:**
+    - supabase-py compila per Android solo con `pydantic==2.13.4`;
+    - con REST diretto i dati arrivano circa 1 s prima;
+    - le Build Tools di Visual Studio hanno un CMake a 32 bit che richiede un aggiramento;
+    - su Windows la cartella dati predefinita di Flet è Documenti (OneDrive): l'app vera userà `%APPDATA%`;
+    - la repository GitHub è pubblica, con password versionate.
+  - **Da fare da parte mia:**
+    - eseguire la query di schema e passare il risultato;
+    - indicare l'URL web per la misura di confronto;
+    - approvare la scelta del client;
+    - decidere sulla repository pubblica.
 - **Fase 1:** —
 - **Fase 2:** —
 - **Fase 3:** —

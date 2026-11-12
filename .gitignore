@@ -5,3 +5,7 @@ venv/
 .vscode/
 *_state.json
 data/sync_meta.json
+.env
+spike_android/config.py
+spike_android/build/
+spike_android/.venv/
