@@ -1,14 +1,19 @@
+"""
+Reset completo prima del setup di una nuova stagione: cancella i file locali in data/ (tranne
+fanta_teams.json e rules.json), le foto in assets/players e TUTTE le righe delle tabelle di Supabase,
+profili compresi. Usa la chiave segreta (.env): senza --conferma non cancella nulla.
+
+  python reset_pre_setup.py --conferma
+"""
+import argparse
 from pathlib import Path
-from supabase import create_client, Client
+from supabase import Client
+from supabase_manager import get_client
 
 # --- CONFIGURAZIONE ---
 DATA_DIR = Path("data")
 PLAYERS_DIR = Path("assets/players")
 KEEP_FILES = {"fanta_teams.json", "rules.json"}
-
-# Credenziali Supabase fornite
-SUPABASE_URL = "https://ifqiarpfsbcrfpmabdus.supabase.co"
-SUPABASE_KEY = "sb_publishable_KNhdTSkcs0XuzDwKqNbIOA_XpiJlqFZ"
 
 def clean_local_files():
     """1. Pulisce la cartella data preservando i file essenziali."""
@@ -41,8 +46,8 @@ def clean_database():
     """3. Cancella tutte le righe dalle tabelle di Supabase rispettando i vincoli di foreign key."""
     print("🗄️ Svuotamento delle tabelle del database tramite Supabase Client...")
     
-    # Inizializzazione del client Supabase
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    # Client con la chiave segreta (.env): con la chiave pubblicabile le RLS bloccano le cancellazioni
+    supabase: Client = get_client(admin=True)
     
     # Ordine inverso rispetto alle dipendenze (prima le tabelle figlie, poi quelle genitrici)
     tables = [
@@ -51,6 +56,7 @@ def clean_database():
         "lineup_players",
         "matchups",
         "rosters",
+        "standings_adjustments",  # riferisce fanta_teams (senza cascade)
         "fanta_teams",
         "nba_players",
         "profiles"
@@ -81,6 +87,11 @@ def clean_database():
         print(f"   [Errore Database] Impossibile completare la pulizia delle tabelle: {e}")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Cancella dati locali e TUTTE le tabelle di Supabase (profili compresi)")
+    parser.add_argument("--conferma", action="store_true", help="obbligatorio: senza non viene cancellato nulla")
+    if not parser.parse_args().conferma:
+        parser.error("operazione irreversibile: rilancia con --conferma se vuoi davvero cancellare tutto")
+    get_client(admin=True)  # Senza chiave segreta si ferma qui, prima di cancellare i file locali
     print("=== AVVIO PROCEDURA DI RESET ===")
     clean_local_files()
     print("-" * 40)

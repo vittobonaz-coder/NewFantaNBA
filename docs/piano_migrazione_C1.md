@@ -147,7 +147,22 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - verifiche Windows (finestra, Invio) OK.
   - **Database:** RLS spenta quasi ovunque e `anon` con tutti i privilegi. Con la chiave pubblicabile (pubblica) oggi si leggono le password da `profiles` e si può svuotare qualunque tabella: priorità della Fase 1.
   - **Da fare:** niente per la Fase 0.
-- **Fase 1:** —
+- **Fase 1 (in corso, 13/11/2026):** SQL e codice pronti su `app-nativa`, da pubblicare nell'ordine sotto.
+  - **Fatto:**
+    - `sql/2026-11_fase1a_password_rpc.sql` (solo aggiunte): `profiles.password_hash` (bcrypt), `login_tokens.expires_at`, schema `private`, RPC `login`, `login_with_token`, `logout`, `change_password`, `change_username`, `change_team_name`, `save_lineup`, `admin_set_password` (solo chiave segreta);
+    - `sql/2026-11_fase1b_rls_revoche.sql`: RLS su tutte le tabelle, `anon`/`authenticated` solo in lettura sui dati di lega, niente `profiles`/`login_tokens`, default privileges chiusi; prova a secco e rollback;
+    - `sql/2026-11_fase1c_drop_password_chiaro.sql`: via la colonna `profiles.password`;
+    - `supabase_rest.py` (RPC con httpx); login, profilo e salvataggio formazione passano dalle RPC (il salvataggio da 48 richieste a 1);
+    - cron e script di amministrazione con `SupabaseSync(admin=True)` (chiave segreta da `SUPABASE_SECRET_KEY` o `.env`); workflow con il segreto, input `dry_run` e versioni fissate; `reset_pre_setup.py` con `--conferma`; `.env.example`; `tools/verifica_permessi.py`.
+  - **Verifiche fatte:** le tre migrazioni eseguite su un Postgres locale usa e getta con pgcrypto simulato (RPC, permessi prima e dopo B, vecchio codice ancora funzionante dopo A, token "Ricordami" esistenti validi); codice Python provato con un server finto (nessuna chiamata a Supabase).
+  - **Da fare (in ordine):**
+    1. utente: chiave segreta su Supabase, segreto GitHub `SUPABASE_SECRET_KEY`, `.env` locale, iscrizioni di Supabase Auth disattivate;
+    2. utente: migrazione A e query di verifica;
+    3. prove locali (`test.py`, `main.py`, script con `--dry-run`, spike Android con `rpc/login`);
+    4. con OK: merge di `app-nativa` in `main` e push (Render si ripubblica), verifica su Render e run manuale `injuries`;
+    5. utente: migrazione B (prima la prova a secco), poi `tools/verifica_permessi.py` e verifiche su Render;
+    6. dopo qualche giorno con daily e rollover verdi: migrazione C, poi tutti gli utenti cambiano password;
+    7. `schema_riferimento.sql` aggiornato e Fase 1 chiusa.
 - **Fase 2:** —
 - **Fase 3:** —
 - **Fase 4:** —
@@ -161,3 +176,12 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
   - Riguarda l'app, nativa e web. Cron e script di amministrazione possono restare su supabase-py.
   - Il modulo sostitutivo si scrive quando si toccano le query (Fasi 1-3).
 - **12/11/2026 — La repository resta pubblica** (minuti GitHub Actions illimitati). Si cambia la password del database e si elimina `data/profiles.json`; la cronologia non si riscrive.
+- **13/11/2026 — Fase 1:**
+  - `save_lineup` anticipata dalla Fase 2, senza controllo della scadenza dei cambi (resta lato app fino alla Fase 2);
+  - RPC chiamate con httpx (`supabase_rest.py`), primo pezzo del modulo REST;
+  - ogni accesso crea un token di sessione: 90 giorni con "Ricordami", 7 senza;
+  - nessun limite ai tentativi di login;
+  - `rosters` leggibile con la chiave pubblicabile;
+  - versioni dei pacchetti fissate nel workflow del cron;
+  - `reset_pre_setup.py` cancella solo con `--conferma`;
+  - la versione web resta sempre utilizzabile: l'unica finestra di possibile disservizio è il deploy su Render.

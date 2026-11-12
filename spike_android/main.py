@@ -3,7 +3,8 @@ Prova tecnica della Fase 0 (docs/piano_migrazione_C1.md): mini-app Flet che fa l
 una tabella di lega con le stesse dipendenze dell'app vera.
 
 - Due client a confronto: supabase-py e chiamate REST dirette (httpx, già dipendenza di supabase).
-- Solo letture: niente token "Ricordami", niente scritture sul database.
+- Dalla Fase 1 il login usa la RPC login: un login riuscito crea un token di sessione di 7 giorni
+  (come l'app senza "Ricordami"); a parte questo, solo letture.
 - Misura l'avvio a freddo (creazione del processo -> prima schermata) e lo scrive in un file
   nella cartella dati dell'app, per verificare anche i percorsi scrivibili.
 """
@@ -78,8 +79,9 @@ def login_supabase_py(username: str, password: str) -> dict:
     t_import = time.perf_counter()
     client = create_client(SUPABASE_URL, SUPABASE_KEY)
     t_client = time.perf_counter()
-    profile = (client.table("profiles").select("id, username, fanta_teams(id, name)")
-               .eq("username", username).eq("password", password).limit(1).execute()).data
+    # Login con la RPC della Fase 1 (sql/2026-11_fase1a_password_rpc.sql), come l'app
+    data = client.rpc("login", {"p_username": username, "p_password": password, "p_remember": False}).execute().data
+    profile = [data] if data else []
     t_login = time.perf_counter()
     matchups = (client.table("matchups").select(
         "gameweek, start_date, end_date, home_score, away_score, was_played, home_lineup, away_lineup, "
@@ -103,11 +105,10 @@ def login_rest(username: str, password: str) -> dict:
         client = httpx.Client(base_url=f"{SUPABASE_URL}/rest/v1", headers={"apikey": SUPABASE_KEY}, timeout=20)
     t_client = time.perf_counter()
     with client:
-        r = client.get("/profiles", params={"select": "id,username,fanta_teams(id,name)",
-                                            "username": f"eq.{username}", "password": f"eq.{password}",
-                                            "limit": 1})
+        # Login con la RPC della Fase 1 (sql/2026-11_fase1a_password_rpc.sql), come l'app
+        r = client.post("/rpc/login", json={"p_username": username, "p_password": password, "p_remember": False})
         r.raise_for_status()
-        profile = r.json()
+        profile = [r.json()] if r.json() else []
         t_login = time.perf_counter()
         r = client.get("/matchups", params={
             "select": "gameweek,start_date,end_date,home_score,away_score,was_played,home_lineup,away_lineup,"
@@ -186,7 +187,7 @@ async def main(page: ft.Page) -> None:
     page.add(ft.SafeArea(content=ft.Column([
         ft.Text("FantaNBA — prova tecnica", size=20, weight=ft.FontWeight.BOLD),
         username, password, use_rest,
-        ft.ElevatedButton("Accedi (sola lettura)", on_click=do_login),
+        ft.ElevatedButton("Accedi", on_click=do_login),
         ft.Divider(),
         log,
     ])))

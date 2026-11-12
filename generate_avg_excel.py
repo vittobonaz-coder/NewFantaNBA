@@ -93,7 +93,7 @@ def main():
     info_dict = {p["PLAYER_ID"]: p for p in players_info_list}
 
     # 2.2 Fanta-squadra di ogni giocatore (da Supabase) e infortuni attuali di tutta la NBA (da ESPN)
-    rostered = SupabaseSync().get_rostered_players()
+    rostered = SupabaseSync(admin=True).get_rostered_players()
     injuries = fetch_injuries_by_player(manager, players_data)
 
     # 3. Definisci le date della regular season 2026-2027 (date USA)

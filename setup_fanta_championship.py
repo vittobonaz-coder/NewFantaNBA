@@ -10,7 +10,7 @@ from time_manager import TimeManager
 start_calendar_date = "2026-10-21"
 end_calendar_date = "2027-04-12"
 
-sync = SupabaseSync()
+sync = SupabaseSync(admin=True)  # chiave segreta da .env
 api_manager = NbaDataManager(player_ids=[])
 
 fanta_teams_path = os.path.join("data", "fanta_teams.json")
@@ -185,9 +185,8 @@ def run_calendar_setup(start_date: str, end_date: str):
     return calendar
 
 def run_profiles_setup():
-    SupabaseSync().push_fanta_teams_from_json()
-    SupabaseSync().push_profiles_from_teams()
-    SupabaseSync().pull_profiles()
+    sync.push_fanta_teams_from_json()
+    sync.push_profiles_from_teams()  # stampa le password iniziali, da comunicare agli utenti
 
 
 if __name__ == "__main__":
@@ -198,5 +197,5 @@ if __name__ == "__main__":
     # poi calendar.json riscaricato con la chiave nba_games
     sync.sync_nba_season(start_calendar_date, end_calendar_date)
     sync.pull_calendar()
-    SupabaseSync().sync_standings()
-    SupabaseSync().push_season_lineups(calendar)
+    sync.sync_standings()
+    sync.push_season_lineups(calendar)

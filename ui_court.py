@@ -7,6 +7,8 @@ from datetime import datetime
 from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS, LINEUP_ROLES, find_starter_assignment, infer_lineup, \
     find_auto_substitutions, STARTER_SLOTS, SIXTH_SLOT
 from time_manager import TimeManager, ITA_TZ
+from supabase_manager import SupabaseSync
+from supabase_rest import RpcError
 
 
 ROLE_CONFIGS = {
@@ -288,7 +290,7 @@ INJURY_COLORS = {"OUT": ft.Colors.RED_700, "DTD": ft.Colors.AMBER_700}
 
 class Court(ft.Column):
     def __init__(self, team_instance: Team, gameweek: int, edit_deadline: datetime | None = None,
-                 read_only: bool = False, team_id: str | None = None):
+                 read_only: bool = False, token: str | None = None):
         super().__init__()
         self.horizontal_alignment = "center"
         self.scroll = ft.ScrollMode.AUTO
@@ -301,7 +303,7 @@ class Court(ft.Column):
         self.editable = not read_only and edit_deadline is not None and TimeManager.now() < edit_deadline
         self.loading: LoadingOverlay | None = None  # Velo di caricamento, assegnato da TeamView
         self.lineup = self.team.lineup if self.team.lineup in LINEUP_ROLES else "2-2-1"
-        self.team_id = team_id  # UUID su Supabase; None = ricavato dal nome al salvataggio
+        self.token = token  # Token di sessione dell'utente: il salvataggio vale per la sua squadra
 
         # Nome squadra sopra il punteggio (solo nella propria squadra: tra le altre c'è già nella tab)
         self.team_name_text = ft.Text(self.team.name, size=18, weight="bold", visible=not read_only)
@@ -493,43 +495,28 @@ class Court(ft.Column):
 
     def _push_lineup(self) -> str | None:
         """
-        Scrive rosa e formazione su Supabase (eseguito in un thread: niente UI qui).
-        Il client è quello condiviso (connessione già aperta); gli UPDATE della formazione e dei moduli
-        partono in parallelo. Restituisce None se il salvataggio è riuscito, altrimenti il messaggio d'errore.
+        Scrive rosa, formazione e modulo su Supabase con la RPC save_lineup: una richiesta, una transazione,
+        dalla giornata modificabile in poi (mai quella in corso). Eseguito in un thread: niente UI qui.
+        Restituisce None se il salvataggio è riuscito, altrimenti il messaggio d'errore.
         """
-        from supabase_manager import SupabaseSync
-
-        generic_error = "Errore nel salvataggio della formazione, riprova"
-        sync = SupabaseSync()
+        if not self.token:
+            return "Sessione scaduta, rifai l'accesso"
         try:
-            team_id = self.team_id or sync.get_team_id_by_name(self.team.name)
-            if not team_id:
-                return generic_error
-            # La rosa in app deve coincidere con quella su Supabase: se nel frattempo è cambiata
-            # (es. swap_players.py) gli UPDATE per ID lascerebbero la formazione a metà. Niente scritture:
-            # si cancella la copia locale, così al prossimo caricamento viene riscaricata.
-            db_ids = sync.get_lineup_player_ids(team_id, self.gameweek)
-            app_ids = {p.id for p in self.team.players}
-            if db_ids != app_ids:
-                print(f"Rosa di {self.team.name} non aggiornata (GW {self.gameweek}): "
-                      f"solo in app {sorted(app_ids - db_ids)}, solo su Supabase {sorted(db_ids - app_ids)}")
+            SupabaseSync.save_lineup(self.token, self.team, self.gameweek)
+            return None
+        except RpcError as err:
+            if err.code == "ROSA_CAMBIATA":
+                # La rosa su Supabase è cambiata (es. swap_players.py): niente scritture, si cancella la copia
+                # locale, così al prossimo caricamento viene riscaricata
+                print(f"Rosa di {self.team.name} non aggiornata (GW {self.gameweek}): {err}")
                 try:
                     os.remove(self.team.filename)
                 except OSError:
                     pass
-                return "La tua rosa è cambiata: ricarica la pagina e rifai i cambi"
-
-            sync.update_roster_positions(self.team, team_id)
-            # Tutti i giocatori, dalla giornata modificabile in poi (mai quella in corso):
-            # riallinea anche eventuali righe disallineate delle giornate future
-            if not sync.update_lineup_slots(self.team, self.gameweek, team_id=team_id):
-                return generic_error
-            # Modulo in matchups, con la stessa regola: le giornate passate restano come storico
-            sync.update_team_lineup(team_id, self.gameweek, self.team.lineup)
-            return None
+            return str(err)
         except Exception as ex:
             print(f"Errore durante il salvataggio della formazione: {ex}")
-            return generic_error
+            return "Errore nel salvataggio della formazione, riprova"
 
     async def handle_card_click(self, e):
         """Dettaglio delle partite del giocatore toccato, con il velo di caricamento finché non si apre."""
@@ -1078,7 +1065,7 @@ class ProfileView(ft.Stack):
     """
     def __init__(self, user: dict, team_row: dict, on_team_renamed=None, on_logout=None):
         super().__init__(expand=True)
-        self.user = user                        # {"id", "username", "token"}: token "Ricordami" (None se non attivo)
+        self.user = user                        # {"id", "username", "token"}: token della sessione
         self.team_row = team_row                # {"id", "name"}
         self.on_team_renamed = on_team_renamed  # (vecchio nome, nuovo nome) -> None
         self.on_logout = on_logout              # async (token) -> None: torna alla schermata di login
@@ -1135,7 +1122,10 @@ class ProfileView(ft.Stack):
         self.page.update()
 
     async def _run(self, action, success: str) -> bool:
-        """Verifica la password attuale ed esegue action(sync) in un thread. True se è andato tutto bene."""
+        """
+        Esegue action(token, password attuale) in un thread: la RPC verifica la password e applica la modifica
+        in una sola richiesta. True se è andato tutto bene.
+        """
         if not self.current_password.value:
             self.show_message("Inserisci la password attuale", "red")
             return False
@@ -1158,19 +1148,16 @@ class ProfileView(ft.Stack):
         return True
 
     def _checked(self, action):
-        """Eseguito in un thread: niente UI qui."""
-        from supabase_manager import SupabaseSync
-
-        sync = SupabaseSync()
-        if not sync.check_password(self.user["id"], self.current_password.value):
-            raise ValueError("Password attuale errata")
-        action(sync)
+        """Eseguito in un thread: niente UI qui. Gli errori previsti (RpcError) sono ValueError."""
+        if not self.user.get("token"):
+            raise ValueError("Sessione scaduta, rifai l'accesso")
+        action(self.user["token"], self.current_password.value)
 
     async def save_username(self, e):
         new = (self.username_field.value or "").strip()
         if new == self.user["username"]:
             return
-        if await self._run(lambda sync: sync.update_username(self.user["id"], new), "Username aggiornato"):
+        if await self._run(lambda token, pwd: SupabaseSync.update_username(token, pwd, new), "Username aggiornato"):
             self.user["username"] = new
 
     async def save_team_name(self, e):
@@ -1178,10 +1165,11 @@ class ProfileView(ft.Stack):
         if new == old:
             return
 
-        def action(sync):
-            sync.update_team_name(self.team_row["id"], new)
+        def action(token, pwd):
+            SupabaseSync.update_team_name(token, pwd, new)
             # Calendario e classifica locali hanno il vecchio nome fino al prossimo cron: li riscarichiamo
             try:
+                sync = SupabaseSync()
                 sync.pull_calendar()
                 sync.sync_standings()
             except Exception as err:
@@ -1197,10 +1185,9 @@ class ProfileView(ft.Stack):
         if new != self.confirm_password.value:
             self.show_message("Le due password non coincidono", "red")
             return
-        def action(sync):
-            sync.update_password(self.user["id"], new)
-            # Gli altri dispositivi con "Ricordami" devono rifare l'accesso con la nuova password
-            sync.revoke_login_tokens(self.user["id"], keep_token=self.user.get("token"))
+        def action(token, pwd):
+            # Gli altri dispositivi con "Ricordami" devono rifare l'accesso con la nuova password (lo fa la RPC)
+            SupabaseSync.update_password(token, pwd, new)
 
         if await self._run(action, "Password aggiornata"):
             self.new_password.value = self.confirm_password.value = ""
@@ -1302,16 +1289,16 @@ class TeamView(ft.Column):
     """
     def __init__(self, current_team: Team | None, current_gw: int | None,
                  edit_team: Team | None = None, edit_gw: int | None = None,
-                 edit_deadline: datetime | None = None, team_id: str | None = None):
+                 edit_deadline: datetime | None = None, token: str | None = None):
         super().__init__()
         self.expand = True
         self.horizontal_alignment = "center"
 
         self.courts: list[tuple[str, Court]] = []
         if current_team is not None:
-            self.courts.append((f"Giornata {current_gw}", Court(current_team, current_gw, team_id=team_id)))
+            self.courts.append((f"Giornata {current_gw}", Court(current_team, current_gw, token=token)))
         if edit_team is not None:
-            self.courts.append((f"Formazione G{edit_gw}", Court(edit_team, edit_gw, edit_deadline, team_id=team_id)))
+            self.courts.append((f"Formazione G{edit_gw}", Court(edit_team, edit_gw, edit_deadline, token=token)))
 
         # Velo di caricamento sopra le formazioni (cambio giornata, Salva, Annulla)
         self.loading = LoadingOverlay()
@@ -1430,7 +1417,8 @@ class MainDashboard(ft.Tabs):
 
         # Subito solo la Squadra (la prima vista). Le altre si costruiscono alla prima apertura del tab:
         # al login si spediscono al browser meno controlli. Le Altre Squadre scaricano anche i dati.
-        self.team_view = TeamView(current_team, current_gw, edit_team, edit_gw, edit_deadline, team_id=team_row["id"])
+        self.team_view = TeamView(current_team, current_gw, edit_team, edit_gw, edit_deadline,
+                                  token=user.get("token"))
         self.league_view = LeagueView(current_gw, league_loader)
         calendar_gw = current_gw if current_gw is not None else edit_gw  # Pre-campionato: la prima giornata
         self.lazy_builders = {
@@ -1512,24 +1500,23 @@ class LoginView(ft.Column):
         ]
 
     async def _check_login(self, e):
-        from supabase_manager import SupabaseSync
-
         # Niente doppi click mentre si verificano le credenziali e si caricano i dati
         self.login_button.disabled = True
         self.update()
         try:
             # Lo stesso client serve poi a caricare i dati: la connessione a Supabase resta aperta
             sync = SupabaseSync()
+            remember = bool(self.remember_checkbox.value)
             user = await asyncio.to_thread(sync.authenticate,
                                            (self.username_field.value or "").strip(),
-                                           self.password_field.value or "")
+                                           self.password_field.value or "", remember)
             self.error_text.value = "" if user else "Credenziali errate"
         except Exception as err:
             print(f"Errore durante il login: {err}")
             user, self.error_text.value = None, "Server non raggiungibile, riprova"
 
         if user:
-            await self.on_login_success(user, sync, remember=bool(self.remember_checkbox.value))
+            await self.on_login_success(user, sync, remember=remember)
             return
         self.login_button.disabled = False
         self.update()

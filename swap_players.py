@@ -165,7 +165,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="non scrive nulla")
     args = parser.parse_args()
 
-    sync = SupabaseSync()
+    sync = SupabaseSync(admin=True)  # chiave segreta da .env
     db = sync.supabase
     all_players = {int(p["PLAYER_ID"]): p["PLAYER_NAME"] for p in load_json(ALL_PLAYERS_PATH)}
 

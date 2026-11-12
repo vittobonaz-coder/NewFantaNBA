@@ -18,7 +18,7 @@ CALENDAR_PATH = os.path.join("data", "calendar.json")
 STANDINGS_PATH = os.path.join("data", "standings.json")
 INJURIES_PATH = os.path.join("data", "injuries.json")
 SYNC_META_PATH = os.path.join("data", "sync_meta.json")  # Da non committare (.gitignore)
-LOGIN_TOKEN_KEY = "fantanba.login_token"  # Chiave del token "Ricordami" nello storage del browser
+LOGIN_TOKEN_KEY = "fantanba.login_token"  # Chiave del token "Ricordami" nello storage del dispositivo/browser
 
 
 def parse_timestamp(value: str | None) -> datetime | None:
@@ -142,16 +142,17 @@ async def main(page: ft.Page) -> None:
 
     async def on_login_success(user_data, sync: SupabaseSync, remember: bool = False, token: str | None = None):
         """
-        remember: login con "Ricordami" spuntato, si crea un nuovo token.
-        token: accesso automatico con il token già salvato nel browser.
+        user_data: profilo restituito dal login; con username e password contiene anche il token di sessione,
+        che serve a tutti i salvataggi (formazione, profilo).
+        remember: login con "Ricordami" spuntato, il token si salva sul dispositivo per l'accesso automatico.
+        token: accesso automatico con il token già salvato sul dispositivo.
         """
-        if remember:
+        token = token or user_data.get("token")
+        if remember and token:
             try:
-                token = await asyncio.to_thread(sync.create_login_token, user_data["id"])
                 await prefs.set(LOGIN_TOKEN_KEY, token)
             except Exception as e:
                 print(f"'Ricordami' non disponibile: {e}")  # Si entra lo stesso, senza accesso automatico
-                token = None
 
         page.clean()
         page.add(ft.Column(
@@ -185,11 +186,11 @@ async def main(page: ft.Page) -> None:
         page.update()
 
     async def logout(token: str | None):
-        """Dimentica il token "Ricordami" (browser e Supabase) e torna al login."""
+        """Chiude la sessione (dispositivo e Supabase) e torna al login."""
         try:
             await prefs.remove(LOGIN_TOKEN_KEY)
             if token:
-                await asyncio.to_thread(SupabaseSync().delete_login_token, token)
+                await asyncio.to_thread(SupabaseSync.logout, token)
         except Exception as e:
             print(f"Errore durante il logout: {e}")
         show_login()

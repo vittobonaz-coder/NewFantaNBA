@@ -1,6 +1,5 @@
 import os
 import json
-import hashlib
 import secrets
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -9,34 +8,64 @@ from fanta_obj import Player, Team, NOT_PLAYED_SCORE, ROLE_MULTIPLIERS, DEFAULT_
 from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
 from time_manager import TimeManager, ITA_TZ
+from supabase_rest import SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, rpc
 
-SUPABASE_URL = "https://ifqiarpfsbcrfpmabdus.supabase.co"
-SUPABASE_KEY = "sb_publishable_KNhdTSkcs0XuzDwKqNbIOA_XpiJlqFZ"
-
-MAX_NAME_LENGTH = 20               # Username e nome squadra (devono stare nelle tab e nelle tabelle)
-INVALID_NAME_CHARS = '/\\:*?"<>|'  # Il nome squadra finisce nei nomi dei file locali
-LOGIN_TOKEN_DAYS = 90              # Durata dell'accesso automatico ("Ricordami")
+# Chiave segreta (service role) per cron e script di amministrazione: mai nel codice né su Render.
+# Si legge dalla variabile d'ambiente (segreto GitHub nel workflow) oppure dal file .env locale, non versionato.
+SECRET_KEY_ENV = "SUPABASE_SECRET_KEY"
+ENV_FILE = Path(__file__).with_name(".env")
 
 
-# Client Supabase unico per tutto il processo: le connessioni (HTTP/2) restano aperte tra un'operazione
-# e l'altra, senza rifare ogni volta connessione e handshake TLS. Il client httpx è thread-safe.
-_client: Client | None = None
+# Client Supabase unici per tutto il processo (uno per chiave): le connessioni (HTTP/2) restano aperte
+# tra un'operazione e l'altra, senza rifare ogni volta connessione e handshake TLS. Il client httpx è thread-safe.
+_clients: dict[bool, Client] = {}
 _client_lock = threading.Lock()
 
-# Thread per lanciare in parallelo richieste indipendenti (es. gli UPDATE del salvataggio formazione)
+# Thread per lanciare in parallelo richieste indipendenti
 _POOL = ThreadPoolExecutor(max_workers=16, thread_name_prefix="supabase")
 
 
-def get_client() -> Client:
-    """Restituisce il client Supabase condiviso, creandolo alla prima chiamata."""
-    global _client
-    if _client is None:
+def _read_env_file(path: Path | None = None) -> dict[str, str]:
+    """Righe KEY=valore del file .env (commenti con #, virgolette facoltative). Vuoto se il file non c'è."""
+    values = {}
+    try:
+        lines = (path or ENV_FILE).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return values
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
+def secret_key() -> str:
+    """Chiave segreta da variabile d'ambiente o da .env. RuntimeError se manca: mai ripiego sulla pubblicabile."""
+    key = os.environ.get(SECRET_KEY_ENV) or _read_env_file().get(SECRET_KEY_ENV)
+    if not key:
+        raise RuntimeError(
+            f"Manca {SECRET_KEY_ENV}: serve a cron e script di amministrazione. In locale mettila nel file .env "
+            f"(vedi .env.example), su GitHub nei segreti del repository."
+        )
+    return key
+
+
+def get_client(admin: bool = False) -> Client:
+    """
+    Restituisce il client Supabase condiviso, creandolo alla prima chiamata.
+    admin=False: chiave pubblicabile (app). admin=True: chiave segreta (cron e script), che scavalca le RLS.
+    """
+    client = _clients.get(admin)
+    if client is None:
         with _client_lock:
-            if _client is None:
-                client = create_client(SUPABASE_URL, SUPABASE_KEY)
+            client = _clients.get(admin)
+            if client is None:
+                client = create_client(SUPABASE_URL, secret_key() if admin else SUPABASE_PUBLISHABLE_KEY)
                 client.postgrest  # Creato subito: la creazione "lazy" non è protetta tra thread
-                _client = client
-    return _client
+                _clients[admin] = client
+    return client
 
 
 def run_parallel(calls) -> list:
@@ -62,8 +91,12 @@ def valid_lineup(value) -> str | None:
     return value if value in LINEUP_ROLES else None
 
 class SupabaseSync:
-    def __init__(self):
-        self.supabase: Client = get_client()
+    def __init__(self, admin: bool = False):
+        """
+        admin=False: per l'app (chiave pubblicabile: legge i dati di lega, scrive solo con le RPC).
+        admin=True: per cron e script di amministrazione (chiave segreta da SUPABASE_SECRET_KEY).
+        """
+        self.supabase: Client = get_client(admin)
 
     def push_team(self, team: Team, court=None):
         """Salva l'intero stato del team su Supabase"""
@@ -375,45 +408,6 @@ class SupabaseSync:
             if lineup_data:
                 self.supabase.table("lineup_players").insert(lineup_data).execute()
                 print(f"Lineup di '{t['name']}' caricate: {len(calendar)} giornate, {len(lineup_data)} righe.")
-
-    def update_lineup_slots(self, team: Team, gameweek: int, only_ids: set[int] | None = None,
-                            team_id: str | None = None) -> bool:
-        """
-        Aggiorna slot e ruolo dei giocatori del team nella tabella lineup_players
-        per la gameweek indicata e tutte le successive, in base all'ordine attuale di team.players.
-        Se only_ids è indicato, aggiorna solo quei giocatori (quelli che hanno cambiato slot).
-        Score e target_date non vengono toccati.
-        Gli UPDATE di ciascuna fase partono in parallelo: il tempo è quello di due richieste, non di 30.
-        """
-        players = [(slot, p) for slot, p in enumerate(team.players, start=1)
-                   if only_ids is None or p.id in only_ids]
-        if not players:
-            return True
-
-        team_id = team_id or self.get_team_id_by_name(team.name)
-        if not team_id:
-            print(f"Errore: Impossibile recuperare l'ID per il team {team.name}.")
-            return False
-
-        def update(p: Player, values: dict):
-            return lambda: self.supabase.table("lineup_players") \
-                .update(values) \
-                .eq("fanta_team_id", team_id) \
-                .gte("gameweek", gameweek) \
-                .eq("nba_player_id", p.id) \
-                .execute()
-
-        try:
-            # 1. Slot temporanei, per non violare il vincolo unico (team, gameweek, slot).
-            #    La fase 2 parte solo quando la 1 è finita per tutti i giocatori.
-            run_parallel([update(p, {"slot": slot + 100}) for slot, p in players])
-            # 2. Slot e ruoli definitivi (tutti diversi tra loro e dagli slot temporanei)
-            run_parallel([update(p, {"slot": slot, "role": team.roles_map[p.id]}) for slot, p in players])
-            print(f"Lineup di '{team.name}' aggiornata dalla GW {gameweek} in poi.")
-            return True
-        except Exception as e:
-            print(f"Errore durante l'aggiornamento della lineup per {team.name} (GW {gameweek}): {e}")
-            return False
 
     def pull_lineup_for_team(self, team_name: str, gameweek: int, team_id: str | None = None,
                              data_as_of: datetime | None = None, data_dir: str = "data") -> bool:
@@ -877,79 +871,47 @@ class SupabaseSync:
 
     def push_profiles_from_teams(self) -> bool:
         """
-        2. Legge la tabella 'fanta_teams', crea un profilo in 'profiles' per ogni 
-        squadra (username: <nome_team>_user, password: 1) e collega l'id del profilo 
-        al campo user_id della squadra.
+        Solo amministrazione (SupabaseSync(admin=True)). Crea un profilo per ogni squadra di 'fanta_teams'
+        che non ne ha (username: <nome_team>_user) e lo collega al campo user_id della squadra.
+        La password iniziale è casuale: viene impostata come hash (admin_set_password) e stampata UNA volta
+        qui sotto, da comunicare all'utente, che la cambierà dall'app. Non viene salvata da nessuna parte.
         """
         print("Generazione dei profili a partire dalla tabella fanta_teams...")
         try:
-            # Recupera le squadre dal database (con eventuale user_id già assegnato)
-            teams_res = self.supabase.table("fanta_teams").select("id, name, user_id").execute()
-            teams = teams_res.data or []
+            teams = self.supabase.table("fanta_teams").select("id, name, user_id").execute().data or []
+            # Profili esistenti, per non creare username duplicati
+            profiles = self.supabase.table("profiles").select("id, username").execute().data or []
+            existing_profiles = {p["username"]: p["id"] for p in profiles}
 
-            # Recupera i profili esistenti per evitare di creare username duplicati
-            profiles_res = self.supabase.table("profiles").select("id, username").execute()
-            existing_profiles = {p["username"]: p["id"] for p in profiles_res.data} if profiles_res.data else {}
-
-            created_count = 0
-            linked_count = 0
-
+            created, linked = [], 0
             for team in teams:
-                # Genera l'username desiderato
                 target_username = f"{team['name']}_user"
-                
                 profile_id = existing_profiles.get(target_username)
 
-                # Se il profilo non esiste, crealo
                 if not profile_id:
-                    new_profile = {
-                        "username": target_username,
-                        "password": "1"  # Come da richiesta, password impostata a "1"
-                    }
-                    insert_res = self.supabase.table("profiles").insert(new_profile).execute()
-                    
+                    insert_res = self.supabase.table("profiles").insert({"username": target_username}).execute()
                     if insert_res.data:
                         profile_id = insert_res.data[0]["id"]
+                        password = secrets.token_urlsafe(6)
+                        self.set_initial_password(profile_id, password)
                         existing_profiles[target_username] = profile_id
-                        created_count += 1
+                        created.append((target_username, password))
 
                 # Se la squadra non ha ancora il profilo collegato (FK user_id), aggiornala
                 if profile_id and team.get("user_id") != profile_id:
                     self.supabase.table("fanta_teams").update({"user_id": profile_id}).eq("id", team["id"]).execute()
-                    linked_count += 1
+                    linked += 1
 
-            print(f"Profili: {created_count} creati. Collegamenti FK aggiornati: {linked_count}.")
+            print(f"Profili: {len(created)} creati. Collegamenti FK aggiornati: {linked}.")
+            if created:
+                print("Password iniziali (mostrate solo ora, da comunicare a ciascun utente):")
+                for username, password in created:
+                    print(f"  {username}: {password}")
             return True
 
         except Exception as e:
             print(f"Errore durante la creazione dei profili: {e}")
             return False
-
-
-    def pull_profiles(self, filepath: str = os.path.join("data", "profiles.json")) -> list[dict]:
-        """
-        3. Scarica la tabella 'profiles' da Supabase e la salva nel file 
-        'profiles.json', includendo id, username e password.
-        """
-        print("Scaricamento dei profili da Supabase in corso...")
-        try:
-            # Recupera i dati richiesti
-            response = self.supabase.table("profiles").select("id, username, password").execute()
-            profiles_data = response.data or []
-
-            # Salva nel file JSON
-            path = Path(filepath)
-            path.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(profiles_data, f, ensure_ascii=False, indent=4)
-
-            print(f"Scaricati con successo {len(profiles_data)} profili in '{filepath}'.")
-            return profiles_data
-
-        except Exception as e:
-            print(f"Errore durante il pull della tabella profiles: {e}")
-            raise e
 
     def get_gameweek_info(self, gameweek: int) -> dict | None:
         """Restituisce start_date, end_date e was_played di una gameweek (None se non esiste)."""
@@ -981,7 +943,7 @@ class SupabaseSync:
         """
         Scrive le sostituzioni automatiche di fine giornata SOLO per la gameweek indicata (le successive non cambiano).
         changes: [{"nba_player_id", "slot", "role", "auto_sub"}] dei soli giocatori che cambiano slot.
-        Come update_lineup_slots passa da slot temporanei per non violare il vincolo unico (team, gameweek, slot).
+        Passa da slot temporanei (+100) per non violare il vincolo unico (team, gameweek, slot), come save_lineup.
         """
         def update(p_id: int, values: dict):
             return lambda: self.supabase.table("lineup_players") \
@@ -1041,100 +1003,61 @@ class SupabaseSync:
         """Riporta a 0.0 i punteggi di tutte le fanta-squadre nella gameweek."""
         self.supabase.table("matchups").update({"home_score": 0.0, "away_score": 0.0}).eq("gameweek", gameweek).execute()
 
-    # --- Profilo utente (Impostazioni > Gestione Profilo) ---
-
-    def authenticate(self, username: str, password: str) -> dict | None:
-        """
-        Restituisce {"id", "username", "fanta_teams": [{"id", "name"}]} del profilo con queste
-        credenziali (None se errate): con la squadra nella stessa query il login non costa round trip in più.
-        """
-        data = (
-            self.supabase.table("profiles")
-            .select("id, username, fanta_teams(id, name)")
-            .eq("username", username)
-            .eq("password", password)
-            .limit(1)
-            .execute()
-        ).data
-        return data[0] if data else None
-
-    def check_password(self, user_id: str, password: str) -> bool:
-        """True se la password è quella attuale del profilo."""
-        return bool(self.supabase.table("profiles").select("id").eq("id", user_id).eq("password", password).execute().data)
-
-    def update_username(self, user_id: str, new_username: str) -> None:
-        """Cambia lo username. ValueError se non valido o già usato (anche con maiuscole diverse)."""
-        new_username = new_username.strip()
-        self._validate_name(new_username, "Lo username")
-        others = self.supabase.table("profiles").select("username").neq("id", user_id).execute().data or []
-        if any(p["username"].lower() == new_username.lower() for p in others):
-            raise ValueError(f"Lo username '{new_username}' è già in uso")
-        self._update_one("profiles", user_id, {"username": new_username})
-
-    def update_password(self, user_id: str, new_password: str) -> None:
-        if not new_password:
-            raise ValueError("La password non può essere vuota")
-        self._update_one("profiles", user_id, {"password": new_password})
-
-    def update_team_name(self, team_id: str, new_name: str) -> None:
-        """
-        Rinomina la fanta-squadra. Il nome identifica la squadra anche nei file locali
-        (<nome>_gwN_state.json): deve restare unico con la stessa regola dei nomi dei file.
-        """
-        new_name = new_name.strip()
-        self._validate_name(new_name, "Il nome squadra")
-        if any(c in INVALID_NAME_CHARS for c in new_name):
-            raise ValueError(f"Il nome squadra non può contenere {' '.join(INVALID_NAME_CHARS)}")
-        others = self.supabase.table("fanta_teams").select("name").neq("id", team_id).execute().data or []
-        if any(Team(t["name"]).filename == Team(new_name).filename for t in others):
-            raise ValueError(f"Il nome '{new_name}' è già usato da un'altra squadra")
-        self._update_one("fanta_teams", team_id, {"name": new_name})
+    # --- Accesso e profilo utente: solo RPC (sql/2026-11_fase1a_password_rpc.sql) ---
+    # Le password non passano mai da letture dirette: verifica e hash (bcrypt) sono nel database.
+    # Ogni accesso crea un token di sessione, richiesto da tutte le RPC che scrivono.
 
     @staticmethod
-    def _token_hash(token: str) -> str:
-        """Su Supabase va solo l'hash: chi legge la tabella non può usare i token."""
-        return hashlib.sha256(token.encode()).hexdigest()
-
-    def create_login_token(self, user_id: str) -> str:
-        """Nuovo token "Ricordami" per il profilo: il valore in chiaro resta solo nel browser."""
-        token = secrets.token_urlsafe(32)
-        self.supabase.table("login_tokens").insert({"token_hash": self._token_hash(token), "user_id": user_id}).execute()
-        return token
-
-    def authenticate_token(self, token: str) -> dict | None:
-        """Profilo collegato al token, nello stesso formato di authenticate. None se inesistente o scaduto."""
-        cutoff = datetime.now(timezone.utc) - timedelta(days=LOGIN_TOKEN_DAYS)
-        data = (
-            self.supabase.table("login_tokens")
-            .select("profiles(id, username, fanta_teams(id, name))")
-            .eq("token_hash", self._token_hash(token))
-            .gte("created_at", cutoff.isoformat())
-            .limit(1)
-            .execute()
-        ).data
-        return data[0]["profiles"] if data else None
-
-    def delete_login_token(self, token: str) -> None:
-        self.supabase.table("login_tokens").delete().eq("token_hash", self._token_hash(token)).execute()
-
-    def revoke_login_tokens(self, user_id: str, keep_token: str | None = None) -> None:
-        """Cancella i token del profilo (tranne keep_token): gli altri dispositivi devono rifare l'accesso."""
-        query = self.supabase.table("login_tokens").delete().eq("user_id", user_id)
-        if keep_token:
-            query = query.neq("token_hash", self._token_hash(keep_token))
-        query.execute()
+    def authenticate(username: str, password: str, remember: bool = False) -> dict | None:
+        """
+        Login: {"id", "username", "fanta_teams": [{"id", "name"}], "token", "expires_at"}, None se le credenziali
+        sono errate. Il token dura 90 giorni con remember ("Ricordami", da salvare sul dispositivo), 7 senza.
+        """
+        return rpc("login", {"p_username": username, "p_password": password, "p_remember": remember})
 
     @staticmethod
-    def _validate_name(value: str, label: str) -> None:
-        if not value:
-            raise ValueError(f"{label} non può essere vuoto")
-        if len(value) > MAX_NAME_LENGTH:
-            raise ValueError(f"{label} può avere al massimo {MAX_NAME_LENGTH} caratteri")
+    def authenticate_token(token: str) -> dict | None:
+        """Profilo collegato al token, nello stesso formato di authenticate (senza token). None se scaduto o revocato."""
+        return rpc("login_with_token", {"p_token": token})
 
-    def _update_one(self, table: str, row_id: str, values: dict) -> None:
-        """Aggiorna la riga con quell'id; RuntimeError se non è cambiato nulla (id inesistente o RLS)."""
-        if not self.supabase.table(table).update(values).eq("id", row_id).execute().data:
-            raise RuntimeError(f"Nessuna riga aggiornata in {table} (id {row_id})")
+    @staticmethod
+    def logout(token: str) -> None:
+        """Il token non vale più (anche sugli altri dispositivi che lo avessero)."""
+        rpc("logout", {"p_token": token})
+
+    @staticmethod
+    def update_username(token: str, password: str, new_username: str) -> None:
+        """Cambia lo username, confermato dalla password attuale. RpcError (ValueError) se non valido o già usato."""
+        rpc("change_username", {"p_token": token, "p_password": password, "p_new_username": new_username.strip()})
+
+    @staticmethod
+    def update_password(token: str, old_password: str, new_password: str) -> None:
+        """Cambia la password; gli altri dispositivi con "Ricordami" devono rifare l'accesso, questo no."""
+        rpc("change_password", {"p_token": token, "p_old_password": old_password, "p_new_password": new_password})
+
+    @staticmethod
+    def update_team_name(token: str, password: str, new_name: str) -> None:
+        """
+        Rinomina la fanta-squadra dell'utente. Il nome identifica la squadra anche nei file locali
+        (<nome>_gwN_state.json): il database controlla che resti unico con la stessa regola dei nomi dei file.
+        """
+        rpc("change_team_name", {"p_token": token, "p_password": password, "p_new_name": new_name.strip()})
+
+    @staticmethod
+    def save_lineup(token: str, team: Team, gameweek: int) -> None:
+        """
+        Salva formazione e modulo della squadra dell'utente dalla giornata indicata in poi, in una sola
+        richiesta e transazione: ruoli in rosters, slot e ruoli in lineup_players, modulo in matchups.
+        Gli slot seguono l'ordine di team.players (1 = primo). RpcError con code "ROSA_CAMBIATA" se la rosa
+        su Supabase non coincide più con quella dell'app (es. dopo swap_players.py).
+        """
+        players = [{"nba_player_id": p.id, "slot": slot, "role": team.roles_map[p.id]}
+                   for slot, p in enumerate(team.players, start=1)]
+        rpc("save_lineup", {"p_token": token, "p_gameweek": gameweek, "p_players": players, "p_lineup": team.lineup})
+
+    def set_initial_password(self, user_id: str, password: str) -> None:
+        """Solo script di amministrazione (chiave segreta): imposta la password di un profilo."""
+        self.supabase.rpc("admin_set_password", {"p_user_id": user_id, "p_password": password}).execute()
 
     def get_all_teams(self) -> list[dict]:
         """Restituisce {"id", "name"} di tutte le fanta-squadre, in ordine di nome."""
@@ -1199,33 +1122,6 @@ class SupabaseSync:
             print(f"Impossibile registrare la modifica in cron_runs: {e}")
             return False
 
-    def get_lineup_player_ids(self, team_id: str, gameweek: int) -> set[int]:
-        """ID NBA dei giocatori della squadra in lineup_players per la gameweek (la rosa attuale su Supabase)."""
-        rows = (
-            self.supabase.table("lineup_players")
-            .select("nba_player_id")
-            .eq("fanta_team_id", team_id)
-            .eq("gameweek", gameweek)
-            .execute()
-        ).data or []
-        return {int(r["nba_player_id"]) for r in rows}
-
-    def update_roster_positions(self, team: Team, team_id: str) -> None:
-        """
-        Aggiorna solo assigned_position in rosters (nba_players non si tocca: la tiene allineata il cron).
-        Solo UPDATE delle righe già della squadra: un giocatore che non è più in rosa non viene mai
-        reinserito né tolto a un'altra squadra (come poteva fare l'upsert con una rosa non aggiornata).
-        Gli UPDATE partono in parallelo, come in update_lineup_slots.
-        """
-        def update(p: Player):
-            return lambda: self.supabase.table("rosters") \
-                .update({"assigned_position": team.roles_map[p.id]}) \
-                .eq("fanta_team_id", team_id) \
-                .eq("nba_player_id", p.id) \
-                .execute()
-
-        run_parallel([update(p) for p in team.players])
-
     def get_team_lineups(self, gameweek: int) -> dict[str, str | None]:
         """Modulo di ogni fanta-squadra nella gameweek, da matchups: {team_id: modulo} (None se non salvato)."""
         rows = (
@@ -1243,7 +1139,7 @@ class SupabaseSync:
     def update_team_lineup(self, team_id: str, gameweek: int, lineup: str, following: bool = True) -> None:
         """
         Scrive il modulo della squadra in matchups (home_lineup o away_lineup, a seconda di dove gioca)
-        per la gameweek indicata e, con following, per tutte le successive (come update_lineup_slots).
+        per la gameweek indicata e, con following, per tutte le successive (come la RPC save_lineup).
         Le giornate precedenti restano invariate: sono lo storico dei moduli schierati.
         """
         if valid_lineup(lineup) is None:

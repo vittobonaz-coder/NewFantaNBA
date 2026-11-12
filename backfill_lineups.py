@@ -19,7 +19,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="stampa le modifiche senza scriverle")
     args = parser.parse_args()
 
-    SupabaseSync().backfill_matchup_lineups(dry_run=args.dry_run)
+    SupabaseSync(admin=True).backfill_matchup_lineups(dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

@@ -465,7 +465,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="non scrive su Supabase")
     args = parser.parse_args()
 
-    sync = SupabaseSync()
+    sync = SupabaseSync(admin=True)  # chiave segreta: segreto GitHub SUPABASE_SECRET_KEY
     if args.today:
         today = args.today
     elif args.mode == "rollover":
