@@ -140,11 +140,10 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - le Build Tools di Visual Studio hanno un CMake a 32 bit che richiede un aggiramento;
     - su Windows la cartella dati predefinita di Flet è Documenti (OneDrive): l'app vera userà `%APPDATA%`;
     - la repository GitHub è pubblica, con password versionate.
+  - **Versione web:** a server addormentato servono 32,6 s solo per la prima risposta; a server sveglio, circa 4,5 s per scaricare il client Flutter.
   - **Da fare da parte mia:**
     - eseguire la query di schema e passare il risultato;
-    - indicare l'URL web per la misura di confronto;
-    - approvare la scelta del client;
-    - decidere sulla repository pubblica.
+    - cambiare la password del database su Supabase (Settings > Database).
 - **Fase 1:** —
 - **Fase 2:** —
 - **Fase 3:** —
@@ -154,4 +153,8 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
 
 ## Decisioni prese
 
-(vuoto)
+- **12/11/2026 — Client Supabase dell'app: REST diretto con `httpx`** (opzione a della Fase 0), al posto di supabase-py.
+  - Motivo: circa 1 s in meno a ogni avvio, e nessuna dipendenza nativa vincolata (pydantic-core per Android).
+  - Riguarda l'app, nativa e web. Cron e script di amministrazione possono restare su supabase-py.
+  - Il modulo sostitutivo si scrive quando si toccano le query (Fasi 1-3).
+- **12/11/2026 — La repository resta pubblica** (minuti GitHub Actions illimitati). Si cambia la password del database e si elimina `data/profiles.json`; la cronologia non si riscrive.

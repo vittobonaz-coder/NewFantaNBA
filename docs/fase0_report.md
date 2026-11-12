@@ -70,9 +70,16 @@ Un sostituto con chiamate dirette a REST resterebbe quindi piccolo.
 10. **Scritture con la chiave anon:** il cron usa la stessa chiave pubblicabile dell'app (nessun segreto nel workflow). Per questo oggi le tabelle devono accettare scritture anonime; per esempio `player_injuries` ha permessi di scrittura per `anon` (sql/2026-11_sostituzioni_infortuni.sql).
 
 11. **⚠️ La repository GitHub è pubblica** (l'API risponde 200 senza autenticazione).
-    - `todo.txt` (password del database) e `data/profiles.json` (password degli utenti in chiaro) sono **già leggibili da chiunque**, compresa la cronologia.
-    - Per questo la pulizia e la rotazione previste nella Fase 1, punto 4, diventano urgenti.
-    - Rendere privata la repository riduce l'esposizione futura, ma non annulla quella passata: le password vanno cambiate comunque.
+    - **Password del database Postgres:** la versione attuale di `todo.txt` non ne contiene. Era però scritta nel file dal 05/05/2026 (`ff67f99b`) al 31/10/2026 (`4cdfe875`), quindi **è ancora nella cronologia pubblica**.
+      - Con quella password e l'indirizzo del progetto (pubblico in `supabase_manager.py`) ci si collega direttamente a Postgres come amministratore, scavalcando qualunque RLS.
+      - Esistono bot che cercano credenziali di questo tipo nelle repository pubbliche.
+    - **Password degli utenti:** `data/profiles.json` le contiene in chiaro, nella versione attuale e nella cronologia.
+    - **Scelta dell'utente:** la repository resta pubblica, per i minuti illimitati di GitHub Actions.
+    - **Azioni concordate:**
+      - cambiare la password del database: non serve a nessun componente dell'app, del cron o di pg_cron, che usano le chiavi API e il Vault;
+      - eliminare `data/profiles.json` e ignorarlo in git;
+      - le password degli utenti diventano inutili con l'hash della Fase 1.
+    - Riscrivere la cronologia non è necessario: dopo il cambio, la vecchia password del database non vale più.
 
 ## 3. Database
 Query di ricognizione: `sql/2026-11_ricognizione_schema.sql`. Il risultato va aggiunto a `sql/schema_riferimento.sql`.
@@ -178,7 +185,24 @@ Import del client: supabase-py circa 500 ms, httpx 0 ms. Il resto è equivalente
 4. **Dimensione:** l'app Windows occupa **99 MB** (cartella non compressa) e non richiede diritti di amministratore.
 
 ### Versione web su Render (per confronto)
-_Da misurare quando l'utente indica l'URL._
+URL: https://newfantanba.onrender.com (12/11/2026).
+
+| Caso | Misura |
+|---|---|
+| Server addormentato: prima risposta HTML (`curl`) | **32,6 s** |
+| Server sveglio: risposta HTML | 0,20–0,23 s |
+| Server sveglio, browser senza cache: download del client Flutter (`main.dart.wasm` 2,7 MB, font, `rive_native.wasm` 0,8 MB) | **~4,5 s**, prima ancora che il server mandi la schermata di login |
+
+**Confronto con l'app nativa**
+- Prima schermata in 1,2–1,8 s, con il login già visibile.
+- Dati letti in 2,0–2,7 s con REST diretto.
+- Mai attese di 30 s per il risveglio del server.
+
+**Limite della misura web:** il tempo esatto fino al login visibile non si è potuto misurare, perché il pannello del browser era nascosto e la pagina non veniva disegnata. I 4,5 s sono un limite inferiore.
+
+### Verifiche manuali su Windows (utente, 12/11/2026)
+- Finestra ridimensionabile e massimizzabile: **OK**.
+- Invio nel campo password avvia il login: **OK**.
 
 ## 6. Ambiente di compilazione
 

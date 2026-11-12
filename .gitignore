@@ -9,3 +9,4 @@ data/sync_meta.json
 spike_android/config.py
 spike_android/build/
 spike_android/.venv/
+data/profiles.json
