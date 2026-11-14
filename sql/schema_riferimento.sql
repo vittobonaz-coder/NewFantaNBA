@@ -5,11 +5,13 @@
 -- (risultato di sql/2026-11_ricognizione_schema.sql del 12/11/2026).
 -- La vista v_standings è in sql/v_standings.sql.
 -- Da aggiornare ogni volta che una migrazione in sql/ cambia tabelle o colonne.
+-- Aggiornato il 14/11/2026 dopo le migrazioni A e B della Fase 1 (stato attuale in fondo al file).
 
 CREATE TABLE public.profiles (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   username character varying NOT NULL,
-  password character varying NOT NULL DEFAULT 'fanta2026'::character varying,
+  password character varying NOT NULL DEFAULT 'fanta2026'::character varying,  -- in chiaro: la elimina la migrazione C della Fase 1
+  password_hash text,  -- bcrypt (extensions.crypt), Fase 1
   CONSTRAINT profiles_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.nba_players (
@@ -118,6 +120,7 @@ CREATE TABLE public.login_tokens (
   token_hash text NOT NULL,
   user_id uuid NOT NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
+  expires_at timestamp with time zone NOT NULL DEFAULT (now() + '90 days'::interval),  -- Fase 1: 90 giorni con "Ricordami", 7 senza
   CONSTRAINT login_tokens_pkey PRIMARY KEY (token_hash),
   CONSTRAINT login_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
@@ -188,3 +191,30 @@ CREATE TABLE public.standings_adjustments (
 --   8  fanta-rollover              59 21,22 * * *     mode=rollover
 --   9  github-cron-injuries-2110   10 21 * * *        mode=injuries
 --   10 github-cron-injuries-2210   10 22 * * *        mode=injuries
+
+-- =====================================================================================================
+-- FASE 1 (migrazioni A e B eseguite il 14/11/2026; C ancora da eseguire)
+-- =====================================================================================================
+--
+-- sql/2026-11_fase1a_password_rpc.sql
+--   profiles.password_hash (bcrypt), login_tokens.expires_at; trigger di transizione
+--   profiles_sync_password_hash (ricalcola l'hash se cambia profiles.password; lo toglie la migrazione C).
+--   Schema private (non esposto da PostgREST, nessun permesso per anon): token_hash, token_user,
+--   check_password, require_password, set_password, validate_name, profile_json, sync_password_hash.
+--   RPC in public, tutte SECURITY DEFINER con search_path vuoto:
+--     login(p_username, p_password, p_remember)            anon, authenticated
+--     login_with_token(p_token)                            anon, authenticated
+--     logout(p_token)                                      anon, authenticated
+--     change_password(p_token, p_old_password, p_new_password)
+--     change_username(p_token, p_password, p_new_username)
+--     change_team_name(p_token, p_password, p_new_name)
+--     save_lineup(p_token, p_gameweek, p_players, p_lineup)
+--     admin_set_password(p_user_id, p_password)            solo service_role
+--
+-- sql/2026-11_fase1b_rls_revoche.sql
+--   RLS attiva su tutte le tabelle di public. anon e authenticated: nessuna scrittura; SELECT solo su
+--   matchups, lineup_players, nba_games, nba_players, player_injuries, cron_runs, rosters, v_standings
+--   e fanta_teams(id, name), con policy "lettura dati di lega" (using true). Nessun accesso a profiles,
+--   login_tokens, player_stats, standings_adjustments. Default privileges di postgres in public: nessun
+--   permesso per anon e authenticated su tabelle, sequenze e funzioni create in futuro.
+--   Cron e script di amministrazione usano la chiave segreta (service_role), che scavalca le RLS.
