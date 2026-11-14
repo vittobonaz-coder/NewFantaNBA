@@ -5,13 +5,12 @@
 -- (risultato di sql/2026-11_ricognizione_schema.sql del 12/11/2026).
 -- La vista v_standings è in sql/v_standings.sql.
 -- Da aggiornare ogni volta che una migrazione in sql/ cambia tabelle o colonne.
--- Aggiornato il 14/11/2026 dopo le migrazioni A e B della Fase 1 (stato attuale in fondo al file).
+-- Aggiornato il 14/11/2026 dopo le migrazioni A, B e C della Fase 1 (stato attuale in fondo al file).
 
 CREATE TABLE public.profiles (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   username character varying NOT NULL,
-  password character varying NOT NULL DEFAULT 'fanta2026'::character varying,  -- in chiaro: la elimina la migrazione C della Fase 1
-  password_hash text,  -- bcrypt (extensions.crypt), Fase 1
+  password_hash text,  -- bcrypt (extensions.crypt), Fase 1; la password in chiaro è stata eliminata (migrazione C)
   CONSTRAINT profiles_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.nba_players (
@@ -193,14 +192,13 @@ CREATE TABLE public.standings_adjustments (
 --   10 github-cron-injuries-2210   10 22 * * *        mode=injuries
 
 -- =====================================================================================================
--- FASE 1 (migrazioni A e B eseguite il 14/11/2026; C ancora da eseguire)
+-- FASE 1 (migrazioni A, B e C eseguite il 14/11/2026)
 -- =====================================================================================================
 --
 -- sql/2026-11_fase1a_password_rpc.sql
---   profiles.password_hash (bcrypt), login_tokens.expires_at; trigger di transizione
---   profiles_sync_password_hash (ricalcola l'hash se cambia profiles.password; lo toglie la migrazione C).
+--   profiles.password_hash (bcrypt), login_tokens.expires_at.
 --   Schema private (non esposto da PostgREST, nessun permesso per anon): token_hash, token_user,
---   check_password, require_password, set_password, validate_name, profile_json, sync_password_hash.
+--   check_password, require_password, set_password (scrive solo l'hash), validate_name, profile_json.
 --   RPC in public, tutte SECURITY DEFINER con search_path vuoto:
 --     login(p_username, p_password, p_remember)            anon, authenticated
 --     login_with_token(p_token)                            anon, authenticated
@@ -218,3 +216,8 @@ CREATE TABLE public.standings_adjustments (
 --   login_tokens, player_stats, standings_adjustments. Default privileges di postgres in public: nessun
 --   permesso per anon e authenticated su tabelle, sequenze e funzioni create in futuro.
 --   Cron e script di amministrazione usano la chiave segreta (service_role), che scavalca le RLS.
+--
+-- sql/2026-11_fase1c_drop_password_chiaro.sql
+--   Eliminati profiles.password (in chiaro), il trigger profiles_sync_password_hash e private.sync_password_hash.
+--   Password dimenticata: non si recupera; si reimposta con
+--   select public.admin_set_password((select id from public.profiles where username = '...'), '<temporanea>');

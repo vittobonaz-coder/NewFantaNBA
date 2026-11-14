@@ -147,25 +147,23 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - verifiche Windows (finestra, Invio) OK.
   - **Database:** RLS spenta quasi ovunque e `anon` con tutti i privilegi. Con la chiave pubblicabile (pubblica) oggi si leggono le password da `profiles` e si può svuotare qualunque tabella: priorità della Fase 1.
   - **Da fare:** niente per la Fase 0.
-- **Fase 1 (in corso, 13-14/11/2026):** migrazioni A e B eseguite, codice su `main` (commit `0a0f4129`). Manca la migrazione C.
+- **Fase 1 (13-14/11/2026): conclusa.** Password con hash bcrypt, accesso e scritture dell'app solo tramite RPC, RLS su tutte le tabelle, cron e script sulla chiave segreta. Commit `0a0f4129` (codice, su `main` dal 14/11) e successivi di stato su `app-nativa`.
   - **Fatto:**
-    - `sql/2026-11_fase1a_password_rpc.sql` (solo aggiunte): `profiles.password_hash` (bcrypt), `login_tokens.expires_at`, schema `private`, RPC `login`, `login_with_token`, `logout`, `change_password`, `change_username`, `change_team_name`, `save_lineup`, `admin_set_password` (solo chiave segreta);
-    - `sql/2026-11_fase1b_rls_revoche.sql`: RLS su tutte le tabelle, `anon`/`authenticated` solo in lettura sui dati di lega, niente `profiles`/`login_tokens`, default privileges chiusi; prova a secco e rollback;
-    - `sql/2026-11_fase1c_drop_password_chiaro.sql`: via la colonna `profiles.password`;
-    - `supabase_rest.py` (RPC con httpx); login, profilo e salvataggio formazione passano dalle RPC (il salvataggio da 48 richieste a 1);
-    - cron e script di amministrazione con `SupabaseSync(admin=True)` (chiave segreta da `SUPABASE_SECRET_KEY` o `.env`); workflow con il segreto, input `dry_run` e versioni fissate; `reset_pre_setup.py` con `--conferma`; `.env.example`; `tools/verifica_permessi.py`.
-  - **Verifiche fatte:** le tre migrazioni eseguite su un Postgres locale usa e getta con pgcrypto simulato (RPC, permessi prima e dopo B, vecchio codice ancora funzionante dopo A, token "Ricordami" esistenti validi); codice Python provato con un server finto (nessuna chiamata a Supabase).
-  - **Pubblicazione (14/11/2026):**
-    - utente: chiave segreta, segreto GitHub `SUPABASE_SECRET_KEY`, `.env` locale, iscrizioni Auth disattivate;
-    - migrazione A eseguita, query di verifica corrette (nessun profilo senza hash, 23 token "Ricordami" validi);
-    - `app-nativa` portato su `main` (avanzamento diretto, 18:47); deploy su Render, login e salvataggio verificati, run manuale `injuries` verde con la chiave segreta;
-    - migrazione B eseguita: `tools/verifica_permessi.py` 17/17, letture dell'app verificate (8 squadre, classifica, 96 matchups, 1206 partite NBA), webapp e run `injuries` di nuovo verificati;
-    - `schema_riferimento.sql` aggiornato dopo A e B.
-  - **Da fare (in ordine):**
-    1. utente: controllare per 2-3 giorni che daily e rollover siano verdi;
-    2. utente: migrazione C e query di verifica;
-    3. utente: far cambiare la password a tutti gli utenti, prima di tutto a chi ha ancora quella iniziale;
-    4. `schema_riferimento.sql` aggiornato dopo C e Fase 1 chiusa.
+    - migrazioni `sql/2026-11_fase1a_password_rpc.sql` (hash, scadenza dei token, RPC `login`, `login_with_token`, `logout`, `change_password`, `change_username`, `change_team_name`, `save_lineup`, `admin_set_password`), `sql/2026-11_fase1b_rls_revoche.sql` (RLS, sola lettura dei dati di lega, default privileges chiusi), `sql/2026-11_fase1c_drop_password_chiaro.sql` (via le password in chiaro);
+    - `supabase_rest.py` (RPC con httpx); login, profilo e salvataggio formazione passano dalle RPC: il salvataggio da 48 richieste a 1;
+    - cron e script con `SupabaseSync(admin=True)` e `SUPABASE_SECRET_KEY`; workflow con il segreto, input `dry_run` e versioni fissate; `reset_pre_setup.py` con `--conferma`; `.env.example`; `tools/verifica_permessi.py`.
+  - **Verifiche:**
+    - prima della pubblicazione: le tre migrazioni su un Postgres locale usa e getta (pgcrypto simulato) e il codice Python con un server finto;
+    - migrazione A: nessun profilo senza hash, 23 token "Ricordami" esistenti rimasti validi;
+    - codice su `main` il 14/11 alle 18:47 (avanzamento diretto): deploy su Render, login e salvataggio, run manuale `injuries` verde con la chiave segreta;
+    - migrazione B: `tools/verifica_permessi.py` 17/17, letture dell'app verificate (8 squadre, classifica, 96 matchups, 1206 partite NBA), webapp e run `injuries` di nuovo ok;
+    - migrazione C: colonna in chiaro assente; login, cambio password, logout e nuovo login sulla webapp ok.
+  - **Verifica Android/Windows:** in questa fase solo webapp e script; l'app installata è provabile dalla Fase 3. Lo spike Android usa già `rpc/login`.
+  - **Da fare da parte tua:**
+    - controllare nei prossimi giorni che i run automatici di daily, rollover e injuries siano verdi;
+    - far cambiare la password a tutti gli utenti (prima chi ha ancora quella iniziale);
+    - facoltativo: disattivare le chiavi API legacy (JWT), che nessun componente usa.
+  - **Password dimenticata:** non si recupera; si reimposta con `admin_set_password` dallo SQL Editor (esempio in `sql/schema_riferimento.sql`).
 - **Fase 2:** —
 - **Fase 3:** —
 - **Fase 4:** —
