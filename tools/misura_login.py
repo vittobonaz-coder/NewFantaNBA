@@ -51,7 +51,7 @@ def main() -> int:
         response.read()
         counted["n"] += 1
         counted["bytes"] += len(response.content)
-        counted["wire"] += int(response.headers.get("content-length") or len(response.content))
+        counted["wire"] += response.num_bytes_downloaded  # byte arrivati in rete (compressi)
         counted["enc"].add(response.headers.get("content-encoding", "nessuna"))
 
     rest.get_http_client().event_hooks["response"].append(on_response)

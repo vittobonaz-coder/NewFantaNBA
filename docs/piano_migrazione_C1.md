@@ -180,7 +180,12 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - dopo un cron (cache vuota): 11 richieste in sequenza, 1,51 s (1,48–1,76); tab "Altre squadre": 3 richieste, 0,36 s;
     - cache aggiornata: 1 richiesta (`cron_runs`), 0,14 s; tab "Altre squadre": 1 richiesta, 0,12 s;
     - import dell'app (flet + supabase-py): 1,00 s (0,97–1,26).
-  - **Misure dopo:** import dell'app 0,70 s (0,69–0,73), cioè −0,3 s. Richieste e tempi dell'accesso dopo la migrazione A con `tools/misura_login.py` (attese: 1 richiesta in tutti i casi, 0 per "Altre squadre").
+  - **Migrazione A eseguita (14/11, 22:55 italiane):** query di verifica ok (4 parti: calendar 251 KB di testo, lineups 37 KB, injuries 4 KB, standings 2 KB; contesto GW 4 in corso, GW 5 modificabile fino al 17/11 alle 23:59; vincolo deferrable; permessi come previsto; `get_snapshot` con le versioni attuali 0,7 ms nel database). `tools/verifica_permessi.py`: tutto a posto. Lo snapshot vero produce file di cache identici a quelli del codice vecchio (calendario a meno dell'ordine dei matchup).
+  - **Misure dopo** (PC, `tools/misura_login.py`, 3 serie da 5 prove, solo letture con `get_snapshot`; `token_bundle`/`login_bundle` aggiungono profilo e formazione nella stessa richiesta):
+    - dopo un cron che cambia tutto: **1 richiesta**, 0,15–0,20 s di rete (mediane), 0,17–0,23 s con la scrittura della cache; 295 KB di JSON, **20 KB trasferiti** (gzip);
+    - cache aggiornata: **1 richiesta**, 0,11–0,13 s, 255 byte trasferiti;
+    - tab "Altre squadre": **0 richieste** (dalla cache);
+    - import dell'app 0,70 s (0,69–0,73), cioè −0,3 s.
   - **Da fare da parte tua, in ordine:**
     1. eseguire `sql/2026-11_fase2a_snapshot_bundle.sql` nello SQL Editor e le query di verifica in fondo al file;
     2. dirmelo: verifico `tools/verifica_permessi.py`, l'app desktop e la webapp locale contro il database vero e misuro;

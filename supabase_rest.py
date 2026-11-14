@@ -52,7 +52,7 @@ def _on_response(response: httpx.Response) -> None:
     response.read()
     ms = (time.perf_counter() - response.request.extensions.get("t0", time.perf_counter())) * 1000
     richieste_contate += 1
-    size = response.headers.get("content-length") or len(response.content)
+    size = response.num_bytes_downloaded
     print(f"[MISURE] {response.request.method} {response.request.url.path} -> {response.status_code} "
           f"{ms:.0f} ms, {size} byte trasferiti, {len(response.content)} byte, "
           f"compressione: {response.headers.get('content-encoding', 'nessuna')}")
