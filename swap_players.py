@@ -80,9 +80,13 @@ def fetch_player_info(p_id: int) -> dict:
 
 
 def default_from_gw(sync: SupabaseSync) -> int | None:
-    """Prima giornata non ancora iniziata, come per i cambi formazione dell'app."""
-    rounds = [{"round_number": r["gameweek"], "start_date": r["start_date"]} for r in sync.get_gameweek_ranges()]
-    return TimeManager.get_league_context(rounds)["edit_gw"]
+    """Giornata modificabile (prima non ancora iniziata, o quella della deroga), come per i cambi dell'app."""
+    try:
+        return sync.league_context()["edit_gw"]
+    except Exception as e:  # RPC league_context non ancora creata (sql/2026-11_fase2a_snapshot_bundle.sql)
+        print(f"Contesto della lega dal database non disponibile ({e}): calcolo locale")
+        rounds = [{"round_number": r["gameweek"], "start_date": r["start_date"]} for r in sync.get_gameweek_ranges()]
+        return TimeManager.get_league_context(rounds)["edit_gw"]
 
 
 def download_avatar(p_id: int) -> None:
@@ -249,7 +253,7 @@ def main():
             .execute().data or []
         print(f"Supabase: {s['old_name']} -> {new.name} (rosters + {len(rows)} righe di lineup_players)")
 
-    # Le app online tengono una copia locale delle formazioni: segnaliamo la modifica, così al prossimo
+    # Le app tengono una copia locale delle formazioni: run "manual" e snapshot rigenerato, così al prossimo
     # accesso la riscaricano invece di salvare cambi su una rosa vecchia
     data_marked = sync.mark_data_changed()
 
@@ -264,8 +268,9 @@ def main():
     if data_marked:
         print("\nSostituzioni completate. L'app online riscarica le formazioni al prossimo accesso.")
     else:
-        print("\nSostituzioni completate, ma l'app online non è stata avvisata (manca sql/2026-11_cron_runs_manual.sql?):"
-              "\nriscarica le formazioni solo dopo il prossimo run del cron. Lancia a mano il cron daily da GitHub Actions.")
+        print("\nSostituzioni completate, ma l'app non è stata avvisata: riscarica le formazioni solo dopo il prossimo"
+              "\nrun del cron. Lancia a mano il cron daily da GitHub Actions, oppure nello SQL Editor:"
+              "\nselect public.refresh_snapshot();")
 
 
 if __name__ == "__main__":

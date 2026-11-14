@@ -4,11 +4,12 @@ import secrets
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from supabase import create_client, Client
-from fanta_obj import Player, Team, NOT_PLAYED_SCORE, ROLE_MULTIPLIERS, DEFAULT_LINEUP, LINEUP_ROLES, has_played, infer_lineup
+from fanta_obj import Player, Team, NOT_PLAYED_SCORE, DEFAULT_LINEUP, infer_lineup
 from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
-from time_manager import TimeManager, ITA_TZ
-from supabase_rest import SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, rpc
+from time_manager import TimeManager
+from supabase_rest import SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY
+from league_cache import build_calendar, injuries_by_player, valid_lineup, write_json, write_lineup_state
 
 # Chiave segreta (service role) per cron e script di amministrazione: mai nel codice né su Render.
 # Si legge dalla variabile d'ambiente (segreto GitHub nel workflow) oppure dal file .env locale, non versionato.
@@ -86,15 +87,12 @@ def run_parallel(calls) -> list:
     return results
 
 
-def valid_lineup(value) -> str | None:
-    """Il modulo se è uno di quelli previsti, altrimenti None (es. la stringa "NULL" dei vecchi calendari)."""
-    return value if value in LINEUP_ROLES else None
-
 class SupabaseSync:
     def __init__(self, admin: bool = False):
         """
-        admin=False: per l'app (chiave pubblicabile: legge i dati di lega, scrive solo con le RPC).
-        admin=True: per cron e script di amministrazione (chiave segreta da SUPABASE_SECRET_KEY).
+        Solo cron e script di amministrazione: l'app non usa supabase-py (supabase_rest.py e league_cache.py).
+        admin=True: chiave segreta da SUPABASE_SECRET_KEY (scavalca le RLS).
+        admin=False: chiave pubblicabile, sola lettura dei dati di lega.
         """
         self.supabase: Client = get_client(admin)
 
@@ -441,74 +439,12 @@ class SupabaseSync:
                 return False
 
             lineup = self.get_team_lineups(gameweek).get(team_id)
-            self._write_lineup_state(team_name, gameweek, data, data_as_of, data_dir, lineup)
+            write_lineup_state(team_name, gameweek, data, lineup, data_as_of.isoformat() if data_as_of else "", data_dir)
             return True
 
         except Exception as e:
             print(f"Errore durante il pull della lineup per {team_name}: {e}")
             return False
-
-    def _write_lineup_state(self, team_name: str, gameweek: int, rows: list[dict],
-                            data_as_of: datetime | None = None, data_dir: str = "data",
-                            lineup: str | None = None) -> None:
-        """
-        Scrive (o sovrascrive) il file <nome_team>_gw<N>_state.json a partire dalle righe
-        di lineup_players (ordinate per slot, con la join nba_players(nba_team, position))
-        e dal modulo salvato in matchups (se manca resta quello del file locale).
-        """
-        # 1. Costruisci il nuovo roster formattato per il JSON
-        new_roster = []
-        target_date = ""
-
-        for row in rows:
-            # Estrae target_date (basta prenderla dalla prima riga valida)
-            if row.get("target_date"):
-                target_date = row["target_date"]
-
-            # Dati dalla join con la tabella nba_players
-            nba_info = row.get("nba_players") or {}
-
-            new_roster.append({
-                "id": row.get("nba_player_id"),
-                "name": row.get("player_name"),
-                "team": nba_info.get("nba_team", ""),
-                "pos": nba_info.get("position", ""),
-                "score": float(row["score"]) if row.get("score") is not None else NOT_PLAYED_SCORE,
-                "role": row.get("role", "RESERVE"),
-                "entered_game": bool(row.get("entered_game")),
-                "auto_sub": row.get("auto_sub")
-            })
-
-        # 2. Totale ricalcolato dai punteggi scaricati (come fa il cron)
-        total_score = sum(p["score"] * ROLE_MULTIPLIERS.get(p["role"], 0.0)
-                          for p in new_roster if has_played(p["score"]))
-
-        filename = Path(Team(team_name, gameweek=gameweek).filename).name
-        json_path = Path(data_dir) / filename
-        state_data = {
-            "team_name": team_name,
-            "target_date": target_date,
-            "gameweek": gameweek,
-            "data_as_of": data_as_of.isoformat() if data_as_of else "",
-            "total_score": round(total_score, 2),
-            "lineup": valid_lineup(lineup) or DEFAULT_LINEUP,
-            "roster": new_roster
-        }
-
-        # Senza modulo su Supabase preserva quello salvato in locale (l'app lo verifica comunque sui titolari)
-        if valid_lineup(lineup) is None and json_path.exists():
-            with open(json_path, "r", encoding="utf-8") as f:
-                try:
-                    state_data["lineup"] = json.load(f).get("lineup", DEFAULT_LINEUP)
-                except json.JSONDecodeError:
-                    pass
-
-        # 3. Salva (o sovrascrivi) il file locale
-        json_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(state_data, f, ensure_ascii=False, indent=4)
-
-        print(f"File '{filename}' aggiornato con successo ({len(new_roster)} giocatori).")
 
     def pull_lineups_for_teams(self, teams: list[dict], gameweek: int,
                                data_as_of: datetime | None = None, data_dir: str = "data") -> None:
@@ -530,7 +466,8 @@ class SupabaseSync:
         for t in teams:
             team_rows = [r for r in rows if r.get("fanta_team_id") == t["id"]]
             if team_rows:
-                self._write_lineup_state(t["name"], gameweek, team_rows, data_as_of, data_dir, lineups.get(t["id"]))
+                write_lineup_state(t["name"], gameweek, team_rows, lineups.get(t["id"]),
+                                   data_as_of.isoformat() if data_as_of else "", data_dir)
             else:
                 print(f"Attenzione: Nessuna lineup trovata per '{t['name']}' nella gameweek {gameweek}.")
 
@@ -559,79 +496,19 @@ class SupabaseSync:
             if not data:
                 print("Avviso: Nessun matchup trovato su Supabase.")
                 return []
-
-            # Raggruppa i matchup per gameweek
-            rounds_dict = {}
-            for row in data:
-                gw = row["gameweek"]
-                if gw not in rounds_dict:
-                    rounds_dict[gw] = {
-                        "round_number": gw,
-                        "start_date": str(row["start_date"]),
-                        "end_date": str(row["end_date"]),
-                        "matchups": []
-                    }
-
-                home_name = row["home_team"]["name"] if row.get("home_team") else "Unknown"
-                away_name = row["away_team"]["name"] if row.get("away_team") else "Unknown"
-
-                rounds_dict[gw]["matchups"].append({
-                    "home_team": home_name,
-                    "away_team": away_name,
-                    "home_score": float(row["home_score"] or 0.0),
-                    "away_score": float(row["away_score"] or 0.0),
-                    "was_played": bool(row["was_played"]),
-                    "home_lineup": valid_lineup(row["home_lineup"]) or DEFAULT_LINEUP,
-                    "away_lineup": valid_lineup(row["away_lineup"]) or DEFAULT_LINEUP
-                })
-
-            self._attach_nba_games(rounds_dict)
-            calendar_data = list(rounds_dict.values())
-
-            # Scrittura su file JSON
-            path = Path(filepath)
-            path.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(calendar_data, f, ensure_ascii=False, indent=4)
-
+            try:
+                games = self.pull_nba_games()
+            except Exception as e:
+                print(f"Partite NBA non disponibili: {e}")  # Il calendario della lega si scarica lo stesso
+                games = []
+            calendar_data = build_calendar(data, games)
+            write_json(filepath, calendar_data)
             print(f"Calendario salvato con successo in '{filepath}' ({len(calendar_data)} giornate).")
             return calendar_data
 
         except Exception as e:
             print(f"Errore durante il pull del calendario da Supabase: {e}")
             raise e
-
-    def _attach_nba_games(self, rounds_dict: dict[int, dict]) -> None:
-        """
-        Aggiunge a ogni giornata la chiave 'nba_games': {data italiana: [partite]}, in ordine di inizio.
-        Se nba_games non è leggibile il calendario della lega si scarica lo stesso (senza partite NBA).
-        """
-        for round_data in rounds_dict.values():
-            round_data["nba_games"] = {}
-        try:
-            games = self.pull_nba_games()
-        except Exception as e:
-            print(f"Partite NBA non disponibili: {e}")
-            return
-
-        for g in games:
-            round_data = rounds_dict.get(g["gameweek"])
-            if round_data is None:
-                continue
-            if g.get("start_time"):
-                start = datetime.fromisoformat(g["start_time"]).astimezone(ITA_TZ)
-                ita_date, ita_time = start.date().isoformat(), f"{start:%H:%M}"
-            else:
-                ita_date, ita_time = TimeManager.nba_date_to_italian_date(str(g["nba_date"])), ""
-            round_data["nba_games"].setdefault(ita_date, []).append({
-                "home_team": g["home_team"],
-                "away_team": g["away_team"],
-                "home_score": g["home_score"],
-                "away_score": g["away_score"],
-                "status": g["status"],
-                "time": ita_time
-            })
 
     def get_gameweek_ranges(self) -> list[dict]:
         """Giornate del campionato {"gameweek", "start_date", "end_date"} (date italiane), lette da matchups."""
@@ -979,10 +856,8 @@ class SupabaseSync:
         rows = self.supabase.table("player_injuries") \
             .select("nba_player_id, status, fantasy_status, injury_type, return_date") \
             .execute().data or []
-        injuries = {str(r["nba_player_id"]): r for r in rows}
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(injuries, f, ensure_ascii=False, indent=4)
+        injuries = injuries_by_player(rows)
+        write_json(filepath, injuries)
         return injuries
 
     def get_nba_players(self) -> list[dict]:
@@ -1003,58 +878,6 @@ class SupabaseSync:
         """Riporta a 0.0 i punteggi di tutte le fanta-squadre nella gameweek."""
         self.supabase.table("matchups").update({"home_score": 0.0, "away_score": 0.0}).eq("gameweek", gameweek).execute()
 
-    # --- Accesso e profilo utente: solo RPC (sql/2026-11_fase1a_password_rpc.sql) ---
-    # Le password non passano mai da letture dirette: verifica e hash (bcrypt) sono nel database.
-    # Ogni accesso crea un token di sessione, richiesto da tutte le RPC che scrivono.
-
-    @staticmethod
-    def authenticate(username: str, password: str, remember: bool = False) -> dict | None:
-        """
-        Login: {"id", "username", "fanta_teams": [{"id", "name"}], "token", "expires_at"}, None se le credenziali
-        sono errate. Il token dura 90 giorni con remember ("Ricordami", da salvare sul dispositivo), 7 senza.
-        """
-        return rpc("login", {"p_username": username, "p_password": password, "p_remember": remember})
-
-    @staticmethod
-    def authenticate_token(token: str) -> dict | None:
-        """Profilo collegato al token, nello stesso formato di authenticate (senza token). None se scaduto o revocato."""
-        return rpc("login_with_token", {"p_token": token})
-
-    @staticmethod
-    def logout(token: str) -> None:
-        """Il token non vale più (anche sugli altri dispositivi che lo avessero)."""
-        rpc("logout", {"p_token": token})
-
-    @staticmethod
-    def update_username(token: str, password: str, new_username: str) -> None:
-        """Cambia lo username, confermato dalla password attuale. RpcError (ValueError) se non valido o già usato."""
-        rpc("change_username", {"p_token": token, "p_password": password, "p_new_username": new_username.strip()})
-
-    @staticmethod
-    def update_password(token: str, old_password: str, new_password: str) -> None:
-        """Cambia la password; gli altri dispositivi con "Ricordami" devono rifare l'accesso, questo no."""
-        rpc("change_password", {"p_token": token, "p_old_password": old_password, "p_new_password": new_password})
-
-    @staticmethod
-    def update_team_name(token: str, password: str, new_name: str) -> None:
-        """
-        Rinomina la fanta-squadra dell'utente. Il nome identifica la squadra anche nei file locali
-        (<nome>_gwN_state.json): il database controlla che resti unico con la stessa regola dei nomi dei file.
-        """
-        rpc("change_team_name", {"p_token": token, "p_password": password, "p_new_name": new_name.strip()})
-
-    @staticmethod
-    def save_lineup(token: str, team: Team, gameweek: int) -> None:
-        """
-        Salva formazione e modulo della squadra dell'utente dalla giornata indicata in poi, in una sola
-        richiesta e transazione: ruoli in rosters, slot e ruoli in lineup_players, modulo in matchups.
-        Gli slot seguono l'ordine di team.players (1 = primo). RpcError con code "ROSA_CAMBIATA" se la rosa
-        su Supabase non coincide più con quella dell'app (es. dopo swap_players.py).
-        """
-        players = [{"nba_player_id": p.id, "slot": slot, "role": team.roles_map[p.id]}
-                   for slot, p in enumerate(team.players, start=1)]
-        rpc("save_lineup", {"p_token": token, "p_gameweek": gameweek, "p_players": players, "p_lineup": team.lineup})
-
     def set_initial_password(self, user_id: str, password: str) -> None:
         """Solo script di amministrazione (chiave segreta): imposta la password di un profilo."""
         self.supabase.rpc("admin_set_password", {"p_user_id": user_id, "p_password": password}).execute()
@@ -1062,21 +885,6 @@ class SupabaseSync:
     def get_all_teams(self) -> list[dict]:
         """Restituisce {"id", "name"} di tutte le fanta-squadre, in ordine di nome."""
         return self.supabase.table("fanta_teams").select("id, name").order("name").execute().data or []
-
-    def get_last_cron_run(self) -> datetime | None:
-        """Fine dell'ultimo run del cron (tabella cron_runs). None se la tabella è vuota o non esiste."""
-        try:
-            data = (
-                self.supabase.table("cron_runs")
-                .select("finished_at")
-                .order("finished_at", desc=True)
-                .limit(1)
-                .execute()
-            ).data
-        except Exception as e:
-            print(f"Tabella cron_runs non disponibile: {e}")
-            return None
-        return datetime.fromisoformat(data[0]["finished_at"]) if data else None
 
     def get_cron_run(self, mode: str) -> dict | None:
         """Ultimo run registrato per la modalità indicata: {"finished_at", "ok"}. None se assente o senza tabella."""
@@ -1094,33 +902,44 @@ class SupabaseSync:
             return None
         return {"finished_at": datetime.fromisoformat(data[0]["finished_at"]), "ok": bool(data[0]["ok"])}
 
-    def record_cron_run(self, mode: str, ok: bool) -> None:
-        """Registra la fine di un run del cron: l'app la usa per sapere quando riscaricare i dati."""
+    def record_run(self, mode: str, ok: bool) -> bool:
+        """
+        Registra la fine di un run (cron_runs) e rigenera lo snapshot che le app scaricano (RPC record_run,
+        sql/2026-11_fase2a_snapshot_bundle.sql): cambiano solo le parti con dati davvero diversi.
+        Se la RPC manca (migrazione non ancora eseguita) scrive solo cron_runs, come prima.
+        Restituisce False se non è riuscito a scrivere nulla.
+        """
+        try:
+            versions = self.supabase.rpc("record_run", {"p_mode": mode, "p_ok": ok}).execute().data
+            print(f"Snapshot per le app aggiornato: {versions}")
+            return True
+        except Exception as e:
+            print(f"RPC record_run non riuscita ({e}): registro solo il run in cron_runs")
         try:
             self.supabase.table("cron_runs").upsert({
                 "mode": mode,
                 "finished_at": datetime.now(timezone.utc).isoformat(),
                 "ok": ok,
             }).execute()
+            return True
         except Exception as e:
             print(f"Impossibile registrare il run in cron_runs: {e}")
+            return False
+
+    def record_cron_run(self, mode: str, ok: bool) -> None:
+        """Fine di un run del cron (anche fallito): le app riscaricano solo le parti dello snapshot cambiate."""
+        self.record_run(mode, ok)
 
     def mark_data_changed(self) -> bool:
         """
         Segnala alle app che i dati su Supabase sono cambiati fuori dal cron (es. swap_players.py):
-        registra un run "manual" in cron_runs, così al prossimo accesso riscaricano formazioni e calendario.
-        Richiede sql/2026-11_cron_runs_manual.sql. Restituisce False se la scrittura non riesce.
+        run "manual" in cron_runs e snapshot rigenerato. Restituisce False se la scrittura non riesce.
         """
-        try:
-            self.supabase.table("cron_runs").upsert({
-                "mode": "manual",
-                "finished_at": datetime.now(timezone.utc).isoformat(),
-                "ok": True,
-            }).execute()
-            return True
-        except Exception as e:
-            print(f"Impossibile registrare la modifica in cron_runs: {e}")
-            return False
+        return self.record_run("manual", True)
+
+    def league_context(self) -> dict:
+        """Contesto della lega dal database (giornate, scadenza dei cambi, deroga): RPC league_context."""
+        return self.supabase.rpc("league_context", {}).execute().data
 
     def get_team_lineups(self, gameweek: int) -> dict[str, str | None]:
         """Modulo di ogni fanta-squadra nella gameweek, da matchups: {team_id: modulo} (None se non salvato)."""

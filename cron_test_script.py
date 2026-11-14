@@ -495,7 +495,8 @@ def main():
                 nba_dates = [shift_date(last_nba_date, -i) for i in reversed(range(days))]  # dalla più vecchia
             errors = run_daily(sync, nba_dates, today, args.dry_run)
     finally:
-        # Anche un run fallito può aver scritto qualcosa: l'app deve comunque riscaricare i dati
+        # Anche un run fallito può aver scritto qualcosa: si registra e si rigenera lo snapshot delle app,
+        # che cambia versione (e si riscarica) solo nelle parti con dati davvero diversi
         if not args.dry_run:
             sync.record_cron_run(args.mode, ok=errors == [])
 

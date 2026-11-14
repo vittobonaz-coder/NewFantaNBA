@@ -5,6 +5,8 @@ venv/
 .vscode/
 *_state.json
 data/sync_meta.json
+data/snapshot_meta.json
+data/league_teams.json
 .env
 spike_android/config.py
 spike_android/build/

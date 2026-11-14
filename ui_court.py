@@ -7,7 +7,8 @@ from datetime import datetime
 from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS, LINEUP_ROLES, find_starter_assignment, infer_lineup, \
     find_auto_substitutions, STARTER_SLOTS, SIXTH_SLOT
 from time_manager import TimeManager, ITA_TZ
-from supabase_manager import SupabaseSync
+import league_cache
+import supabase_rest as rest
 from supabase_rest import RpcError
 
 
@@ -463,13 +464,9 @@ class Court(ft.Column):
 
     async def handle_save(self, e):
         """Salva su Supabase (dalla giornata self.gameweek in poi) e in locale, poi nasconde i bottoni."""
-        # I cambi potrebbero essersi chiusi mentre l'app era aperta
+        # I cambi potrebbero essersi chiusi mentre l'app era aperta (decide comunque il database)
         if TimeManager.now() >= self.edit_deadline:
-            self.restore_saved_state()
-            self.editable = False
-            self.apply_lock()
-            self.update()
-            self.show_message("Cambi chiusi: formazione non salvata", "red")
+            self.close_edits("Cambi chiusi: formazione non salvata")
             return
 
         # Aggiorniamo i dati nel team (incluso l'ordine dei giocatori)
@@ -479,10 +476,13 @@ class Court(ft.Column):
         if self.loading:
             await self.loading.show()
         try:
-            error = await asyncio.to_thread(self._push_lineup)
+            error, code = await asyncio.to_thread(self._push_lineup)
         finally:
             if self.loading:
                 self.loading.hide()
+        if code == "CAMBI_CHIUSI":
+            self.close_edits(error)
+            return
         if error:
             self.show_message(error, "red")
             return
@@ -493,17 +493,28 @@ class Court(ft.Column):
         self.toggle_buttons(False)
         self.show_message(f"Formazione di {self.team.name} salvata!", "green")
 
-    def _push_lineup(self) -> str | None:
+    def close_edits(self, message: str):
+        """Cambi chiusi: ripristina l'ultima formazione salvata e blocca scambi e modulo."""
+        self.restore_saved_state()
+        self.editable = False
+        self.apply_lock()
+        self.update()
+        self.show_message(message, "red")
+
+    def _push_lineup(self) -> tuple[str | None, str | None]:
         """
         Scrive rosa, formazione e modulo su Supabase con la RPC save_lineup: una richiesta, una transazione,
-        dalla giornata modificabile in poi (mai quella in corso). Eseguito in un thread: niente UI qui.
-        Restituisce None se il salvataggio è riuscito, altrimenti il messaggio d'errore.
+        dalla giornata modificabile in poi. Il database controlla anche la scadenza dei cambi.
+        Eseguito in un thread: niente UI qui.
+        Restituisce (None, None) se il salvataggio è riuscito, altrimenti (messaggio d'errore, codice).
         """
         if not self.token:
-            return "Sessione scaduta, rifai l'accesso"
+            return "Sessione scaduta, rifai l'accesso", "SESSIONE_SCADUTA"
         try:
-            SupabaseSync.save_lineup(self.token, self.team, self.gameweek)
-            return None
+            rest.misura_inizio("salvataggio")
+            rest.save_lineup(self.token, self.team, self.gameweek)
+            rest.misura_fine("salvataggio")
+            return None, None
         except RpcError as err:
             if err.code == "ROSA_CAMBIATA":
                 # La rosa su Supabase è cambiata (es. swap_players.py): niente scritture, si cancella la copia
@@ -513,10 +524,10 @@ class Court(ft.Column):
                     os.remove(self.team.filename)
                 except OSError:
                     pass
-            return str(err)
+            return str(err), err.code
         except Exception as ex:
             print(f"Errore durante il salvataggio della formazione: {ex}")
-            return "Errore nel salvataggio della formazione, riprova"
+            return "Errore nel salvataggio della formazione, riprova", None
 
     async def handle_card_click(self, e):
         """Dettaglio delle partite del giocatore toccato, con il velo di caricamento finché non si apre."""
@@ -1157,7 +1168,7 @@ class ProfileView(ft.Stack):
         new = (self.username_field.value or "").strip()
         if new == self.user["username"]:
             return
-        if await self._run(lambda token, pwd: SupabaseSync.update_username(token, pwd, new), "Username aggiornato"):
+        if await self._run(lambda token, pwd: rest.change_username(token, pwd, new), "Username aggiornato"):
             self.user["username"] = new
 
     async def save_team_name(self, e):
@@ -1166,12 +1177,11 @@ class ProfileView(ft.Stack):
             return
 
         def action(token, pwd):
-            SupabaseSync.update_team_name(token, pwd, new)
-            # Calendario e classifica locali hanno il vecchio nome fino al prossimo cron: li riscarichiamo
+            rest.change_team_name(token, pwd, new)
+            # Calendario, classifica e formazioni in cache hanno il vecchio nome: il database ha già
+            # rigenerato lo snapshot, si scaricano solo le parti cambiate
             try:
-                sync = SupabaseSync()
-                sync.pull_calendar()
-                sync.sync_standings()
+                league_cache.apply_snapshot(rest.get_snapshot(league_cache.local_versions()))
             except Exception as err:
                 print(f"Calendario/classifica non aggiornati dopo il cambio nome: {err}")
 
@@ -1187,7 +1197,7 @@ class ProfileView(ft.Stack):
             return
         def action(token, pwd):
             # Gli altri dispositivi con "Ricordami" devono rifare l'accesso con la nuova password (lo fa la RPC)
-            SupabaseSync.update_password(token, pwd, new)
+            rest.change_password(token, pwd, new)
 
         if await self._run(action, "Password aggiornata"):
             self.new_password.value = self.confirm_password.value = ""
@@ -1504,19 +1514,20 @@ class LoginView(ft.Column):
         self.login_button.disabled = True
         self.update()
         try:
-            # Lo stesso client serve poi a caricare i dati: la connessione a Supabase resta aperta
-            sync = SupabaseSync()
+            # Una richiesta: profilo, token, contesto della lega e dati cambiati rispetto alla cache locale
+            rest.misura_inizio("accesso")
             remember = bool(self.remember_checkbox.value)
-            user = await asyncio.to_thread(sync.authenticate,
+            user = await asyncio.to_thread(rest.login_bundle,
                                            (self.username_field.value or "").strip(),
-                                           self.password_field.value or "", remember)
+                                           self.password_field.value or "", remember,
+                                           league_cache.local_versions())
             self.error_text.value = "" if user else "Credenziali errate"
         except Exception as err:
             print(f"Errore durante il login: {err}")
             user, self.error_text.value = None, "Server non raggiungibile, riprova"
 
         if user:
-            await self.on_login_success(user, sync, remember=remember)
+            await self.on_login_success(user, remember=remember)
             return
         self.login_button.disabled = False
-        self.update()
+        self.update()

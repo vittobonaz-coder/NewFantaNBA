@@ -1,10 +1,10 @@
 # Dipendenze dell'app su Render (main.py -> app.py). Pip installa da solo i sotto-pacchetti.
-# Gli script locali (setup, swap, cron...) usano anche requests, pandas e nba_api:
+# L'app non usa supabase-py (solo httpx, che arriva con flet: supabase_rest.py).
+# Gli script locali (setup, swap, cron...) usano anche supabase, requests, pandas e nba_api:
 # il cron le installa nel workflow GitHub, in locale stanno nella .venv.
 flet==0.82.0
 flet-web==0.82.0        # server web di Flet (main.py)
 fastapi==0.144.0        # GZipMiddleware in main.py
 uvicorn==0.54.0
 websockets==15.0.1      # uvicorn ws="websockets-sansio"
-supabase==2.31.0
 tzdata==2025.3          # fusi orari per zoneinfo se il sistema non li ha

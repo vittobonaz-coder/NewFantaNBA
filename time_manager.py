@@ -1,4 +1,3 @@
-import os
 from datetime import date, datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -15,23 +14,32 @@ DAILY_CRON_UTC = time(8, 0)       # punteggi della notte NBA
 ROLLOVER_TIME_ITA = time(23, 59)  # cambio giornata = chiusura dei cambi formazione
 # Un run del rollover che parte dopo mezzanotte (fino alle 03:00) vale ancora per il giorno prima
 ROLLOVER_GRACE = timedelta(hours=3)
-# Ritardo massimo atteso di un run su GitHub Actions (usato solo se manca la tabella cron_runs)
-CRON_DELAY_MARGIN = timedelta(minutes=45)
 
 class TimeManager:
     """Classe utility per gestire logiche orarie e controlli temporali della lega."""
     _sim_offset: timedelta | None = None
+    _server_offset: timedelta = timedelta(0)
 
     @classmethod
     def simulate_now(cls, fake_now: datetime | None) -> None:
-        """Solo per i test: sposta l'orologio dell'app a fake_now (aware), da lì il tempo scorre normalmente."""
+        """
+        Solo per i test: sposta l'orologio dell'app a fake_now (aware), da lì il tempo scorre normalmente.
+        Giornate e scadenza dei cambi le decide il database (ora reale): la simulazione cambia solo
+        il blocco dei cambi a video.
+        """
         cls._sim_offset = None if fake_now is None else fake_now - datetime.now(UTC)
 
     @classmethod
+    def sync_with_server(cls, server_now: datetime | None) -> None:
+        """Allinea l'orologio dell'app a quello del database (ora restituita dalle RPC con il contesto)."""
+        if server_now is not None:
+            cls._server_offset = server_now - datetime.now(UTC)
+
+    @classmethod
     def now(cls) -> datetime:
-        """Istante attuale in UTC, eventualmente simulato con simulate_now."""
+        """Istante attuale in UTC: simulato con simulate_now, altrimenti allineato al database."""
         real_now = datetime.now(UTC)
-        return real_now + cls._sim_offset if cls._sim_offset is not None else real_now
+        return real_now + (cls._sim_offset if cls._sim_offset is not None else cls._server_offset)
 
     @staticmethod
     def rollover_instant(ita_day: date) -> datetime:
@@ -42,18 +50,6 @@ class TimeManager:
     def rollover_day(now: datetime) -> date:
         """Giorno italiano a cui appartiene un run del rollover (dopo mezzanotte conta ancora il giorno prima)."""
         return (now.astimezone(ITA_TZ) - ROLLOVER_GRACE).date()
-
-    @staticmethod
-    def last_scheduled_cron() -> datetime:
-        """
-        Ultimo orario programmato di un cron, passato da almeno CRON_DELAY_MARGIN (orologio reale).
-        Ripiego per quando su Supabase non c'è traccia dei run (tabella cron_runs).
-        """
-        now = datetime.now(UTC)
-        today_ita = now.astimezone(ITA_TZ).date()
-        slots = [datetime.combine(now.date() - timedelta(days=d), DAILY_CRON_UTC, tzinfo=UTC) for d in (0, 1)]
-        slots += [TimeManager.rollover_instant(today_ita - timedelta(days=d)) for d in (0, 1)]
-        return max(s + CRON_DELAY_MARGIN for s in slots if s + CRON_DELAY_MARGIN <= now)
 
     @classmethod
     def get_league_context(cls, rounds: list[dict]) -> dict:
@@ -67,6 +63,9 @@ class TimeManager:
         I cambi sono quindi sempre aperti per la giornata successiva a quella in corso
         (e per la giornata 1 in pre-campionato): il salvataggio scrive su lineup_players
         da edit_gw in poi, senza toccare la giornata in corso.
+        La regola valida è quella del database (private.league_context, con la deroga della tabella
+        edit_override): l'app usa il contesto restituito dalle RPC. Questa copia resta per gli script e i test
+        e deve dare lo stesso risultato (senza deroga).
         """
         context = {"current_gw": None, "edit_gw": None, "deadline": None}
         if not rounds:
@@ -95,26 +94,7 @@ class TimeManager:
             eve = date.fromisoformat(next_round["start_date"]) - timedelta(days=1)
             context.update(edit_gw=next_round["round_number"], deadline=cls.rollover_instant(eve))
 
-        # Deroga: cambi riaperti sulla giornata in corso fino all'orario indicato
-        override = cls.edit_override()
-        if override and context["current_gw"] == override[0] and now < override[1]:
-            context.update(edit_gw=override[0], deadline=override[1])
         return context
-
-    @staticmethod
-    def edit_override() -> tuple[int, datetime] | None:
-        """
-        Riapertura straordinaria dei cambi per la giornata in corso, da variabili d'ambiente:
-        EDIT_OVERRIDE_GW=3, EDIT_OVERRIDE_UNTIL=2026-11-04 23:59 (ora italiana).
-        """
-        gw, until = os.environ.get("EDIT_OVERRIDE_GW"), os.environ.get("EDIT_OVERRIDE_UNTIL")
-        if not gw or not until:
-            return None
-        try:
-            return int(gw), datetime.fromisoformat(until).replace(tzinfo=ITA_TZ).astimezone(UTC)
-        except ValueError:
-            print(f"EDIT_OVERRIDE non valido: {gw!r} / {until!r}")
-            return None
 
     @staticmethod
     def get_today_str(fmt: str = "%Y-%m-%d") -> str:

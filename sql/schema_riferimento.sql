@@ -221,3 +221,40 @@ CREATE TABLE public.standings_adjustments (
 --   Eliminati profiles.password (in chiaro), il trigger profiles_sync_password_hash e private.sync_password_hash.
 --   Password dimenticata: non si recupera; si reimposta con
 --   select public.admin_set_password((select id from public.profiles where username = '...'), '<temporanea>');
+
+-- =====================================================================================================
+-- FASE 2 (migrazioni scritte il 14/11/2026; A da eseguire prima del codice su main, B dopo)
+-- =====================================================================================================
+--
+-- sql/2026-11_fase2a_snapshot_bundle.sql
+--   CREATE TABLE public.edit_override (           -- deroga ai cambi, al massimo una riga (prima: variabili su Render)
+--     id boolean PRIMARY KEY DEFAULT true CHECK (id),
+--     gameweek integer NOT NULL,
+--     until_at timestamptz NOT NULL,
+--     note text,
+--     updated_at timestamptz NOT NULL DEFAULT now()
+--   );
+--   CREATE TABLE public.app_snapshot (             -- dati uguali per tutti, per parti con versione
+--     part text PRIMARY KEY CHECK (part IN ('calendar', 'standings', 'injuries', 'lineups')),
+--     version text NOT NULL,                       -- md5 di data: cambia solo se i dati cambiano
+--     data jsonb NOT NULL,
+--     updated_at timestamptz NOT NULL DEFAULT now(),   -- ultima modifica del contenuto
+--     checked_at timestamptz NOT NULL DEFAULT now()    -- ultima rigenerazione
+--   );
+--   Entrambe con RLS e nessun permesso per anon/authenticated: si leggono solo dalle RPC.
+--   lineup_players_team_gw_slot_key  UNIQUE (fanta_team_id, gameweek, slot) DEFERRABLE INITIALLY IMMEDIATE
+--   private: league_context(p_now), snapshot_part, lineup_row_json, refresh_snapshot(p_parts), ensure_snapshot,
+--            snapshot_since, team_lineup_json, bundle_data.
+--   RPC (SECURITY DEFINER, search_path vuoto):
+--     login_bundle(p_username, p_password, p_remember, p_versions)   anon, authenticated
+--     token_bundle(p_token, p_versions)                              anon, authenticated
+--     get_snapshot(p_versions)                                       anon, authenticated
+--     league_context()                                               anon, authenticated
+--     record_run(p_mode, p_ok)       cron_runs + snapshot             solo service_role
+--     refresh_snapshot()                                             solo service_role (e SQL Editor)
+--   change_team_name rigenera le parti con i nomi.
+--   Dopo una correzione a mano nello SQL Editor: select public.refresh_snapshot();
+--
+-- sql/2026-11_fase2b_save_lineup_scadenza.sql
+--   save_lineup: solo la giornata modificabile e prima della scadenza (private.league_context, con la deroga),
+--   errore CAMBI_CHIUSI; un solo UPDATE degli slot (niente slot temporanei +100).

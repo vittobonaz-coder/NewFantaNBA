@@ -164,7 +164,30 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - far cambiare la password a tutti gli utenti (prima chi ha ancora quella iniziale);
     - facoltativo: disattivare le chiavi API legacy (JWT), che nessun componente usa.
   - **Password dimenticata:** non si recupera; si reimposta con `admin_set_password` dallo SQL Editor (esempio in `sql/schema_riferimento.sql`).
-- **Fase 2:** —
+- **Fase 2 (14/11/2026): codice e migrazioni pronti su `app-nativa`, da pubblicare.** Piano approvato in `docs/fase2_piano.md`.
+  - **Fatto:**
+    - migrazione A `sql/2026-11_fase2a_snapshot_bundle.sql` (solo aggiunte): contesto della lega e deroga nel database (`private.league_context`, tabella `edit_override`), vincolo unico DEFERRABLE INITIALLY IMMEDIATE, tabella `app_snapshot` con 4 parti versionate (md5 del contenuto) e auto-riparazione, RPC `login_bundle`, `token_bundle`, `get_snapshot`, `league_context`, `record_run`, `refresh_snapshot`;
+    - migrazione B `sql/2026-11_fase2b_save_lineup_scadenza.sql` (restrittiva): `save_lineup` controlla giornata e scadenza (`CAMBI_CHIUSI`) e scambia gli slot con un solo UPDATE;
+    - app: accesso in una richiesta (bundle), nessuna lettura di tabelle, tab "Altre squadre" senza richieste, scadenza e ora dal database; nuovo `league_cache.py` (cache e trasformazioni, usato anche dagli script); `supabase_rest.py` con tutte le RPC dell'app e le misure (`FANTANBA_MISURE=1`); via supabase-py dall'app e da `requirements.txt`;
+    - cron e `swap_players.py`: `record_run` (cron_runs + snapshot; se la RPC manca, solo cron_runs come prima); `swap_players.py` prende la giornata modificabile dal database;
+    - `EDIT_OVERRIDE_*` non si legge più dalle variabili d'ambiente: la deroga è in `edit_override` (snippet in fondo alla migrazione A);
+    - `tools/misura_login.py`, nuovi controlli in `tools/verifica_permessi.py`.
+  - **Verifiche (prima della pubblicazione):**
+    - migrazioni Fase 1 + 2A + 2B su Postgres 16 locale usa e getta con le 24 giornate vere: 64/64 controlli; `league_context` uguale a `TimeManager.get_league_context` su 22.440 istanti (ogni 30 minuti della stagione e al secondo intorno alle 23:59 di Roma, compresi i cambi d'ora, con e senza deroga); A rieseguibile; la `save_lineup` di Fase 1 funziona con il vincolo deferrable;
+    - cache: sugli stessi dati reali i file prodotti da `league_cache` sono identici a quelli del codice vecchio (classifica, infortuni, 8 formazioni); il calendario differisce solo per l'ordine dei matchup dentro la giornata (ora per nome della squadra di casa: serve un ordine fisso per la versione);
+    - l'app non importa più supabase-py.
+  - **Misure prima** (PC, codice `9f213df0`, 5 prove, solo letture anonime; in più c'è sempre la RPC di login):
+    - dopo un cron (cache vuota): 11 richieste in sequenza, 1,51 s (1,48–1,76); tab "Altre squadre": 3 richieste, 0,36 s;
+    - cache aggiornata: 1 richiesta (`cron_runs`), 0,14 s; tab "Altre squadre": 1 richiesta, 0,12 s;
+    - import dell'app (flet + supabase-py): 1,00 s (0,97–1,26).
+  - **Misure dopo:** import dell'app 0,70 s (0,69–0,73), cioè −0,3 s. Richieste e tempi dell'accesso dopo la migrazione A con `tools/misura_login.py` (attese: 1 richiesta in tutti i casi, 0 per "Altre squadre").
+  - **Da fare da parte tua, in ordine:**
+    1. eseguire `sql/2026-11_fase2a_snapshot_bundle.sql` nello SQL Editor e le query di verifica in fondo al file;
+    2. dirmelo: verifico `tools/verifica_permessi.py`, l'app desktop e la webapp locale contro il database vero e misuro;
+    3. controllare che su Render non ci siano `EDIT_OVERRIDE_GW` / `EDIT_OVERRIDE_UNTIL` (se c'è una deroga in corso, copiarla in `edit_override`);
+    4. OK per portare il codice su `main` (deploy Render e cron);
+    5. eseguire `sql/2026-11_fase2b_save_lineup_scadenza.sql` e provare un salvataggio dalla webapp.
+  - **Verifica Android/Windows:** come in Fase 1, solo webapp e desktop locale; l'app installata si prova dalla Fase 3.
 - **Fase 3:** —
 - **Fase 4:** —
 - **Fase 5:** —
@@ -186,3 +209,12 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
   - versioni dei pacchetti fissate nel workflow del cron;
   - `reset_pre_setup.py` cancella solo con `--conferma`;
   - la versione web resta sempre utilizzabile: l'unica finestra di possibile disservizio è il deploy su Render.
+- **14/11/2026 — Fase 2:**
+  - snapshot in una tabella (`app_snapshot`), non in Supabase Storage: una richiesta in meno, aggiornabile dalle RPC e dallo SQL Editor, niente cache CDN;
+  - snapshot costruito in SQL con righe "grezze"; le trasformazioni restano in Python (`league_cache.py`), uguali per app e script;
+  - 4 parti con versione = md5 del contenuto: il cron injuries cambia solo la sua parte, un run senza modifiche non fa scaricare nulla;
+  - vincolo unico DEFERRABLE INITIALLY IMMEDIATE;
+  - deroga ai cambi nella tabella `edit_override`, impostata dallo SQL Editor;
+  - supabase-py tolto da `requirements.txt` (l'app non lo importa più);
+  - la SELECT diretta di anon sulle tabelle di lega resta per ora: si decide a fine Fase 3;
+  - l'app usa l'ora del server per il blocco dei cambi a video; `TimeManager.simulate_now` cambia solo quello.

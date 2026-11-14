@@ -1,6 +1,7 @@
 """
 Controllo "da fuori" dei permessi del database dopo la migrazione B della Fase 1
-(sql/2026-11_fase1b_rls_revoche.sql): usa SOLO la chiave pubblicabile, come chiunque abbia la repository o l'APK.
+(sql/2026-11_fase1b_rls_revoche.sql) e la migrazione A della Fase 2 (sql/2026-11_fase2a_snapshot_bundle.sql):
+usa SOLO la chiave pubblicabile, come chiunque abbia la repository o l'APK.
 
   python tools/verifica_permessi.py
 
@@ -55,6 +56,26 @@ def main() -> int:
     # RPC solo per la chiave segreta
     r = client.post("/rpc/admin_set_password", json={"p_user_id": NO_ROW, "p_password": "x"})
     check("admin_set_password negata", r.status_code >= 400, f"HTTP {r.status_code}")
+
+    # Fase 2: snapshot e deroga solo tramite RPC, rigenerazione solo con la chiave segreta
+    for table in ("app_snapshot", "edit_override"):
+        r = client.get(f"/{table}", params={"select": "*", "limit": 1})
+        check(f"{table} non leggibile", r.status_code >= 400, f"HTTP {r.status_code}")
+    for name, args in (("record_run", {"p_mode": "manual", "p_ok": True}), ("refresh_snapshot", {})):
+        r = client.post(f"/rpc/{name}", json=args)
+        check(f"{name} negata", r.status_code >= 400, f"HTTP {r.status_code}")
+    r = client.post("/rpc/league_context", json={})
+    check("rpc league_context", r.status_code == 200 and "edit_gw" in (r.json() or {}), f"HTTP {r.status_code}")
+    r = client.post("/rpc/get_snapshot", json={"p_versions": {}})
+    parts = sorted((r.json() or {}).get("parts", {})) if r.status_code == 200 else []
+    check("rpc get_snapshot con tutte le parti", parts == ["calendar", "injuries", "lineups", "standings"],
+          f"HTTP {r.status_code} {parts}")
+    r = client.post("/rpc/login_bundle", json={"p_username": "verifica_inesistente", "p_password": "x", "p_versions": {}})
+    check("rpc login_bundle, credenziali errate -> null", r.status_code == 200 and r.json() is None,
+          f"HTTP {r.status_code} {r.text[:60]}")
+    r = client.post("/rpc/token_bundle", json={"p_token": "verifica_inesistente", "p_versions": {}})
+    check("rpc token_bundle, token falso -> null", r.status_code == 200 and r.json() is None,
+          f"HTTP {r.status_code} {r.text[:60]}")
 
     print("\nTutto a posto." if not failures else f"\n{failures} controlli NON superati.")
     return 1 if failures else 0

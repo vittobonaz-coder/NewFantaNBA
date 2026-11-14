@@ -1,94 +1,18 @@
 """
 Codice comune dell'app, avviata da test.py (in locale) o da main.py (su Render).
-I punteggi li scrive solo il cron (cron_test_script.py): l'app li scarica da Supabase
-quando è girato un cron dopo l'ultimo download e li salva nei file locali.
+I punteggi li scrive solo il cron (cron_test_script.py). L'accesso è una sola richiesta (RPC login_bundle o
+token_bundle): profilo, contesto della lega (giornate e scadenza dei cambi), formazione modificabile della
+propria squadra e le sole parti dello snapshot cambiate rispetto alla cache locale (league_cache.py).
 """
-import os
-import json
 import asyncio
 import flet as ft
-from datetime import datetime
-from fanta_obj import Team
+import league_cache
+import supabase_rest as rest
 from ui_court import MainDashboard, LoginView
 from time_manager import TimeManager
-from supabase_manager import SupabaseSync
 
 
-CALENDAR_PATH = os.path.join("data", "calendar.json")
-STANDINGS_PATH = os.path.join("data", "standings.json")
-INJURIES_PATH = os.path.join("data", "injuries.json")
-SYNC_META_PATH = os.path.join("data", "sync_meta.json")  # Da non committare (.gitignore)
 LOGIN_TOKEN_KEY = "fantanba.login_token"  # Chiave del token "Ricordami" nello storage del dispositivo/browser
-
-
-def parse_timestamp(value: str | None) -> datetime | None:
-    try:
-        return datetime.fromisoformat(value) if value else None
-    except ValueError:
-        return None
-
-def is_stale(data_as_of: str | None, last_update: datetime) -> bool:
-    """True se dopo il download dei dati locali è girato un cron (o non si sa quando sono stati scaricati)."""
-    local = parse_timestamp(data_as_of)
-    return local is None or local < last_update
-
-def get_last_update(sync: SupabaseSync) -> datetime:
-    """Fine dell'ultimo cron che ha scritto su Supabase (se non tracciato: ultimo orario programmato + margine)."""
-    return sync.get_last_cron_run() or TimeManager.last_scheduled_cron()
-
-def sync_injuries(sync: SupabaseSync) -> None:
-    """Infortuni (aggiornati dal cron injuries): un errore non blocca l'app, al limite mancano i badge."""
-    try:
-        sync.pull_injuries(INJURIES_PATH)
-    except Exception as e:
-        print(f"Infortuni non scaricati: {e}")
-
-def sync_league_data(sync: SupabaseSync, last_update: datetime) -> list[dict]:
-    """Calendario (con i punteggi di tutte le squadre), classifica e infortuni: riscaricati solo se è girato un cron."""
-    meta = {}
-    if os.path.exists(SYNC_META_PATH):
-        try:
-            with open(SYNC_META_PATH, "r", encoding="utf-8") as f:
-                meta = json.load(f)
-        except (OSError, json.JSONDecodeError):
-            meta = {}
-
-    files_exist = os.path.exists(CALENDAR_PATH) and os.path.exists(STANDINGS_PATH)
-    if files_exist and not is_stale(meta.get("league_data_as_of"), last_update):
-        print("Calendario e classifica locali già aggiornati")
-        if not os.path.exists(INJURIES_PATH):
-            sync_injuries(sync)
-        with open(CALENDAR_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-    calendar = sync.pull_calendar()
-    sync.sync_standings()
-    sync_injuries(sync)
-    with open(SYNC_META_PATH, "w", encoding="utf-8") as f:
-        json.dump({"league_data_as_of": last_update.isoformat()}, f, indent=4)
-    return calendar
-
-def sync_team_data(sync: SupabaseSync, team_name: str, team_id: str, gameweek: int, last_update: datetime) -> Team | None:
-    """Formazione e punteggi della squadra per la giornata indicata: riscaricati se mancano o sono vecchi."""
-    team = Team(team_name, gameweek=gameweek)
-    if team.load_from_json() and not is_stale(team.data_as_of, last_update):
-        print(f"Stato locale di {team_name} già aggiornato (GW {gameweek})")
-        return team
-
-    sync.pull_lineup_for_team(team_name, gameweek, team_id=team_id, data_as_of=last_update)
-    return team if team.load_from_json() else None
-
-def sync_other_teams(sync: SupabaseSync, exclude_id: str, gameweek: int, last_update: datetime) -> list[Team]:
-    """Formazioni e punteggi delle altre squadre: riscaricati in blocco solo quelli mancanti o vecchi."""
-    others = [t for t in sync.get_all_teams() if t["id"] != exclude_id]
-    teams = {t["name"]: Team(t["name"], gameweek=gameweek) for t in others}
-    stale = [t for t in others
-             if not teams[t["name"]].load_from_json() or is_stale(teams[t["name"]].data_as_of, last_update)]
-    if stale:
-        sync.pull_lineups_for_teams(stale, gameweek, data_as_of=last_update)
-        for t in stale:
-            teams[t["name"]].load_from_json()
-    return [team for team in teams.values() if team.is_valid_roster()]
 
 
 async def main(page: ft.Page) -> None:
@@ -109,74 +33,60 @@ async def main(page: ft.Page) -> None:
         page.add(LoginView(page, on_login_success))
         page.update()
 
-    def load_user_data(user_data, sync: SupabaseSync) -> tuple[dict | None, str | None]:
+    def load_user_data(bundle: dict) -> tuple[dict | None, str | None]:
         """
-        Scarica (o legge dai file locali) tutto il necessario per la dashboard.
+        Applica il bundle dell'accesso alla cache locale e carica le squadre da mostrare. Nessuna richiesta di rete.
         Gira in un thread, quindi niente UI qui: restituisce (dati, None) oppure (None, errore).
-        La squadra arriva già col profilo (SupabaseSync.authenticate), insieme al client usato per il login.
         """
         try:
-            team_row = (user_data.get("fanta_teams") or [None])[0]
+            team_row = (bundle.get("fanta_teams") or [None])[0]
             if not team_row:
-                return None, f"Nessuna squadra associata a {user_data['username']}"
+                return None, f"Nessuna squadra associata a {bundle['username']}"
 
-            # 1. Calendario e classifica (riscaricati solo dopo un nuovo run del cron)
-            last_update = get_last_update(sync)
-            calendar = sync_league_data(sync, last_update)
-
-            # 2. Giornata in corso, giornata modificabile e scadenza dei cambi
-            league = TimeManager.get_league_context(calendar)
+            league_cache.apply_snapshot(bundle)
+            league_cache.apply_my_team(bundle.get("my_team"), team_row["name"])
+            league = league_cache.parse_context(bundle.get("context") or {})
+            TimeManager.sync_with_server(league["now"])
             gameweeks = [gw for gw in (league["current_gw"], league["edit_gw"]) if gw is not None]
             if not gameweeks:
                 return None, "Calendario vuoto"
-
-            # 3. Formazione e punteggi della squadra per ciascuna giornata da mostrare
-            teams = {gw: sync_team_data(sync, team_row["name"], team_row["id"], gw, last_update) for gw in gameweeks}
+            teams = {gw: league_cache.load_team(team_row["name"], gw) for gw in gameweeks}
         except Exception as e:
             print(f"Errore durante l'aggiornamento dei dati: {e}")
             return None, "Impossibile scaricare i dati, riprova più tardi"
 
-        if any(team is None or not team.is_valid_roster() for team in teams.values()):
+        if any(team is None for team in teams.values()):
             return None, f"Errore Roster: {team_row['name']}"
-        return {"team_row": team_row, "last_update": last_update, "league": league, "teams": teams}, None
+        return {"team_row": team_row, "league": league, "teams": teams}, None
 
-    async def on_login_success(user_data, sync: SupabaseSync, remember: bool = False, token: str | None = None):
+    async def on_login_success(bundle: dict, remember: bool = False, token: str | None = None):
         """
-        user_data: profilo restituito dal login; con username e password contiene anche il token di sessione,
-        che serve a tutti i salvataggi (formazione, profilo).
+        bundle: risposta di login_bundle o token_bundle; con username e password contiene anche il token
+        di sessione, che serve a tutti i salvataggi (formazione, profilo).
         remember: login con "Ricordami" spuntato, il token si salva sul dispositivo per l'accesso automatico.
         token: accesso automatico con il token già salvato sul dispositivo.
         """
-        token = token or user_data.get("token")
+        token = token or bundle.get("token")
         if remember and token:
             try:
                 await prefs.set(LOGIN_TOKEN_KEY, token)
             except Exception as e:
                 print(f"'Ricordami' non disponibile: {e}")  # Si entra lo stesso, senza accesso automatico
 
-        page.clean()
-        page.add(ft.Column(
-            [ft.ProgressRing(), ft.Text("Aggiornamento dati...")],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER
-        ))
-        page.update()
-
-        # Il download gira in un thread: il loop di Flet resta libero, quindi lo spinner
-        # arriva subito al client e continua a girare
-        data, error = await asyncio.to_thread(load_user_data, user_data, sync)
+        data, error = await asyncio.to_thread(load_user_data, bundle)
         if error:
             show_message(error, "red")
             return
-        team_row, last_update, league, teams = data["team_row"], data["last_update"], data["league"], data["teams"]
+        team_row, league, teams = data["team_row"], data["league"], data["teams"]
 
-        # Le altre squadre (solo giornata in corso) si scaricano alla prima apertura del tab Avversari
+        # Le altre squadre (solo giornata in corso) sono già nella cache: nessuna richiesta all'apertura del tab
         current_gw = league["current_gw"]
-        league_loader = (lambda: sync_other_teams(SupabaseSync(), team_row["id"], current_gw, last_update)) \
+        league_loader = (lambda: league_cache.load_other_teams(team_row["id"], current_gw)) \
                         if current_gw is not None else None
 
         page.clean()
         page.add(MainDashboard(
-            user={"id": user_data["id"], "username": user_data["username"], "token": token}, team_row=team_row,
+            user={"id": bundle["id"], "username": bundle["username"], "token": token}, team_row=team_row,
             current_team=teams.get(current_gw) if current_gw != league["edit_gw"] else None, current_gw=current_gw,
             edit_team=teams.get(league["edit_gw"]), edit_gw=league["edit_gw"],
             edit_deadline=league["deadline"],
@@ -184,13 +94,14 @@ async def main(page: ft.Page) -> None:
             on_logout=logout,
         ))
         page.update()
+        rest.misura_fine("accesso")
 
     async def logout(token: str | None):
         """Chiude la sessione (dispositivo e Supabase) e torna al login."""
         try:
             await prefs.remove(LOGIN_TOKEN_KEY)
             if token:
-                await asyncio.to_thread(SupabaseSync.logout, token)
+                await asyncio.to_thread(rest.logout, token)
         except Exception as e:
             print(f"Errore durante il logout: {e}")
         show_login()
@@ -200,20 +111,20 @@ async def main(page: ft.Page) -> None:
         token = await prefs.get(LOGIN_TOKEN_KEY)
         if not token:
             return False
+        rest.misura_inizio("accesso")
         page.add(ft.Column([ft.ProgressRing(), ft.Text("Accesso in corso...")],
                            horizontal_alignment=ft.CrossAxisAlignment.CENTER))
         page.update()
-        sync = SupabaseSync()
         try:
-            user = await asyncio.to_thread(sync.authenticate_token, token)
+            bundle = await asyncio.to_thread(rest.token_bundle, token, league_cache.local_versions())
         except Exception as e:
             print(f"Accesso automatico non riuscito: {e}")  # Server irraggiungibile: il token resta
             return False
-        if not user:
+        if not bundle:
             # Scaduto o revocato (logout, cambio password da un altro dispositivo)
             await prefs.remove(LOGIN_TOKEN_KEY)
             return False
-        await on_login_success(user, sync, token=token)
+        await on_login_success(bundle, token=token)
         return True
 
     # Avvio: accesso automatico se c'è un token valido, altrimenti schermata di login
