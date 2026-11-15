@@ -1,5 +1,6 @@
 """
-Cache locale dei dati di lega (cartella data/), senza supabase-py: la usano l'app e, per le stesse
+Cache locale dei dati di lega (cartella di app_paths: data/ su Render e negli script, cartella dati
+dell'utente nell'app installata), senza supabase-py: la usano l'app e, per le stesse
 trasformazioni, supabase_manager.py negli script.
 
 I dati arrivano dalle RPC login_bundle, token_bundle e get_snapshot (sql/2026-11_fase2a_snapshot_bundle.sql):
@@ -9,20 +10,39 @@ manda le versioni che ha e riceve solo le parti cambiate; qui si trasformano nei
 import json
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import app_paths
 from fanta_obj import Team, NOT_PLAYED_SCORE, ROLE_MULTIPLIERS, DEFAULT_LINEUP, LINEUP_ROLES, has_played
 from time_manager import TimeManager, ITA_TZ
 
-DATA_DIR = "data"
-CALENDAR_PATH = os.path.join(DATA_DIR, "calendar.json")
-STANDINGS_PATH = os.path.join(DATA_DIR, "standings.json")
-INJURIES_PATH = os.path.join(DATA_DIR, "injuries.json")
-LEAGUE_TEAMS_PATH = os.path.join(DATA_DIR, "league_teams.json")      # Parte lineups: giornata e squadre (non versionato)
-SNAPSHOT_META_PATH = os.path.join(DATA_DIR, "snapshot_meta.json")    # Versioni delle parti in cache (non versionato)
 PARTS = ("calendar", "standings", "injuries", "lineups")
+LAST_SYNC_KEY = "_last_sync"  # In snapshot_meta.json: ora (UTC, ISO) dell'ultimo aggiornamento riuscito
+
+
+# Percorsi come funzioni: la cartella si decide all'avvio (app_paths.set_data_dir nell'app installata)
+def calendar_path() -> Path:
+    return app_paths.data_file("calendar.json")
+
+
+def standings_path() -> Path:
+    return app_paths.data_file("standings.json")
+
+
+def injuries_path() -> Path:
+    return app_paths.data_file("injuries.json")
+
+
+def league_teams_path() -> Path:
+    """Parte lineups: giornata e squadre (non versionato)."""
+    return app_paths.data_file("league_teams.json")
+
+
+def snapshot_meta_path() -> Path:
+    """Versioni delle parti in cache e ora dell'ultimo aggiornamento (non versionato)."""
+    return app_paths.data_file("snapshot_meta.json")
 
 
 def valid_lineup(value) -> str | None:
@@ -105,7 +125,7 @@ def injuries_by_player(rows: list[dict]) -> dict[str, dict]:
 
 
 def write_lineup_state(team_name: str, gameweek: int, rows: list[dict], lineup: str | None = None,
-                       data_as_of: str = "", data_dir: str = DATA_DIR) -> None:
+                       data_as_of: str = "", data_dir: str | Path | None = None) -> None:
     """
     Scrive il file <nome_team>_gw<N>_state.json dalle righe di lineup_players (ordinate per slot, con
     nba_players(nba_team, position)) e dal modulo salvato in matchups (se manca resta quello del file locale).
@@ -128,7 +148,7 @@ def write_lineup_state(team_name: str, gameweek: int, rows: list[dict], lineup: 
 
     # Totale ricalcolato dai punteggi scaricati (come fa il cron)
     total_score = sum(p["score"] * ROLE_MULTIPLIERS.get(p["role"], 0.0) for p in roster if has_played(p["score"]))
-    json_path = Path(data_dir) / Path(Team(team_name, gameweek=gameweek).filename).name
+    json_path = Path(data_dir or app_paths.data_dir()) / Path(Team(team_name, gameweek=gameweek).filename).name
     state = {
         "team_name": team_name,
         "target_date": target_date,
@@ -149,12 +169,12 @@ def write_lineup_state(team_name: str, gameweek: int, rows: list[dict], lineup: 
 def _parts_files_exist(part: str) -> bool:
     """True se i file locali della parte ci sono ancora (altrimenti la versione salvata non vale)."""
     if part == "calendar":
-        return os.path.exists(CALENDAR_PATH)
+        return calendar_path().exists()
     if part == "standings":
-        return os.path.exists(STANDINGS_PATH)
+        return standings_path().exists()
     if part == "injuries":
-        return os.path.exists(INJURIES_PATH)
-    league = read_json(LEAGUE_TEAMS_PATH)
+        return injuries_path().exists()
+    league = read_json(league_teams_path())
     if not isinstance(league, dict):
         return False
     gw = league.get("gameweek")
@@ -163,7 +183,7 @@ def _parts_files_exist(part: str) -> bool:
 
 def local_versions() -> dict[str, str]:
     """Versioni delle parti presenti in cache, da mandare alle RPC: le parti mancanti tornano complete."""
-    meta = read_json(SNAPSHOT_META_PATH, {})
+    meta = read_json(snapshot_meta_path(), {})
     if not isinstance(meta, dict):
         return {}
     return {p: v for p, v in meta.items() if p in PARTS and isinstance(v, str) and _parts_files_exist(p)}
@@ -177,16 +197,16 @@ def apply_snapshot(snapshot: dict) -> None:
     """
     parts: dict = snapshot.get("parts") or {}
     versions: dict = snapshot.get("versions") or {}
-    meta = read_json(SNAPSHOT_META_PATH, {})
+    meta = read_json(snapshot_meta_path(), {})
     meta = {p: v for p, v in meta.items() if p in PARTS} if isinstance(meta, dict) else {}
 
     for part, data in parts.items():
         if part == "calendar":
-            write_json(CALENDAR_PATH, build_calendar(data.get("matchups") or [], data.get("nba_games") or []))
+            write_json(calendar_path(), build_calendar(data.get("matchups") or [], data.get("nba_games") or []))
         elif part == "standings":
-            write_json(STANDINGS_PATH, data or [])
+            write_json(standings_path(), data or [])
         elif part == "injuries":
-            write_json(INJURIES_PATH, injuries_by_player(data or []))
+            write_json(injuries_path(), injuries_by_player(data or []))
         elif part == "lineups":
             gw, lineups = data.get("gameweek"), data.get("lineups") or {}
             rows = data.get("rows") or []
@@ -196,12 +216,23 @@ def apply_snapshot(snapshot: dict) -> None:
                     team_rows = [r for r in rows if r.get("fanta_team_id") == t["id"]]
                     if team_rows:
                         write_lineup_state(t["name"], gw, team_rows, lineups.get(t["id"]), versions.get("lineups", ""))
-            write_json(LEAGUE_TEAMS_PATH, {"gameweek": gw, "teams": teams})
+            write_json(league_teams_path(), {"gameweek": gw, "teams": teams})
         else:
             continue
         if part in versions:
             meta[part] = versions[part]
-    write_json(SNAPSHOT_META_PATH, meta)
+    meta[LAST_SYNC_KEY] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    write_json(snapshot_meta_path(), meta)
+
+
+def last_sync() -> datetime | None:
+    """Ora (UTC) dell'ultimo aggiornamento riuscito dal database, None se la cache è vuota."""
+    meta = read_json(snapshot_meta_path(), {})
+    value = meta.get(LAST_SYNC_KEY) if isinstance(meta, dict) else None
+    try:
+        return datetime.fromisoformat(value) if value else None
+    except ValueError:
+        return None
 
 
 def apply_my_team(my_team: dict | None, team_name: str) -> None:
@@ -231,7 +262,7 @@ def load_team(team_name: str, gameweek: int | None) -> Team | None:
 
 def load_other_teams(exclude_id: str, gameweek: int | None) -> list[Team]:
     """Formazioni delle altre squadre nella giornata in corso, dalla parte lineups dello snapshot (nessuna richiesta)."""
-    league = read_json(LEAGUE_TEAMS_PATH, {}) or {}
+    league = read_json(league_teams_path(), {}) or {}
     if gameweek is None or league.get("gameweek") != gameweek:
         return []
     teams = [load_team(t["name"], gameweek) for t in league.get("teams", []) if t["id"] != exclude_id]

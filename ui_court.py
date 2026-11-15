@@ -7,6 +7,7 @@ from datetime import datetime
 from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS, LINEUP_ROLES, find_starter_assignment, infer_lineup, \
     find_auto_substitutions, STARTER_SLOTS, SIXTH_SLOT
 from time_manager import TimeManager, ITA_TZ
+import app_paths
 import league_cache
 import supabase_rest as rest
 from supabase_rest import RpcError
@@ -19,7 +20,6 @@ ROLE_CONFIGS = {
     "RESERVE": {"width": 80, "height": 122, "avatar": 40, "font": 13, "opacity": 0.6, "mult": ROLE_MULTIPLIERS["RESERVE"], "button_size": 15, "button_left": -8, "button_top": -8},
 }
 
-CALENDAR_PATH = os.path.join("data", "calendar.json")
 _schedules_cache: dict = {}  # (giornata, mtime del calendario) -> partite per squadra NBA
 
 def load_team_schedules(gameweek: int | None) -> dict[str, list[dict]]:
@@ -28,13 +28,14 @@ def load_team_schedules(gameweek: int | None) -> dict[str, list[dict]]:
     (avversario, casa/trasferta, punteggi propri e avversari). Dal calendar.json scaricato al login;
     in cache finché il file non cambia, così le formazioni delle altre squadre non lo rileggono.
     """
-    if gameweek is None or not os.path.exists(CALENDAR_PATH):
+    calendar_path = league_cache.calendar_path()
+    if gameweek is None or not calendar_path.exists():
         return {}
-    key = (gameweek, os.path.getmtime(CALENDAR_PATH))
+    key = (gameweek, os.path.getmtime(calendar_path))
     if key in _schedules_cache:
         return _schedules_cache[key]
 
-    with open(CALENDAR_PATH, "r", encoding="utf-8") as f:
+    with open(calendar_path, "r", encoding="utf-8") as f:
         calendar = json.load(f)
     round_data = next((r for r in calendar if r.get("round_number") == gameweek), None) or {}
     games_by_date = round_data.get("nba_games") or {}
@@ -259,17 +260,17 @@ class LoadingOverlay(ft.Container):
         self.update()
 
 
-INJURIES_PATH = os.path.join("data", "injuries.json")
 _injuries_cache: dict = {}  # mtime del file -> infortuni
 
 def load_injuries() -> dict[str, dict]:
     """Infortuni attuali {nba_player_id (str): {...}} dal file scaricato al login (in cache finché non cambia)."""
-    if not os.path.exists(INJURIES_PATH):
+    injuries_path = league_cache.injuries_path()
+    if not injuries_path.exists():
         return {}
-    key = os.path.getmtime(INJURIES_PATH)
+    key = os.path.getmtime(injuries_path)
     if key not in _injuries_cache:
         try:
-            with open(INJURIES_PATH, "r", encoding="utf-8") as f:
+            with open(injuries_path, "r", encoding="utf-8") as f:
                 _injuries_cache.clear()
                 _injuries_cache[key] = json.load(f)
         except (OSError, json.JSONDecodeError):
@@ -872,8 +873,8 @@ class CalendarView(ft.Tabs):
             await self.nba_tabs.show_current()
 
     def load_calendar(self) -> list[dict] | None:
-        cal_path = os.path.join("data", "calendar.json")
-        if not os.path.exists(cal_path):
+        cal_path = league_cache.calendar_path()
+        if not cal_path.exists():
             return None
         with open(cal_path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -976,9 +977,9 @@ class CalendarView(ft.Tabs):
 
 
 class StandingsView(ft.Column):
-    def __init__(self, json_path: str = os.path.join("data", "standings.json")):
+    def __init__(self, json_path: str | None = None):
         super().__init__()
-        self.json_path = json_path
+        self.json_path = json_path or str(league_cache.standings_path())
         self.expand = True
         self.scroll = ft.ScrollMode.AUTO
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -1218,7 +1219,7 @@ class SettingsView(ft.Tabs):
         self.animation_duration = 300
 
         self.profile_view = ProfileView(user, team_row, on_team_renamed, on_logout)
-        self.rules_filepath = os.path.join("data", "rules.json")
+        self.rules_filepath = str(app_paths.resource("assets/rules.json"))  # Incluso nel pacchetto
         self.rules_view = self._build_multi_table_view(self.rules_filepath)
         
         self.content = ft.Column(
@@ -1358,7 +1359,7 @@ class TeamView(ft.Column):
         for _, court in self.courts:
             court.set_team_name(new_name)
         key = os.path.basename(Team(old_name).filename).removesuffix("_state.json")
-        for path in glob.glob(os.path.join("data", f"{glob.escape(key)}_gw*_state.json")):
+        for path in glob.glob(os.path.join(glob.escape(str(app_paths.data_dir())), f"{glob.escape(key)}_gw*_state.json")):
             os.remove(path)
         self.update()
 

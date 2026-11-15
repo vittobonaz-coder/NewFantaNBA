@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import os
 import json
 
+import app_paths
+
 
 # Score di un giocatore la cui squadra non ha ancora giocato nella data target
 NOT_PLAYED_SCORE = None
@@ -319,7 +321,8 @@ class Team:
         self.data_as_of = ""      # Fine dell'ultimo cron (ISO, UTC) quando i dati sono stati scaricati
         # Con la giornata, un file per giornata (l'app ne usa due nella finestra dei cambi)
         suffix = f"_gw{gameweek}" if gameweek is not None else ""
-        self.filename = os.path.join("data", f"{self.name.replace(' ', '_').lower()}{suffix}_state.json")
+        # Cartella della cache (app_paths): data/ per Render e script, cartella dati nell'app installata
+        self.filename = str(app_paths.data_file(f"{self.name.replace(' ', '_').lower()}{suffix}_state.json"))
     
     def save_to_json(self):
         """Salva l'intero stato del team, inclusi i dati dei giocatori e il punteggio totale."""
@@ -332,8 +335,7 @@ class Team:
             "lineup": self.lineup,
             "roster": self.to_ui_format() # Usiamo il formato UI che è già un dizionario pulito
         }
-        if not os.path.exists("data"):
-            os.makedirs("data")
+        os.makedirs(os.path.dirname(self.filename) or ".", exist_ok=True)
         with open(self.filename, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4)
         print(f"Stato del team salvato in {self.filename}")

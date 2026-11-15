@@ -12,3 +12,10 @@ spike_android/config.py
 spike_android/build/
 spike_android/.venv/
 data/profiles.json
+# Cache dei dati che l'app riscrive a ogni accesso (Fase 3: non più versionata)
+data/calendar.json
+data/standings.json
+data/injuries.json
+# Build dell'app nativa (tools/prepara_build.py + flet build)
+app_src/
+build/

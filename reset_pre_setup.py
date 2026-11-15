@@ -1,6 +1,6 @@
 """
 Reset completo prima del setup di una nuova stagione: cancella i file locali in data/ (tranne
-fanta_teams.json e rules.json), le foto in assets/players e TUTTE le righe delle tabelle di Supabase,
+fanta_teams.json; rules.json dalla Fase 3 è in assets/), le foto in assets/players e TUTTE le righe delle tabelle di Supabase,
 profili compresi. Usa la chiave segreta (.env): senza --conferma non cancella nulla.
 
   python reset_pre_setup.py --conferma
