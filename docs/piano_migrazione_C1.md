@@ -164,7 +164,7 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - far cambiare la password a tutti gli utenti (prima chi ha ancora quella iniziale);
     - facoltativo: disattivare le chiavi API legacy (JWT), che nessun componente usa.
   - **Password dimenticata:** non si recupera; si reimposta con `admin_set_password` dallo SQL Editor (esempio in `sql/schema_riferimento.sql`).
-- **Fase 2 (14/11/2026): codice e migrazioni pronti su `app-nativa`, da pubblicare.** Piano approvato in `docs/fase2_piano.md`.
+- **Fase 2 (14–15/11/2026): conclusa.** Piano approvato in `docs/fase2_piano.md`. Codice su `main` dal 15/11 (`b4dbf7bb`), migrazioni A e B eseguite.
   - **Fatto:**
     - migrazione A `sql/2026-11_fase2a_snapshot_bundle.sql` (solo aggiunte): contesto della lega e deroga nel database (`private.league_context`, tabella `edit_override`), vincolo unico DEFERRABLE INITIALLY IMMEDIATE, tabella `app_snapshot` con 4 parti versionate (md5 del contenuto) e auto-riparazione, RPC `login_bundle`, `token_bundle`, `get_snapshot`, `league_context`, `record_run`, `refresh_snapshot`;
     - migrazione B `sql/2026-11_fase2b_save_lineup_scadenza.sql` (restrittiva): `save_lineup` controlla giornata e scadenza (`CAMBI_CHIUSI`) e scambia gli slot con un solo UPDATE;
@@ -190,8 +190,10 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     1. ~~eseguire la migrazione A e le query di verifica~~ (fatto il 14/11);
     2. ~~verifiche e misure contro il database vero~~ (fatto il 14/11);
     3. ~~controllare che su Render non ci siano `EDIT_OVERRIDE_GW` / `EDIT_OVERRIDE_UNTIL`~~ (15/11: nessuna deroga); ~~prova di login sull'app desktop locale~~ (15/11: ok);
-    4. OK per portare il codice su `main` (deploy Render e cron);
-    5. eseguire `sql/2026-11_fase2b_save_lineup_scadenza.sql` e provare un salvataggio dalla webapp.
+    4. ~~OK per portare il codice su `main`~~ (15/11: `main` = `b4dbf7bb`, deploy Render ok);
+    5. ~~eseguire la migrazione B e provare un salvataggio dalla webapp~~ (15/11: ok);
+    6. ~~run manuale `injuries`~~ (15/11: in `app_snapshot` si è aggiornata solo la parte `injuries`, 11:36 UTC; le altre tre restano alle 11:11).
+  - **Da tenere d'occhio:** i prossimi run automatici di daily e rollover (il rollover cambia `edit_gw` e rigenera lo snapshot); la deroga ai cambi ora si mette solo in `edit_override` (snippet in fondo alla migrazione A), non più nelle variabili di Render.
   - **Verifica Android/Windows:** come in Fase 1, solo webapp e desktop locale; l'app installata si prova dalla Fase 3.
 - **Fase 3:** —
 - **Fase 4:** —
