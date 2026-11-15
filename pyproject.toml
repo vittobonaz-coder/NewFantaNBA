@@ -1,0 +1,31 @@
+# Configurazione di `flet build apk` / `flet build windows` (Flet 0.82) per l'app nativa.
+# Render NON usa questo file: installa requirements.txt e avvia main.py.
+# Prima del build: python tools/prepara_build.py (copia in app_src/ solo i file ammessi: mai .env né data/).
+[project]
+name = "fantanba"
+version = "0.3.0"
+description = "FantaNBA: fantabasket NBA privato"
+requires-python = ">=3.12"
+# httpx arriva con flet; tzdata serve a zoneinfo (il Python incorporato non ha i fusi orari)
+dependencies = [
+    "flet==0.82.0",
+    "tzdata==2025.3",
+]
+
+[tool.flet]
+org = "it.fantanba"            # identificativo Android: it.fantanba.fantanba (non si cambia dopo la distribuzione)
+product = "FantaNBA"
+company = "FantaNBA"           # cartella dati su Windows: %APPDATA%\FantaNBA\FantaNBA
+copyright = "FantaNBA"
+build_number = 1
+
+[tool.flet.app]
+path = "app_src"               # preparata da tools/prepara_build.py, non versionata
+module = "nativa"              # punto d'ingresso dell'app installata (main.py resta a Render)
+
+[tool.flet.android]
+# Telefoni reali a 64 e 32 bit; per l'emulatore: flet build apk --arch x86_64
+target_arch = ["arm64-v8a", "armeabi-v7a"]
+
+[tool.flet.android.permission]
+"android.permission.INTERNET" = true

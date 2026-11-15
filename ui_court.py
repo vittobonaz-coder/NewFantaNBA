@@ -20,6 +20,32 @@ ROLE_CONFIGS = {
     "RESERVE": {"width": 80, "height": 122, "avatar": 40, "font": 13, "opacity": 0.6, "mult": ROLE_MULTIPLIERS["RESERVE"], "button_size": 15, "button_left": -8, "button_top": -8},
 }
 
+WIDE_COURT_MIN = 760   # Da questa larghezza (dp) titolari a sinistra e panchina/riserve a destra
+WIDE_LABELS_MIN = 600  # Da questa larghezza etichette della barra dei tab più grandi
+NBA_HEADSHOT_URL = "https://cdn.nba.com/headshots/nba/latest/260x190/{id}.png"  # Riserva per le foto mancanti
+
+
+class Layout:
+    """
+    Larghezza della pagina condivisa dalle viste di una dashboard (sul web una per sessione: niente globali).
+    desktop: mouse e tastiera (PC, anche dal browser), per le frecce accanto alle barre scorrevoli.
+    """
+    def __init__(self, width: float | None = None, desktop: bool = False):
+        self.width = width or 0
+        self.desktop = desktop
+        self.courts: list["Court"] = []
+
+    @property
+    def wide(self) -> bool:
+        return self.width >= WIDE_COURT_MIN
+
+
+def max_width(content: ft.Control, width: int) -> ft.Column:
+    """Contenuto centrato largo al massimo width (più stretto se la pagina è più stretta), alto quanto la pagina."""
+    return ft.Column([ft.Container(content=content, width=width, expand=True)], expand=True, spacing=0,
+                     horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+
+
 _schedules_cache: dict = {}  # (giornata, mtime del calendario) -> partite per squadra NBA
 
 def load_team_schedules(gameweek: int | None) -> dict[str, list[dict]]:
@@ -146,7 +172,7 @@ class PlayerCard(ft.Container):
                     spacing=0,
                     horizontal_alignment="center",
                     controls=[
-                        ft.Image(src=self.player.get_avatar_img(), width=conf["avatar"], height=conf["avatar"]),
+                        self.build_avatar(conf["avatar"]),
                         ft.Text(f"{first_initial}. {surname}", size=conf["font"], weight="bold", no_wrap=True),
                         ft.Text(f"{self.player.team_abbreviation} | {self.player.position}", size=9, color="grey"),
                         self.build_games_indicator(),
@@ -155,6 +181,15 @@ class PlayerCard(ft.Container):
                 ),
             ] + ([btn_container] if self.show_swap else []) + badge
         )
+
+    def build_avatar(self, size: int) -> ft.Image:
+        """Foto inclusa nel pacchetto; se manca (giocatore arrivato dopo il build) dal CDN NBA, poi il segnaposto."""
+        placeholder = ft.Image(src="avatar_placeholder.png", width=size, height=size)
+        if not self.player.id:
+            return placeholder
+        remote = ft.Image(src=NBA_HEADSHOT_URL.format(id=self.player.id), width=size, height=size,
+                          error_content=placeholder)
+        return ft.Image(src=self.player.get_avatar_img(), width=size, height=size, error_content=remote)
 
     @property
     def games(self) -> list[dict]:
@@ -292,8 +327,11 @@ INJURY_COLORS = {"OUT": ft.Colors.RED_700, "DTD": ft.Colors.AMBER_700}
 
 class Court(ft.Column):
     def __init__(self, team_instance: Team, gameweek: int, edit_deadline: datetime | None = None,
-                 read_only: bool = False, token: str | None = None):
+                 read_only: bool = False, token: str | None = None, layout: Layout | None = None):
         super().__init__()
+        self.wide = bool(layout and layout.wide)  # Titolari e panchina affiancati (PC)
+        if layout is not None:
+            layout.courts.append(self)
         self.horizontal_alignment = "center"
         self.scroll = ft.ScrollMode.AUTO
         self.expand = True
@@ -458,10 +496,8 @@ class Court(ft.Column):
         self.status_text.value = self.status_message()
 
     def show_message(self, text: str, color: str):
-        sb = ft.SnackBar(ft.Text(text), bgcolor=color)
-        self.page.overlay.append(sb) # Metodo più robusto per Flet
-        sb.open = True
-        self.page.update()
+        # In Flet 0.82 la SnackBar va aperta con show_dialog: aggiunta a page.overlay non compare
+        self.page.show_dialog(ft.SnackBar(ft.Text(text), bgcolor=color))
 
     async def handle_save(self, e):
         """Salva su Supabase (dalla giornata self.gameweek in poi) e in locale, poi nasconde i bottoni."""
@@ -528,6 +564,8 @@ class Court(ft.Column):
             return str(err), err.code
         except Exception as ex:
             print(f"Errore durante il salvataggio della formazione: {ex}")
+            if rest.is_network_error(ex):
+                return "Senza connessione: formazione non salvata, riprova quando torna la rete", None
             return "Errore nel salvataggio della formazione, riprova", None
 
     async def handle_card_click(self, e):
@@ -608,14 +646,27 @@ class Court(ft.Column):
         self.refresh_ui_and_data()
         self.update()
     
+    def set_wide(self, wide: bool):
+        """Cambia la disposizione (una colonna / titolari e panchina affiancati) quando cambia la larghezza."""
+        if wide == self.wide:
+            return
+        self.wide = wide
+        self.setup_static_ui()
+
+    def has_unsaved_changes(self) -> bool:
+        """True se la formazione ha scambi o modulo cambiati e non ancora salvati (barra Salva/Annulla visibile)."""
+        return not self.read_only and self.controls_bar.visible
+
     def setup_static_ui(self):
-        self.controls = [
+        header = [
             # Nome squadra
             self.team_name_text,
             # Punteggio Squadra
             self.total_score_text,
             # Giornata e stato dei cambi
             self.status_text,
+        ]
+        starters = [
             # Dropdown formazione (nascosto in sola lettura)
             ft.Container(
                 content=ft.Row([self.lineup_dd], alignment=ft.MainAxisAlignment.START),
@@ -626,7 +677,8 @@ class Court(ft.Column):
             self.starters_container,
 
             self.controls_bar, # Barra Salva/Annulla
-
+        ]
+        others = [
             # Panchina
             ft.Container(
                 content= ft.Column(
@@ -647,6 +699,14 @@ class Court(ft.Column):
                 )
             )
         ]
+        if self.wide:
+            self.controls = header + [ft.Row(
+                [ft.Column(starters, horizontal_alignment="center", spacing=0),
+                 ft.Column(others, horizontal_alignment="center", spacing=10)],
+                alignment=ft.MainAxisAlignment.CENTER, vertical_alignment=ft.CrossAxisAlignment.START, spacing=40,
+            )]
+        else:
+            self.controls = header + starters + others
 
     def update_starters_layout(self):
         """Cambia SOLO il contenuto del rettangolo dei titolari"""
@@ -768,7 +828,7 @@ class RoundTabs(ft.Tabs):
     """
     def __init__(self, rounds: list, build_round, lazy: bool = False, initial_index: int = 0,
                  labels: list[str] | None = None, scrollable: bool = False, build_initial: bool = False,
-                 loading: "LoadingOverlay | None" = None):
+                 loading: "LoadingOverlay | None" = None, arrows: bool = False):
         super().__init__(content=None, length=len(rounds))
         initial_index = initial_index if 0 <= initial_index < len(rounds) else 0
         self.selected_index = initial_index
@@ -789,21 +849,26 @@ class RoundTabs(ft.Tabs):
         else:
             body_area = self.body = ft.TabBarView(expand=True, controls=[build_round(r) for r in rounds])
 
-        self.content = ft.Column(
-            expand=True,
-            controls=[
-                ft.TabBar(
-                    scrollable=scrollable,
-                    label_text_style=ft.TextStyle(size=20),
-                    unselected_label_text_style=ft.TextStyle(size=17),
-                    label_color=ft.Colors.ORANGE,           # Colore testo selezionato
-                    unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
-                    indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
-                    tabs=[ft.Tab(label=label) for label in (labels or [f"{r['round_number']}" for r in rounds])]
-                ),
-                body_area,
-            ],
+        tab_bar = ft.TabBar(
+            scrollable=scrollable,
+            label_text_style=ft.TextStyle(size=20),
+            unselected_label_text_style=ft.TextStyle(size=17),
+            label_color=ft.Colors.ORANGE,           # Colore testo selezionato
+            unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
+            indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
+            tabs=[ft.Tab(label=label) for label in (labels or [f"{r['round_number']}" for r in rounds])]
         )
+        if arrows and scrollable:
+            # Col mouse una barra scorrevole non si trascina: frecce per la tab precedente / successiva
+            tab_bar.expand = True
+            header = ft.Row([
+                ft.IconButton(ft.Icons.CHEVRON_LEFT, data=-1, on_click=self.handle_arrow, tooltip="Precedente"),
+                tab_bar,
+                ft.IconButton(ft.Icons.CHEVRON_RIGHT, data=1, on_click=self.handle_arrow, tooltip="Successiva"),
+            ], spacing=0)
+        else:
+            header = tab_bar
+        self.content = ft.Column(expand=True, controls=[header, body_area])
 
     async def show_current(self):
         """
@@ -828,13 +893,22 @@ class RoundTabs(ft.Tabs):
         self.current = int(e.data)  # e.data = indice della tab selezionata
         await self.show_current()
 
+    async def handle_arrow(self, e):
+        """Frecce (PC): tab precedente o successiva."""
+        new = self.current + e.control.data
+        if not 0 <= new < len(self.rounds):
+            return
+        self.current = self.selected_index = new
+        self.update()
+        await self.show_current()
+
 
 class CalendarView(ft.Tabs):
     """
     Calendario: scontri diretti della lega e partite NBA, divisi per giornata.
     Si apre sulla giornata indicata (quella in corso) e costruisce solo le giornate aperte.
     """
-    def __init__(self, gameweek: int | None = None):
+    def __init__(self, gameweek: int | None = None, arrows: bool = False):
         super().__init__(content=None, length=2)
         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
         self.selected_index = 0
@@ -848,10 +922,10 @@ class CalendarView(ft.Tabs):
             # Calendario Lega visibile subito: si costruisce solo la giornata iniziale
             # Barre delle giornate scorrevoli: 24 numeri non stanno nella larghezza di un telefono
             league_view = RoundTabs(calendar_data, self.build_league_round, lazy=True,
-                                    initial_index=initial, scrollable=True, build_initial=True)
+                                    initial_index=initial, scrollable=True, build_initial=True, arrows=arrows)
             # Le giornate NBA si costruiscono solo quando si apre il Calendario NBA (vedi RoundTabs)
             nba_view = self.nba_tabs = RoundTabs(calendar_data, self.build_nba_round, lazy=True,
-                                                 initial_index=initial, scrollable=True)
+                                                 initial_index=initial, scrollable=True, arrows=arrows)
             self.on_change = self.handle_change
 
         self.content = ft.Column(
@@ -1128,10 +1202,8 @@ class ProfileView(ft.Stack):
         self.controls = [form, self.loading]
 
     def show_message(self, text: str, color: str):
-        sb = ft.SnackBar(ft.Text(text), bgcolor=color)
-        self.page.overlay.append(sb)
-        sb.open = True
-        self.page.update()
+        # In Flet 0.82 la SnackBar va aperta con show_dialog: aggiunta a page.overlay non compare
+        self.page.show_dialog(ft.SnackBar(ft.Text(text), bgcolor=color))
 
     async def _run(self, action, success: str) -> bool:
         """
@@ -1150,7 +1222,8 @@ class ProfileView(ft.Stack):
             return False
         except Exception as err:
             print(f"Errore durante l'aggiornamento del profilo: {err}")
-            self.show_message("Errore nel salvataggio, riprova", "red")
+            self.show_message("Serve la connessione: modifica non salvata" if rest.is_network_error(err)
+                              else "Errore nel salvataggio, riprova", "red")
             return False
         finally:
             self.loading.hide()
@@ -1300,16 +1373,18 @@ class TeamView(ft.Column):
     """
     def __init__(self, current_team: Team | None, current_gw: int | None,
                  edit_team: Team | None = None, edit_gw: int | None = None,
-                 edit_deadline: datetime | None = None, token: str | None = None):
+                 edit_deadline: datetime | None = None, token: str | None = None, layout: Layout | None = None):
         super().__init__()
         self.expand = True
         self.horizontal_alignment = "center"
 
         self.courts: list[tuple[str, Court]] = []
         if current_team is not None:
-            self.courts.append((f"Giornata {current_gw}", Court(current_team, current_gw, token=token)))
+            self.courts.append((f"Giornata {current_gw}",
+                                Court(current_team, current_gw, token=token, layout=layout)))
         if edit_team is not None:
-            self.courts.append((f"Formazione G{edit_gw}", Court(edit_team, edit_gw, edit_deadline, token=token)))
+            self.courts.append((f"Formazione G{edit_gw}",
+                                Court(edit_team, edit_gw, edit_deadline, token=token, layout=layout)))
 
         # Velo di caricamento sopra le formazioni (cambio giornata, Salva, Annulla)
         self.loading = LoadingOverlay()
@@ -1327,6 +1402,9 @@ class TeamView(ft.Column):
         content.controls += [court for _, court in self.courts]
         self.controls = [ft.Stack([content, self.loading], expand=True)]
         self.show_court(0, refresh=False)
+
+    def has_unsaved_changes(self) -> bool:
+        return any(court.has_unsaved_changes() for _, court in self.courts)
 
     async def handle_switch_click(self, e):
         await self.switch_court(e.control.data)
@@ -1369,8 +1447,9 @@ class LeagueView(ft.Column):
     Formazioni e punteggi della giornata in corso delle altre squadre, una per tab.
     I dati si scaricano solo alla prima apertura del tab (loader), non al login.
     """
-    def __init__(self, gameweek: int | None, loader=None):
+    def __init__(self, gameweek: int | None, loader=None, layout: Layout | None = None):
         super().__init__()
+        self.layout = layout
         self.expand = True
         self.horizontal_alignment = "center"
         self.alignment = ft.MainAxisAlignment.CENTER
@@ -1405,12 +1484,13 @@ class LeagueView(ft.Column):
             loading = LoadingOverlay()  # Velo sopra le formazioni (cambio squadra, dettaglio partite)
 
             def build_court(team: Team) -> Court:
-                court = Court(team, self.gameweek, read_only=True)
+                court = Court(team, self.gameweek, read_only=True, layout=self.layout)
                 court.loading = loading
                 return court
 
             self.controls = [RoundTabs(teams, build_court, lazy=True, labels=[t.name for t in teams],
-                                       scrollable=True, build_initial=True, loading=loading)]
+                                       scrollable=True, build_initial=True, loading=loading,
+                                       arrows=bool(self.layout and self.layout.desktop))]
         self.update()
 
 
@@ -1418,73 +1498,108 @@ class MainDashboard(ft.Tabs):
     def __init__(self, user: dict, team_row: dict,
                  current_team: Team | None, current_gw: int | None,
                  edit_team: Team | None = None, edit_gw: int | None = None,
-                 edit_deadline: datetime | None = None, league_loader=None, on_logout=None):
+                 edit_deadline: datetime | None = None, league_loader=None, on_logout=None,
+                 width: float | None = None, desktop: bool = False):
         super().__init__(content=None, length=0)
         self.expand = True # Permette alla dashboard di occupare tutto lo spazio
         self.length = 5
         self.selected_index=0
         self.animation_duration=300
         self.on_change = self.handle_tab_change
+        # Larghezza della pagina: campo affiancato ed etichette più grandi sul PC (apply_width a ogni resize)
+        self.layout = Layout(width, desktop)
 
         # Subito solo la Squadra (la prima vista). Le altre si costruiscono alla prima apertura del tab:
         # al login si spediscono al browser meno controlli. Le Altre Squadre scaricano anche i dati.
         self.team_view = TeamView(current_team, current_gw, edit_team, edit_gw, edit_deadline,
-                                  token=user.get("token"))
-        self.league_view = LeagueView(current_gw, league_loader)
+                                  token=user.get("token"), layout=self.layout)
+        self.league_view = LeagueView(current_gw, league_loader, layout=self.layout)
         calendar_gw = current_gw if current_gw is not None else edit_gw  # Pre-campionato: la prima giornata
         self.lazy_builders = {
-            2: lambda: CalendarView(calendar_gw),
+            2: lambda: CalendarView(calendar_gw, arrows=desktop),
             3: StandingsView,
             4: lambda: SettingsView(user, team_row, on_team_renamed=self.team_view.rename_team, on_logout=on_logout),
         }
         self.lazy_containers = {i: ft.Container() for i in self.lazy_builders}
+        max_widths = {2: 900, 3: 900, 4: 600}  # Larghezza massima dei contenuti sugli schermi larghi
 
-        self.content=ft.Column(
+        self.tab_bar = ft.TabBar(
+            label_color=ft.Colors.ORANGE,           # Colore testo selezionato
+            unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
+            indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
+            tabs=[
+                ft.Tab(label="Squadra", icon=ft.Icons.SPORTS_BASKETBALL),
+                ft.Tab(label="Altre Squadre", icon=ft.Icons.GROUPS),
+                ft.Tab(label="Calendario", icon=ft.Icons.CALENDAR_MONTH),
+                ft.Tab(label="Campionato", icon=ft.Icons.EMOJI_EVENTS),
+                ft.Tab(label="Impostazioni", icon=ft.Icons.SETTINGS),
+            ]
+        )
+        self._set_label_sizes()
+        self.content = ft.Column(
             expand=True,
             controls=[
-                ft.TabBar(
-                    label_text_style=ft.TextStyle(size=9.3),
-                    unselected_label_text_style=ft.TextStyle(size=7.2),
-                    label_color=ft.Colors.ORANGE,           # Colore testo selezionato
-                    unselected_label_color=ft.Colors.GREY,  # Colore testo non selezionato
-                    indicator_color=ft.Colors.ORANGE,       # Colore della linea sotto la tab
-                    tabs=[
-                        ft.Tab(label="Squadra", icon=ft.Icons.SPORTS_BASKETBALL),
-                        ft.Tab(label="Altre Squadre", icon=ft.Icons.GROUPS),
-                        ft.Tab(label="Calendario", icon=ft.Icons.CALENDAR_MONTH),
-                        ft.Tab(label="Campionato", icon=ft.Icons.EMOJI_EVENTS),
-                        ft.Tab(label="Impostazioni", icon=ft.Icons.SETTINGS),
-                    ]
-                ),
+                self.tab_bar,
                 ft.TabBarView(
                     expand=True,
                     controls=[
-                        # Squadra
+                        # Squadra (campo centrato dal Court; affiancato sopra WIDE_COURT_MIN)
                         self.team_view,
                         # Avversari
-                        ft.Container(content=self.league_view, padding=0),
+                        max_width(ft.Container(content=self.league_view, padding=0), 900),
                         # Calendario, Campionato, Impostazioni (riempiti alla prima apertura)
-                        self.lazy_containers[2],
-                        self.lazy_containers[3],
-                        self.lazy_containers[4],
+                        *(max_width(self.lazy_containers[i], max_widths[i]) for i in (2, 3, 4)),
                     ],
                 ),
             ],
         )
 
+    def _set_label_sizes(self) -> None:
+        """Etichette dei tab: piccole sul telefono (5 tab in 360 dp), leggibili sugli schermi larghi."""
+        wide = self.layout.width >= WIDE_LABELS_MIN
+        self.tab_bar.label_text_style = ft.TextStyle(size=14 if wide else 9.3)
+        self.tab_bar.unselected_label_text_style = ft.TextStyle(size=13 if wide else 7.2)
+
+    def apply_width(self, width: float | None) -> None:
+        """
+        Nuova larghezza della pagina (resize della finestra, rotazione): aggiorna solo se cambia una soglia
+        (campo affiancato, etichette), così trascinare il bordo della finestra non ridisegna di continuo.
+        """
+        old_wide, old_labels = self.layout.wide, self.layout.width >= WIDE_LABELS_MIN
+        self.layout.width = width or 0
+        if self.layout.wide == old_wide and (self.layout.width >= WIDE_LABELS_MIN) == old_labels:
+            return
+        self._set_label_sizes()
+        for court in self.layout.courts:
+            court.set_wide(self.layout.wide)
+        self.update()
+
+    def has_unsaved_changes(self) -> bool:
+        """Formazione con modifiche non salvate (per Indietro e aggiornamento silenzioso)."""
+        return self.team_view.has_unsaved_changes()
+
+    async def select_tab(self, index: int) -> None:
+        """Seleziona un tab da codice (Indietro, ricostruzione dopo un aggiornamento), costruendolo se serve."""
+        if index == self.selected_index:
+            return
+        self.selected_index = index
+        self.update()
+        await self.open_tab(index)
+
     async def handle_tab_change(self, e):
+        await self.open_tab(int(e.data))  # e.data = indice del tab selezionato
+
+    async def open_tab(self, index: int) -> None:
         """
         Al primo ingresso nel tab Altre Squadre scarica le formazioni delle altre squadre;
         al primo ingresso in Calendario, Campionato o Impostazioni costruisce la vista.
         """
-        index = int(e.data)  # e.data = indice del tab selezionato
         if index == 1:
             await self.league_view.load()
         elif index in self.lazy_builders:
             container = self.lazy_containers[index]
             container.content = self.lazy_builders.pop(index)()
             container.update()
-
 
 class LoginView(ft.Column):
     def __init__(self, page: ft.Page, on_login_success):
@@ -1494,8 +1609,13 @@ class LoginView(ft.Column):
         self.alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
-        self.username_field = ft.TextField(label="Username", width=280, bgcolor="#1a1a1a")
-        self.password_field = ft.TextField(label="Password", width=280, password=True, can_reveal_password=True, bgcolor="#1a1a1a")
+        self.expand = True  # Centrata in verticale nell'area sicura
+
+        # Invio nello username passa alla password, Invio nella password accede (PC)
+        self.username_field = ft.TextField(label="Username", width=280, bgcolor="#1a1a1a",
+                                           on_submit=self._focus_password)
+        self.password_field = ft.TextField(label="Password", width=280, password=True, can_reveal_password=True,
+                                           bgcolor="#1a1a1a", on_submit=self._check_login)
         self.remember_checkbox = ft.Checkbox(label="Ricordami", value=False)
         self.error_text = ft.Text("", color="red")
         self.login_button = ft.ElevatedButton("Entra", on_click=self._check_login, bgcolor="amber", color="black")
@@ -1505,12 +1625,17 @@ class LoginView(ft.Column):
             ft.Text("NewFantaNBA Login", size=24, weight="bold"),
             self.username_field,
             self.password_field,
-            self.remember_checkbox,
+            ft.Container(content=self.remember_checkbox, width=280),  # Allineata ai campi
             self.error_text,
             self.login_button
         ]
 
+    async def _focus_password(self, e):
+        await self.password_field.focus()
+
     async def _check_login(self, e):
+        if self.login_button.disabled:
+            return  # Accesso già in corso (doppio Invio)
         # Niente doppi click mentre si verificano le credenziali e si caricano i dati
         self.login_button.disabled = True
         self.update()

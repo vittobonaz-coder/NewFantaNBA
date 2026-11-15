@@ -252,6 +252,21 @@ def parse_context(context: dict) -> dict:
     }
 
 
+def offline_context(saved: dict) -> dict:
+    """
+    Contesto senza rete: quello salvato all'ultimo accesso (stessa forma della RPC); se la sua scadenza è
+    passata, ricalcolato con TimeManager.get_league_context sul calendario in cache (regola del database,
+    senza deroga).
+    """
+    league = parse_context(saved or {})
+    deadline = league["deadline"]
+    if league["edit_gw"] is not None and (deadline is None or TimeManager.now() < deadline):
+        return league
+    rounds = read_json(calendar_path(), []) or []
+    local = TimeManager.get_league_context(rounds)
+    return {**local, "now": None}
+
+
 def load_team(team_name: str, gameweek: int | None) -> Team | None:
     """Squadra della giornata dal file locale, None se manca o non è valida."""
     if gameweek is None:

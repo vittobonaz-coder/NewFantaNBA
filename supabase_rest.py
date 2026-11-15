@@ -37,6 +37,11 @@ class RpcError(ValueError):
         self.code = code
 
 
+def is_network_error(err: BaseException) -> bool:
+    """True se la richiesta non è arrivata al database (rete assente, DNS, timeout): l'app passa ai dati in cache."""
+    return isinstance(err, httpx.TransportError)
+
+
 # --- Misure (solo con FANTANBA_MISURE=1) ---
 
 _misura: dict[str, float] = {}
