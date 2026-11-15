@@ -367,3 +367,17 @@ Un APK firmato con la chiave di debug non si aggiorna poi con quello firmato in 
 - **Render:** `pyproject.toml` nella radice: da controllare nel log del primo deploy che il build usi ancora
   `requirements.txt`. Il primo login dopo il deploy scarica i tre JSON (≈20 KB compressi).
 - **Dimensione:** Python incorporato domina (~70 MB APK con 3 architetture in Fase 0); le foto aggiungono ~2 MB.
+
+## 13. Cambiato in corso d'opera (15/11/2026)
+
+- **Telefoni sotto 360 dp:** nessuna scala del campo. Le larghezze fisse si restringono da sole fino a 320 dp
+  (provato nel browser a 320 px); sotto i 360 dp la barra dei 5 tab scorre, come prima.
+- **Indietro con formazione non salvata:** invece di un dialog "Uscire senza salvare?", un avviso e un secondo
+  Indietro entro 3 secondi per uscire (verificato nel codice Dart di Flet 0.82: `confirm_pop(True)` sulla vista
+  radice chiama `SystemNavigator.pop()`).
+- **Frecce per le barre scorrevoli** (giornate del calendario, altre squadre) sempre su PC, anche dal browser:
+  Flet 0.82 non abilita il trascinamento col mouse.
+- **SnackBar:** con `page.overlay` in Flet 0.82 non compaiono; ora `page.show_dialog` (anche in `Court` e
+  `ProfileView`, quindi anche sulla webapp).
+- **Tempi di avvio** in `avvii.jsonl` nella cartella dati (`import_flet_ms`, `pagina_ms`, `prima_schermata_ms`
+  dall'inizio di Python).

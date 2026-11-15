@@ -195,7 +195,25 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     6. ~~run manuale `injuries`~~ (15/11: in `app_snapshot` si è aggiornata solo la parte `injuries`, 11:36 UTC; le altre tre restano alle 11:11).
   - **Da tenere d'occhio:** i prossimi run automatici di daily e rollover (il rollover cambia `edit_gw` e rigenera lo snapshot); la deroga ai cambi ora si mette solo in `edit_override` (snippet in fondo alla migrazione A), non più nelle variabili di Render.
   - **Verifica Android/Windows:** come in Fase 1, solo webapp e desktop locale; l'app installata si prova dalla Fase 3.
-- **Fase 3:** —
+- **Fase 3 (15/11/2026): codice pronto su `app-nativa`, in attesa delle prove su telefono e PC.** Piano approvato in `docs/fase3_piano.md` (decisioni tutte come proposto). Nessuna migrazione SQL.
+  - **Fatto:**
+    - `app_paths.py`: cache in `data/` per Render, sviluppo, cron e script (invariati); nell'app installata in `%APPDATA%\FantaNBA\FantaNBA\cache` (Windows) o nella cartella interna (Android); `rules.json` spostato in `assets/`;
+    - `data/calendar.json`, `standings.json`, `injuries.json` fuori dal versionamento (verificato: l'app li ricrea da una cartella vuota, il cron non li legge);
+    - `pyproject.toml` (`it.fantanba.fantanba`, versione 0.3.0, ingresso `nativa.py`, arm64-v8a + armeabi-v7a, permesso INTERNET), `tools/prepara_build.py` (cartella `app_src/` con **lista di file ammessi** e controllo dei segreti: `flet build` impacchetterebbe tutta la cartella, `.env` compreso), `tools/build_windows.ps1` (aggiramento CMake della Fase 0), icona e segnaposto ridotto (577 → 48 KB);
+    - interfaccia: area sicura, finestra libera sul PC (iniziale 1100×800, minima 380×600), contenuti con larghezza massima, campo e panchina affiancati da 760 dp, etichette dei tab leggibili da 600 dp, frecce accanto alle barre scorrevoli col mouse (anche web da PC), Invio al login, foto con riserva dal CDN NBA;
+    - Android: Indietro (chiude il dialog → avvisa se la formazione non è salvata → torna a Squadra → esce), solo verticale;
+    - ripresa: al ritorno in primo piano, se i dati hanno più di 5 minuti, una `token_bundle`; se è cambiato qualcosa la dashboard si ricostruisce sul tab corrente, salvo modifiche non salvate (barra "Dati aggiornati disponibili");
+    - senza rete (solo app installata, con "Ricordami"): dashboard dalla cache con barra "Senza connessione — dati del …" e "Riprova"; salvataggi con messaggio "Senza connessione"; a sessione scaduta si cancellano token e profilo salvato;
+    - `nativa.py` scrive i tempi di ogni avvio in `avvii.jsonl` nella cartella dati.
+  - **Trovato in corso d'opera:** in Flet 0.82 una `SnackBar` aggiunta a `page.overlay` **non compare** (provato con una mini-app): i messaggi "Formazione salvata", errori di salvataggio e del profilo probabilmente non si vedevano neanche sulla webapp in produzione. Ora usano `page.show_dialog` (che li toglie anche dalla pagina alla chiusura: risolve il punto della Fase 4).
+  - **Verifiche fatte da me:**
+    - cache da cartella vuota (solo letture anonime): 13 file creati, seconda richiesta senza parti; script e `supabase_manager` importano come prima;
+    - APK: contiene solo gli 8 moduli e `assets/` (138 file), nessun `.env`/`data/`, nessuna traccia di `sb_secret_` in tutto l'APK; le foto non sono duplicate;
+    - webapp locale nel browser integrato a 320, 375 e 1280 px: login, Squadra, Altre squadre, Calendario (frecce), Campionato; passaggio largo/stretto al ridimensionamento;
+    - app vera in modalità nativa su banco di prova con rete simulata assente: avvio dalla cache con barra, "Riprova" senza rete (avviso), rete tornata con modifiche non salvate (barra "Dati aggiornati", modifica conservata), "Ricarica", sessione scaduta → login con token e profilo cancellati;
+    - `nativa.py` sul PC (client desktop di Flet): accesso automatico, cache nella cartella dati, `avvii.jsonl` scritto.
+  - **Non verificato (serve il dispositivo):** tasto Indietro e gesto Indietro predittivo, blocco in verticale, area sicura con barra dei gesti, evento di ripresa su Android e Windows, avvio dell'app Windows costruita (va lanciata da Esplora file), misure di avvio.
+  - **Da fare da parte tua:** vedi la sezione 9 di `docs/fase3_piano.md` e la lista di prova (sezione 11).
 - **Fase 4:** —
 - **Fase 5:** —
 - **Fase 6:** —
