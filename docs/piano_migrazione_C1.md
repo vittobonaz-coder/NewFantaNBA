@@ -187,9 +187,9 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - tab "Altre squadre": **0 richieste** (dalla cache);
     - import dell'app 0,70 s (0,69–0,73), cioè −0,3 s.
   - **Da fare da parte tua, in ordine:**
-    1. eseguire `sql/2026-11_fase2a_snapshot_bundle.sql` nello SQL Editor e le query di verifica in fondo al file;
-    2. dirmelo: verifico `tools/verifica_permessi.py`, l'app desktop e la webapp locale contro il database vero e misuro;
-    3. controllare che su Render non ci siano `EDIT_OVERRIDE_GW` / `EDIT_OVERRIDE_UNTIL` (se c'è una deroga in corso, copiarla in `edit_override`);
+    1. ~~eseguire la migrazione A e le query di verifica~~ (fatto il 14/11);
+    2. ~~verifiche e misure contro il database vero~~ (fatto il 14/11);
+    3. ~~controllare che su Render non ci siano `EDIT_OVERRIDE_GW` / `EDIT_OVERRIDE_UNTIL`~~ (15/11: nessuna deroga); ~~prova di login sull'app desktop locale~~ (15/11: ok);
     4. OK per portare il codice su `main` (deploy Render e cron);
     5. eseguire `sql/2026-11_fase2b_save_lineup_scadenza.sql` e provare un salvataggio dalla webapp.
   - **Verifica Android/Windows:** come in Fase 1, solo webapp e desktop locale; l'app installata si prova dalla Fase 3.
