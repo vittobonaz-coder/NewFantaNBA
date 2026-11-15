@@ -208,7 +208,8 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
   - **Trovato in corso d'opera:** in Flet 0.82 una `SnackBar` aggiunta a `page.overlay` **non compare** (provato con una mini-app): i messaggi "Formazione salvata", errori di salvataggio e del profilo probabilmente non si vedevano neanche sulla webapp in produzione. Ora usano `page.show_dialog` (che li toglie anche dalla pagina alla chiusura: risolve il punto della Fase 4).
   - **Verifiche fatte da me:**
     - cache da cartella vuota (solo letture anonime): 13 file creati, seconda richiesta senza parti; script e `supabase_manager` importano come prima;
-    - APK: contiene solo gli 8 moduli e `assets/` (138 file), nessun `.env`/`data/`, nessuna traccia di `sb_secret_` in tutto l'APK; le foto non sono duplicate;
+    - build: APK `build/apk/fantanba.apk` **66 MB** (2 architetture; spike con 3: 70,6 MB), primo build 8 min e poi ~3 min; app Windows `build/windows/` **78 MB** (spike: 99 MB), ~4 min;
+    - APK e cartella Windows: contengono solo gli 8 moduli e `assets/` (138 file), nessun `.env`/`data/`, nessuna traccia di `sb_secret_` in tutto l'APK; le foto non sono duplicate;
     - webapp locale nel browser integrato a 320, 375 e 1280 px: login, Squadra, Altre squadre, Calendario (frecce), Campionato; passaggio largo/stretto al ridimensionamento;
     - app vera in modalità nativa su banco di prova con rete simulata assente: avvio dalla cache con barra, "Riprova" senza rete (avviso), rete tornata con modifiche non salvate (barra "Dati aggiornati", modifica conservata), "Ricarica", sessione scaduta → login con token e profilo cancellati;
     - `nativa.py` sul PC (client desktop di Flet): accesso automatico, cache nella cartella dati, `avvii.jsonl` scritto.
