@@ -222,7 +222,15 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     3. prova della webapp da iPhone (login, tab, messaggio "Formazione salvata!" dopo un salvataggio, margini) e da PC;
     4. facoltativo: tempi di avvio sul telefono col cronometro (tocco dell'icona → dashboard, 5 volte); cancellare la vecchia cartella `%APPDATA%\FantaNBA`.
   - **Da tenere d'occhio:** dopo `swap_players.py` la foto di un giocatore nuovo va committata e portata su `main` per la webapp; le app installate la prendono dal CDN NBA finché non si rifà il build.
-- **Fase 4:** —
+- **Fase 4 (dal 16/11/2026): in corso.** Piano approvato in `docs/fase4_piano.md` (decisioni in cima al piano).
+  - **Trovato nella preparazione:** il costo degli scambi e dei tab non sono i menu ma un difetto di Flet 0.82: ogni
+    `update()` fa il `repr` di tutto il sottoalbero (`logger.debug` con f-string in `object_patch.py`), ~450 ms sul PC
+    per il solo campo e ~930 ms per la pagina, anche senza modifiche; in più Flet aggiorna da sé la pagina intera dopo
+    ogni evento. Corretto a monte da Flet 0.83.0; qui si corregge con `flet_fix.py` (commit 2).
+  - **Commit 1 (misure, temporaneo):** `misure.py` (tappe dell'avvio, durata delle operazioni comprensiva
+    dell'aggiornamento automatico di Flet, andata e ritorno col client), tab "Tempi" nelle Impostazioni visibile solo
+    con le misure accese (build di prova `tools/prepara_build.py --misure` / `build_windows.ps1 -Misure`, oppure
+    `FANTANBA_MISURE=1`), `supabase_rest.ultima_risposta`. Si toglie a fine fase.
 - **Fase 5:** —
 - **Fase 6:** —
 
@@ -260,3 +268,12 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
   - senza rete solo nell'app installata;
   - nome **Bonkest** (`it.bonkest.bonkest`), anche nel titolo della webapp; chiavi dello storage invariate;
   - migrazione 2C (via `login`, `login_with_token`, SELECT diretta di anon) rimandata a dopo la Fase 5.
+- **16/11/2026 — Fase 4:**
+  - difetto delle patch di Flet 0.82 corretto nel nostro codice (`flet_fix.py`), senza cambiare versione;
+  - **aggiornare Flet (0.83 o l'ultima) alla fine della migrazione**, dopo l'ultima fase, con una prova separata
+    (build Android/Windows, `flet-web` su Render): può portare altri miglioramenti; poi via `flet_fix.py`;
+  - menu di scambio mantenuti, aggiornati sul posto (niente "tocca A, poi tocca B");
+  - schermata dei tempi solo temporanea, nascosta agli utenti, tolta a fine fase;
+  - all'avvio connessione anticipata; dashboard dalla cache solo se l'avvio sul telefono resta > 2 s;
+  - strumentazione pubblicata su `main` per misurare Render prima delle modifiche;
+  - foto mancanti scaricate una volta nella cartella dati (solo app installata); JSON compatto per i file grandi.

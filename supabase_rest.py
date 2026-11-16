@@ -46,6 +46,7 @@ def is_network_error(err: BaseException) -> bool:
 
 _misura: dict[str, float] = {}
 richieste_contate = 0
+ultima_risposta: dict[str, Any] = {}  # Ultima RPC: nome, ms, byte trasferiti e del JSON (per misure.py)
 
 
 def _on_request(request: httpx.Request) -> None:
@@ -85,12 +86,14 @@ def get_http_client() -> httpx.Client:
     if _client is None:
         with _client_lock:
             if _client is None:
+                t = time.perf_counter()
                 _client = httpx.Client(
                     base_url=f"{SUPABASE_URL}/rest/v1",
                     headers={"apikey": SUPABASE_PUBLISHABLE_KEY},
                     timeout=TIMEOUT,
                     event_hooks={"request": [_on_request], "response": [_on_response]} if MISURE else None,
                 )
+                ultima_risposta["client_ms"] = round((time.perf_counter() - t) * 1000)  # Contesto SSL, certifi
     return _client
 
 
@@ -100,7 +103,11 @@ def rpc(name: str, args: dict[str, Any]) -> Any:
     (None per le funzioni void o quando restituiscono null).
     RpcError per gli errori previsti, httpx.HTTPStatusError per gli altri, httpx.HTTPError per la rete.
     """
-    response = get_http_client().post(f"/rpc/{name}", json=args)
+    client = get_http_client()
+    t = time.perf_counter()
+    response = client.post(f"/rpc/{name}", json=args)
+    ultima_risposta.update(rpc=name, ms=round((time.perf_counter() - t) * 1000),
+                           byte=response.num_bytes_downloaded, byte_json=len(response.content))
     if response.status_code >= 400:
         try:
             body = response.json()

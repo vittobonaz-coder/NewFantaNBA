@@ -3,9 +3,13 @@
 # Qui WINDIR punta, solo per questo processo, a build\winroot con le DLL x64 delle Build Tools.
 # Soluzione definitiva da decidere in Fase 5 (GitHub Actions o CMake a 64 bit).
 #
-#   powershell -ExecutionPolicy Bypass -File tools\build_windows.ps1 [altri argomenti di flet build]
+#   powershell -ExecutionPolicy Bypass -File tools\build_windows.ps1 [-Misure] [altri argomenti di flet build]
 #   (dopo un cambio di nome dell'app serve --clear-cache: la cache di CMake ricorda il nome vecchio)
 # L'app costruita va avviata con doppio clic da Esplora file (dalla sessione di Claude Code non si avvia).
+param(
+    [switch]$Misure,  # Fase 4: build di prova con le misure accese (prepara_build.py --misure)
+    [Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest
+)
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
@@ -21,11 +25,11 @@ foreach ($dll in "msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll") {
     Copy-Item (Join-Path $crt.FullName $dll) $winroot -Force
 }
 
-python tools\prepara_build.py
+if ($Misure) { python tools\prepara_build.py --misure } else { python tools\prepara_build.py }
 if ($LASTEXITCODE -ne 0) { throw "prepara_build fallito" }
 
 $env:WINDIR = Join-Path $root "build\winroot"
 $env:PYTHONUTF8 = "1"
 $env:PYTHONIOENCODING = "utf-8"
-& $flet build windows --no-rich-output --yes @args
+& $flet build windows --no-rich-output --yes @Rest
 exit $LASTEXITCODE

@@ -5,8 +5,11 @@ flet build include TUTTO quello che trova nella cartella dell'app, tranne build/
 repository finirebbero nell'APK anche .env (chiave segreta), data/, sql/... Qui si copia invece una
 lista di file AMMESSI, poi si controlla che non sia entrato nulla di segreto.
 
-  python tools/prepara_build.py
-  flet build apk          (o: powershell -File tools/build_windows.ps1)
+  python tools/prepara_build.py [--misure]
+  flet build apk          (o: powershell -File tools/build_windows.ps1 [-Misure])
+
+--misure (Fase 4, solo build di prova): aggiunge il file misure_attive, che accende misure.py e il tab
+"Tempi" nelle Impostazioni. I build per gli utenti si fanno senza.
 """
 import ast
 import shutil
@@ -18,7 +21,8 @@ DEST = ROOT / "app_src"
 
 # Moduli dell'app nativa (nativa.py e tutto ciò che importa) e asset (icona, foto, regolamento)
 APP_MODULES = ["nativa.py", "app.py", "app_paths.py", "ui_court.py", "fanta_obj.py", "league_cache.py",
-               "supabase_rest.py", "time_manager.py"]
+               "supabase_rest.py", "time_manager.py", "misure.py"]
+FLAG_MISURE = "misure_attive"  # Stesso nome di misure.FLAG_FILE
 ASSET_FILES = ["icon.png", "avatar_placeholder.png", "rules.json"]
 ASSET_DIRS = ["players"]
 
@@ -77,6 +81,8 @@ def check_content() -> list[str]:
 
 def main() -> int:
     copy_files()
+    if "--misure" in sys.argv[1:]:
+        (DEST / FLAG_MISURE).write_text("Build di prova con le misure accese (Fase 4)\n", encoding="utf-8")
     errors = check_imports() + check_content()
     if errors:
         print("ERRORE, app_src/ non va impacchettata:\n  " + "\n  ".join(errors))
@@ -84,7 +90,8 @@ def main() -> int:
         return 1
     files = [p for p in DEST.rglob("*") if p.is_file()]
     size = sum(p.stat().st_size for p in files)
-    print(f"app_src/ pronta: {len(files)} file, {size / 1024:.0f} KB")
+    misure_on = (DEST / FLAG_MISURE).exists()
+    print(f"app_src/ pronta: {len(files)} file, {size / 1024:.0f} KB, misure {'ACCESE' if misure_on else 'spente'}")
     return 0
 
 

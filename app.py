@@ -15,6 +15,7 @@ import flet as ft
 
 import app_paths
 import league_cache
+import misure
 import supabase_rest as rest
 from ui_court import MainDashboard, LoginView
 from time_manager import TimeManager, ITA_TZ
@@ -26,6 +27,8 @@ REFRESH_AFTER = timedelta(minutes=5)        # Al ritorno in primo piano si aggio
 BACK_EXIT_WINDOW = 3.0                      # Secondi per il secondo Indietro con modifiche non salvate
 DESKTOP_PLATFORMS = (ft.PagePlatform.WINDOWS, ft.PagePlatform.MACOS, ft.PagePlatform.LINUX)
 
+misure.installa_misura_eventi()  # Solo con le misure accese (Fase 4, temporaneo)
+
 
 def _bundle_signature(bundle: dict) -> str:
     """Ciò che cambia la dashboard: parti scaricate, contesto (senza l'ora), propria formazione."""
@@ -34,6 +37,7 @@ def _bundle_signature(bundle: dict) -> str:
 
 
 async def main(page: ft.Page) -> None:
+    misure.tappa(page, "main")
     page.title = 'Bonkest'
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
@@ -69,6 +73,8 @@ async def main(page: ft.Page) -> None:
         if message:
             login.error_text.value = message
         show(login)
+        misure.tappa(page, "login_a_video")
+        misure.chiudi_avvio(page, "login")
 
     def snack(text: str, color: str = "grey_800"):
         page.show_dialog(ft.SnackBar(ft.Text(text), bgcolor=color))  # Con page.overlay in Flet 0.82 non compare
@@ -114,6 +120,7 @@ async def main(page: ft.Page) -> None:
         current_gw = league["current_gw"]
         league_loader = (lambda: league_cache.load_other_teams(team_row["id"], current_gw)) \
                         if current_gw is not None else None
+        misure.tappa(page, "costruzione_inizio")
         dashboard = MainDashboard(
             user={"id": user["id"], "username": user["username"], "token": session["token"]}, team_row=team_row,
             current_team=teams.get(current_gw) if current_gw != league["edit_gw"] else None, current_gw=current_gw,
@@ -126,8 +133,10 @@ async def main(page: ft.Page) -> None:
         )
         session["dashboard"] = dashboard
         session["pending"] = None
+        misure.tappa(page, "dashboard_costruita")
         controls = ([banner] if banner else []) + [dashboard]
         show(ft.Column(controls, expand=True, spacing=0))
+        misure.tappa(page, "inviata")
         if selected_index:
             page.run_task(dashboard.select_tab, selected_index)
 
@@ -168,6 +177,7 @@ async def main(page: ft.Page) -> None:
                 print(f"'Ricordami' non disponibile: {e}")  # Si entra lo stesso, senza accesso automatico
 
         data, error = await asyncio.to_thread(load_user_data, bundle)
+        misure.tappa(page, "cache_scritta")
         if error:
             show_message(error, "red")
             return
@@ -176,6 +186,8 @@ async def main(page: ft.Page) -> None:
         build_dashboard(data, selected_index=selected_index)
         rest.misura_fine("accesso")
         await save_last_profile(bundle)
+        misure.tappa(page, "profilo_salvato")
+        misure.chiudi_avvio(page, "dashboard")
 
     async def open_offline(token: str) -> bool:
         """Avvio senza rete (app installata, "Ricordami"): ultimi dati in cache con un avviso. False se non si può."""
@@ -195,6 +207,7 @@ async def main(page: ft.Page) -> None:
         last = league_cache.last_sync()
         when = f" — dati del {last.astimezone(ITA_TZ):%d/%m alle %H:%M}" if last else ""
         build_dashboard(data, banner=banner(f"Senza connessione{when}", ft.Icons.WIFI_OFF, "Riprova", retry))
+        misure.chiudi_avvio(page, "senza_rete")
         return True
 
     async def logout(token: str | None):
@@ -211,12 +224,15 @@ async def main(page: ft.Page) -> None:
     async def try_auto_login() -> bool:
         """Accesso con il token salvato. False = serve la schermata di login."""
         token = await prefs.get(LOGIN_TOKEN_KEY)
+        misure.tappa(page, "token_letto")
         if not token:
             return False
         rest.misura_inizio("accesso")
         show(centered(ft.ProgressRing(), ft.Text("Accesso in corso...")))
+        misure.tappa(page, "attesa_a_video")
         try:
             bundle = await asyncio.to_thread(rest.token_bundle, token, league_cache.local_versions())
+            misure.nota_rete(page, rest.ultima_risposta)
         except Exception as e:
             print(f"Accesso automatico non riuscito: {e}")  # Server irraggiungibile: il token resta
             if rest.is_network_error(e) and await open_offline(token):
@@ -246,8 +262,10 @@ async def main(page: ft.Page) -> None:
         if not force and not offline and last and datetime.now(timezone.utc) - last < REFRESH_AFTER:
             return
         session["busy"] = True
+        misure.riparti(page, "aggiornamento")
         try:
             bundle = await asyncio.to_thread(rest.token_bundle, token, league_cache.local_versions())
+            misure.nota_rete(page, rest.ultima_risposta)
         except Exception as e:
             print(f"Aggiornamento non riuscito: {e}")
             if force:
@@ -265,6 +283,7 @@ async def main(page: ft.Page) -> None:
             return
         if not offline and _bundle_signature(bundle) == session["signature"] and not bundle.get("parts"):
             league_cache.apply_snapshot(bundle)  # Solo l'ora dell'ultimo aggiornamento
+            misure.chiudi_avvio(page, "nulla_di_nuovo")
             return
         if dashboard.has_unsaved_changes():
             already_shown = session["pending"] is not None

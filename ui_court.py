@@ -9,6 +9,7 @@ from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS, LINEUP_ROLES, 
 from time_manager import TimeManager, ITA_TZ
 import app_paths
 import league_cache
+import misure
 import supabase_rest as rest
 from supabase_rest import RpcError
 
@@ -506,6 +507,7 @@ class Court(ft.Column):
             self.close_edits("Cambi chiusi: formazione non salvata")
             return
 
+        misure.etichetta(self.page, "salvataggio")
         # Aggiorniamo i dati nel team (incluso l'ordine dei giocatori)
         self.refresh_ui_and_data()
 
@@ -523,6 +525,7 @@ class Court(ft.Column):
         if error:
             self.show_message(error, "red")
             return
+        misure.durata(self.page, "salvataggio_rete", rest.ultima_risposta.get("ms", 0))
 
         self.team.save_to_json()
         # Il nuovo stato corrente diventa il punto di ripristino per futuri cambi
@@ -570,6 +573,7 @@ class Court(ft.Column):
 
     async def handle_card_click(self, e):
         """Dettaglio delle partite del giocatore toccato, con il velo di caricamento finché non si apre."""
+        misure.etichetta(self.page, "dettaglio_partite")
         if self.loading:
             await self.loading.show()
         try:
@@ -580,6 +584,7 @@ class Court(ft.Column):
 
     async def handle_cancel(self, e):
         """Ripristina l'ultimo salvataggio mostrando il velo di caricamento."""
+        misure.etichetta(self.page, "annulla")
         if self.loading:
             await self.loading.show()
         try:
@@ -633,6 +638,7 @@ class Court(ft.Column):
         new_val = self.lineup_dd.value
         if new_val == self.lineup:
             return
+        misure.etichetta(self.page, "modulo")
         # 1. Correggi i giocatori incompatibili (sui dati)
         self.auto_fix_starters(new_val)
         # 2. Aggiorna la variabile di stato della formazione
@@ -759,6 +765,7 @@ class Court(ft.Column):
 
     def handle_swap(self, origin_idx: int, target_idx: int):
         """Logica di scambio"""
+        misure.etichetta(self.page, "scambio")
         origin_card = self.cards[origin_idx]
         target_card = self.cards[target_idx]
         old_player, old_score = origin_card.player, origin_card.score
@@ -828,8 +835,9 @@ class RoundTabs(ft.Tabs):
     """
     def __init__(self, rounds: list, build_round, lazy: bool = False, initial_index: int = 0,
                  labels: list[str] | None = None, scrollable: bool = False, build_initial: bool = False,
-                 loading: "LoadingOverlay | None" = None, arrows: bool = False):
+                 loading: "LoadingOverlay | None" = None, arrows: bool = False, nome: str = "barra"):
         super().__init__(content=None, length=len(rounds))
+        self.nome = nome  # Nome dell'operazione nelle misure (es. giornata_nba)
         initial_index = initial_index if 0 <= initial_index < len(rounds) else 0
         self.selected_index = initial_index
         self.expand = True
@@ -889,8 +897,12 @@ class RoundTabs(ft.Tabs):
         finally:
             self.loading.hide()
 
+    def _etichetta(self) -> None:
+        misure.etichetta(self.page, self.nome, prima=self.lazy and self.current not in self.built_views)
+
     async def handle_change(self, e):
         self.current = int(e.data)  # e.data = indice della tab selezionata
+        self._etichetta()
         await self.show_current()
 
     async def handle_arrow(self, e):
@@ -899,6 +911,7 @@ class RoundTabs(ft.Tabs):
         if not 0 <= new < len(self.rounds):
             return
         self.current = self.selected_index = new
+        self._etichetta()
         self.update()
         await self.show_current()
 
@@ -922,10 +935,12 @@ class CalendarView(ft.Tabs):
             # Calendario Lega visibile subito: si costruisce solo la giornata iniziale
             # Barre delle giornate scorrevoli: 24 numeri non stanno nella larghezza di un telefono
             league_view = RoundTabs(calendar_data, self.build_league_round, lazy=True,
-                                    initial_index=initial, scrollable=True, build_initial=True, arrows=arrows)
+                                    initial_index=initial, scrollable=True, build_initial=True, arrows=arrows,
+                                    nome="giornata_lega")
             # Le giornate NBA si costruiscono solo quando si apre il Calendario NBA (vedi RoundTabs)
             nba_view = self.nba_tabs = RoundTabs(calendar_data, self.build_nba_round, lazy=True,
-                                                 initial_index=initial, scrollable=True, arrows=arrows)
+                                                 initial_index=initial, scrollable=True, arrows=arrows,
+                                                 nome="giornata_nba")
             self.on_change = self.handle_change
 
         self.content = ft.Column(
@@ -943,6 +958,8 @@ class CalendarView(ft.Tabs):
 
     async def handle_change(self, e):
         """All'apertura del Calendario NBA mostra (e alla prima volta costruisce) la giornata selezionata."""
+        misure.etichetta(self.page, "calendario_nba" if int(e.data) == 1 else "calendario_lega",
+                         prima=int(e.data) == 1 and not self.nba_tabs.built_views)
         if int(e.data) == 1:
             await self.nba_tabs.show_current()
 
@@ -1294,23 +1311,21 @@ class SettingsView(ft.Tabs):
         self.profile_view = ProfileView(user, team_row, on_team_renamed, on_logout)
         self.rules_filepath = str(app_paths.resource("assets/rules.json"))  # Incluso nel pacchetto
         self.rules_view = self._build_multi_table_view(self.rules_filepath)
-        
+
+        tabs = [ft.Tab(label="Gestione Profilo", icon=ft.Icons.SPORTS_BASKETBALL),
+                ft.Tab(label="Regolamento", icon=ft.Icons.MANAGE_SEARCH)]
+        views = [ft.Container(content=self.profile_view, padding=0),
+                 ft.Container(content=self.rules_view, padding=10)]
+        if misure.attive():  # Fase 4, temporaneo: solo nei build di prova e con FANTANBA_MISURE=1
+            tabs.append(ft.Tab(label="Tempi", icon=ft.Icons.TIMER))
+            views.append(ft.Container(content=TimesView(), padding=10))
+        self.length = len(tabs)
+
         self.content = ft.Column(
             expand=True,
             controls=[
-                ft.TabBar(
-                    tabs=[
-                        ft.Tab(label="Gestione Profilo", icon=ft.Icons.SPORTS_BASKETBALL),
-                        ft.Tab(label="Regolamento", icon=ft.Icons.MANAGE_SEARCH)
-                    ]
-                ),
-                ft.TabBarView(
-                    expand=True,
-                    controls=[
-                        ft.Container(content=self.profile_view, padding=0),
-                        ft.Container(content=self.rules_view, padding=10)
-                    ],
-                ),
+                ft.TabBar(tabs=tabs),
+                ft.TabBarView(expand=True, controls=views),
             ],
         )
 
@@ -1366,6 +1381,46 @@ class SettingsView(ft.Tabs):
         return ft.ListView(expand=True, padding=5, controls=view_controls)
 
 
+class TimesView(ft.Column):
+    """
+    Fase 4, TEMPORANEO (si toglie a fine fase): tempi di avvio e delle operazioni misurati da misure.py,
+    da copiare negli appunti e incollare in chat. Visibile solo con le misure accese.
+    """
+    def __init__(self):
+        super().__init__(expand=True, spacing=8)
+        self.text = ft.Text("Tocca Aggiorna", size=11, font_family="monospace", selectable=True)
+        self.controls = [
+            ft.Row([
+                ft.ElevatedButton("Aggiorna", icon=ft.Icons.REFRESH, on_click=self.refresh),
+                ft.ElevatedButton("Copia negli appunti", icon=ft.Icons.COPY, on_click=self.copy),
+                ft.TextButton("Azzera", icon=ft.Icons.DELETE_OUTLINE, on_click=self.clear),
+            ], wrap=True),
+            ft.ListView(expand=True, controls=[self.text]),
+        ]
+
+    async def refresh(self, e=None):
+        self.text.value = misure.riepilogo(self.page)
+        self.update()
+
+    async def copy(self, e):
+        text = misure.riepilogo(self.page)
+        try:
+            # Prima della copia nessun update: nel browser la copia vale solo subito dopo il clic
+            await ft.Clipboard().set(text)
+            message, color = "Tempi copiati negli appunti", "green"
+        except Exception as err:  # Es. browser senza permesso per gli appunti
+            print(f"Copia negli appunti non riuscita: {err}")
+            message, color = "Copia non riuscita: tieni premuto sul testo per selezionarlo", "red"
+        self.text.value = text
+        self.update()
+        self.page.show_dialog(ft.SnackBar(ft.Text(message), bgcolor=color))
+
+    async def clear(self, e):
+        if (reg := misure.registro(self.page)) is not None:
+            reg.azzera()
+        await self.refresh()
+
+
 class TeamView(ft.Column):
     """
     Schermata Squadra: la giornata in corso con i punteggi e, nella finestra dei cambi,
@@ -1407,6 +1462,7 @@ class TeamView(ft.Column):
         return any(court.has_unsaved_changes() for _, court in self.courts)
 
     async def handle_switch_click(self, e):
+        misure.etichetta(self.page, "giornata_formazione")
         await self.switch_court(e.control.data)
 
     async def switch_court(self, index: int):
@@ -1490,8 +1546,11 @@ class LeagueView(ft.Column):
 
             self.controls = [RoundTabs(teams, build_court, lazy=True, labels=[t.name for t in teams],
                                        scrollable=True, build_initial=True, loading=loading,
-                                       arrows=bool(self.layout and self.layout.desktop))]
+                                       arrows=bool(self.layout and self.layout.desktop), nome="squadra")]
         self.update()
+
+
+TAB_NAMES = ["squadra", "altre_squadre", "calendario", "campionato", "impostazioni"]  # Per le misure
 
 
 class MainDashboard(ft.Tabs):
@@ -1587,7 +1646,10 @@ class MainDashboard(ft.Tabs):
         await self.open_tab(index)
 
     async def handle_tab_change(self, e):
-        await self.open_tab(int(e.data))  # e.data = indice del tab selezionato
+        index = int(e.data)  # e.data = indice del tab selezionato
+        misure.etichetta(self.page, f"tab_{TAB_NAMES[index]}",
+                         prima=index in self.lazy_builders or (index == 1 and not self.league_view.loaded))
+        await self.open_tab(index)
 
     async def open_tab(self, index: int) -> None:
         """
@@ -1639,6 +1701,8 @@ class LoginView(ft.Column):
         # Niente doppi click mentre si verificano le credenziali e si caricano i dati
         self.login_button.disabled = True
         self.update()
+        misure.riparti(self.app_page, "login")
+        misure.etichetta(self.app_page, "login")
         try:
             # Una richiesta: profilo, token, contesto della lega e dati cambiati rispetto alla cache locale
             rest.misura_inizio("accesso")
@@ -1647,6 +1711,7 @@ class LoginView(ft.Column):
                                            (self.username_field.value or "").strip(),
                                            self.password_field.value or "", remember,
                                            league_cache.local_versions())
+            misure.nota_rete(self.app_page, rest.ultima_risposta)
             self.error_text.value = "" if user else "Credenziali errate"
         except Exception as err:
             print(f"Errore durante il login: {err}")
