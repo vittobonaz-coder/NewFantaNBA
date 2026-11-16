@@ -34,7 +34,7 @@ def _bundle_signature(bundle: dict) -> str:
 
 
 async def main(page: ft.Page) -> None:
-    page.title = 'FantaNBA'
+    page.title = 'Bonkest'
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 0

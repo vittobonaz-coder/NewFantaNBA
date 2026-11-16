@@ -2,9 +2,9 @@
 # Render NON usa questo file: installa requirements.txt e avvia main.py.
 # Prima del build: python tools/prepara_build.py (copia in app_src/ solo i file ammessi: mai .env né data/).
 [project]
-name = "fantanba"
+name = "bonkest"                # nome dei file costruiti: bonkest.apk, bonkest.exe
 version = "0.3.0"
-description = "FantaNBA: fantabasket NBA privato"
+description = "Bonkest: fantabasket NBA privato"
 requires-python = ">=3.12"
 # httpx arriva con flet; tzdata serve a zoneinfo (il Python incorporato non ha i fusi orari)
 dependencies = [
@@ -13,10 +13,10 @@ dependencies = [
 ]
 
 [tool.flet]
-org = "it.fantanba"            # identificativo Android: it.fantanba.fantanba (non si cambia dopo la distribuzione)
-product = "FantaNBA"
-company = "FantaNBA"           # cartella dati su Windows: %APPDATA%\FantaNBA\FantaNBA
-copyright = "FantaNBA"
+org = "it.bonkest"             # identificativo Android: it.bonkest.bonkest (non si cambia dopo la distribuzione)
+product = "Bonkest"            # nome sotto l'icona e della finestra
+company = "Bonkest"            # cartella dati su Windows: %APPDATA%\Bonkest\Bonkest
+copyright = "Bonkest"
 build_number = 1
 
 [tool.flet.app]

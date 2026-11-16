@@ -1188,7 +1188,7 @@ class ProfileView(ft.Stack):
                     ft.Row([
                         ft.Icon(ft.Icons.WARNING_AMBER, color="amber", size=18),
                         ft.Text("Non usare assolutamente una password che usi anche altrove "
-                                "(email, banca, social...): scegline una solo per FantaNBA.",
+                                "(email, banca, social...): scegline una solo per Bonkest.",
                                 size=12, color="amber", expand=True),
                     ], vertical_alignment=ft.CrossAxisAlignment.START),
                     self.new_password, self.confirm_password,
@@ -1622,7 +1622,7 @@ class LoginView(ft.Column):
 
         self.controls = [
             ft.Icon(ft.Icons.SPORTS_BASKETBALL, size=80, color="amber"),
-            ft.Text("NewFantaNBA Login", size=24, weight="bold"),
+            ft.Text("Bonkest", size=24, weight="bold"),
             self.username_field,
             self.password_field,
             ft.Container(content=self.remember_checkbox, width=280),  # Allineata ai campi

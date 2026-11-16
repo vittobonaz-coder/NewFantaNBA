@@ -381,3 +381,7 @@ Un APK firmato con la chiave di debug non si aggiorna poi con quello firmato in 
   `ProfileView`, quindi anche sulla webapp).
 - **Tempi di avvio** in `avvii.jsonl` nella cartella dati (`import_flet_ms`, `pagina_ms`, `prima_schermata_ms`
   dall'inizio di Python).
+- **16/11: nome Bonkest** (decisione dell'utente dopo le prove): `it.bonkest.bonkest`, prodotto e azienda "Bonkest",
+  file `bonkest.apk` / `bonkest.exe`, cartella `%APPDATA%\Bonkest\Bonkest`; titolo e login "Bonkest" anche sul web.
+- **16/11: foto in più nel pacchetto:** i giocatori con media FPTS ≥ 18 (probabili acquisti di mercato), 33 foto,
+  totale 160 (2,8 MB). Le altre continuano ad arrivare dal CDN NBA.

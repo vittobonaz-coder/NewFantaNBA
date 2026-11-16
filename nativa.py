@@ -1,7 +1,7 @@
 """
 Punto d'ingresso dell'app installata (flet build apk / windows, pyproject.toml). Render usa main.py,
 lo sviluppo sul PC test.py: entrambi tengono la cache in data/.
-Qui la cache va nella cartella dati dell'utente: %APPDATA%\\FantaNBA\\FantaNBA\\cache su Windows (fuori da
+Qui la cache va nella cartella dati dell'utente: %APPDATA%\\Bonkest\\Bonkest\\cache su Windows (fuori da
 Documenti/OneDrive e dalla cartella del programma), la cartella interna privata dell'app su Android.
 Ogni avvio aggiunge una riga ad avvii.jsonl (nella stessa cartella) con i tempi, per le misure della Fase 4.
 """
