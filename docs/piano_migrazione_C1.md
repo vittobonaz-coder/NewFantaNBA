@@ -195,7 +195,7 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     6. ~~run manuale `injuries`~~ (15/11: in `app_snapshot` si è aggiornata solo la parte `injuries`, 11:36 UTC; le altre tre restano alle 11:11).
   - **Da tenere d'occhio:** i prossimi run automatici di daily e rollover (il rollover cambia `edit_gw` e rigenera lo snapshot); la deroga ai cambi ora si mette solo in `edit_override` (snippet in fondo alla migrazione A), non più nelle variabili di Render.
   - **Verifica Android/Windows:** come in Fase 1, solo webapp e desktop locale; l'app installata si prova dalla Fase 3.
-- **Fase 3 (15–16/11/2026): verificata su Android e Windows, codice su `app-nativa`; manca il passaggio su `main` (con il tuo OK) e la prova della webapp da iPhone.** Piano approvato in `docs/fase3_piano.md` (decisioni tutte come proposto). Nessuna migrazione SQL.
+- **Fase 3 (15–16/11/2026): conclusa.** Verificata su Android e Windows; codice su `main` dal 16/11 (`9fcde878`, avanzamento diretto), stato aggiornato su `app-nativa`. Piano approvato in `docs/fase3_piano.md` (decisioni tutte come proposto). Nessuna migrazione SQL.
   - **Fatto:**
     - `app_paths.py`: cache in `data/` per Render, sviluppo, cron e script (invariati); nell'app installata in `%APPDATA%\Bonkest\Bonkest\cache` (Windows) o nella cartella interna (Android); `rules.json` spostato in `assets/`;
     - `data/calendar.json`, `standings.json`, `injuries.json` fuori dal versionamento (verificato: l'app li ricrea da una cartella vuota, il cron non li legge);
@@ -217,10 +217,11 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
   - **Misure di avvio, app Windows** (`avvii.jsonl`, ms dall'inizio di Python, 5 avvii con "Ricordami" e cache piena): import di flet 637 (622–658), pagina pronta 949 (948–953), **dashboard 2.872 (2.575–3.248)**; primo avvio a cache vuota fino al login 1.155. Circa 1,9 s passano tra pagina pronta e dashboard (cartella dati, token, una richiesta, scrittura della cache, costruzione dei controlli): da analizzare nella Fase 4. Telefono: misure col cronometro non ancora riportate.
   - **16/11, dopo le prove:** l'app installata si chiama **Bonkest** (APK 67 MB, app Windows 79 MB; `it.bonkest.bonkest`, `bonkest.apk`, `bonkest.exe`, cartella dati `%APPDATA%\Bonkest\Bonkest\cache`; le misure sopra erano su `%APPDATA%\FantaNBA\FantaNBA`). Titolo e login dicono "Bonkest" anche sulla webapp; le chiavi dello storage (`fantanba.login_token`) restano, così il "Ricordami" della webapp non si perde. Aggiunte in `assets/players` le foto dei 33 giocatori con media FPTS ≥ 18 (file `nba_stats_2026_2027_2026-11-16.xlsx`) che non l'avevano: 160 foto, 2,8 MB.
   - **Da fare da parte tua, in ordine:**
-    0. disinstallare dal telefono la FantaNBA di prova, installare `bonkest.apk`, fare login con "Ricordami"; sul PC avviare `build\windows\bonkest.exe` e rifare il login (cartella dati nuova);
-    1. OK per portare su `main` i commit della Fase 3 (deploy Render; nessun SQL; i tre JSON di cache si riscaricano al primo accesso);
-    2. dopo il deploy: prova della webapp da iPhone (login, tab, messaggi a comparsa, margini) e da PC;
-    3. facoltativo: tempi di avvio sul telefono col cronometro (tocco dell'icona → dashboard, 5 volte).
+    1. ~~prova veloce di `bonkest.apk` e `bonkest.exe`~~ (16/11: ok);
+    2. ~~OK per portare il codice su `main`~~ (16/11: `main` = `9fcde878`, deploy Render ok);
+    3. prova della webapp da iPhone (login, tab, messaggio "Formazione salvata!" dopo un salvataggio, margini) e da PC;
+    4. facoltativo: tempi di avvio sul telefono col cronometro (tocco dell'icona → dashboard, 5 volte); cancellare la vecchia cartella `%APPDATA%\FantaNBA`.
+  - **Da tenere d'occhio:** dopo `swap_players.py` la foto di un giocatore nuovo va committata e portata su `main` per la webapp; le app installate la prendono dal CDN NBA finché non si rifà il build.
 - **Fase 4:** —
 - **Fase 5:** —
 - **Fase 6:** —
@@ -250,3 +251,12 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
   - supabase-py tolto da `requirements.txt` (l'app non lo importa più);
   - la SELECT diretta di anon sulle tabelle di lega resta per ora: si decide a fine Fase 3;
   - l'app usa l'ora del server per il blocco dei cambi a video; `TimeManager.simulate_now` cambia solo quello.
+- **15–16/11/2026 — Fase 3:**
+  - cache dell'app installata nella cartella dati dell'utente (`app_paths.py`), `data/` per Render, sviluppo, cron e script;
+  - `calendar.json`, `standings.json`, `injuries.json` non più versionati;
+  - pacchetto costruito da `app_src/` con lista di file ammessi (`tools/prepara_build.py`), mai dalla radice;
+  - foto incluse: quelle della lega più i giocatori con media FPTS ≥ 18; le altre dal CDN NBA;
+  - Android arm64-v8a + armeabi-v7a, solo verticale; aggiornamento silenzioso al ritorno dopo 5 minuti, ricostruendo la dashboard sul tab corrente;
+  - senza rete solo nell'app installata;
+  - nome **Bonkest** (`it.bonkest.bonkest`), anche nel titolo della webapp; chiavi dello storage invariate;
+  - migrazione 2C (via `login`, `login_with_token`, SELECT diretta di anon) rimandata a dopo la Fase 5.
