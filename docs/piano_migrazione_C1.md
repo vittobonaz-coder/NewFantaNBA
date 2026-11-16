@@ -195,7 +195,7 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     6. ~~run manuale `injuries`~~ (15/11: in `app_snapshot` si è aggiornata solo la parte `injuries`, 11:36 UTC; le altre tre restano alle 11:11).
   - **Da tenere d'occhio:** i prossimi run automatici di daily e rollover (il rollover cambia `edit_gw` e rigenera lo snapshot); la deroga ai cambi ora si mette solo in `edit_override` (snippet in fondo alla migrazione A), non più nelle variabili di Render.
   - **Verifica Android/Windows:** come in Fase 1, solo webapp e desktop locale; l'app installata si prova dalla Fase 3.
-- **Fase 3 (15/11/2026): codice pronto su `app-nativa`, in attesa delle prove su telefono e PC.** Piano approvato in `docs/fase3_piano.md` (decisioni tutte come proposto). Nessuna migrazione SQL.
+- **Fase 3 (15–16/11/2026): verificata su Android e Windows, codice su `app-nativa`; manca il passaggio su `main` (con il tuo OK) e la prova della webapp da iPhone.** Piano approvato in `docs/fase3_piano.md` (decisioni tutte come proposto). Nessuna migrazione SQL.
   - **Fatto:**
     - `app_paths.py`: cache in `data/` per Render, sviluppo, cron e script (invariati); nell'app installata in `%APPDATA%\FantaNBA\FantaNBA\cache` (Windows) o nella cartella interna (Android); `rules.json` spostato in `assets/`;
     - `data/calendar.json`, `standings.json`, `injuries.json` fuori dal versionamento (verificato: l'app li ricrea da una cartella vuota, il cron non li legge);
@@ -213,8 +213,12 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - webapp locale nel browser integrato a 320, 375 e 1280 px: login, Squadra, Altre squadre, Calendario (frecce), Campionato; passaggio largo/stretto al ridimensionamento;
     - app vera in modalità nativa su banco di prova con rete simulata assente: avvio dalla cache con barra, "Riprova" senza rete (avviso), rete tornata con modifiche non salvate (barra "Dati aggiornati", modifica conservata), "Ricarica", sessione scaduta → login con token e profilo cancellati;
     - `nativa.py` sul PC (client desktop di Flet): accesso automatico, cache nella cartella dati, `avvii.jsonl` scritto.
-  - **Non verificato (serve il dispositivo):** tasto Indietro e gesto Indietro predittivo, blocco in verticale, area sicura con barra dei gesti, evento di ripresa su Android e Windows, avvio dell'app Windows costruita (va lanciata da Esplora file), misure di avvio.
-  - **Da fare da parte tua:** vedi la sezione 9 di `docs/fase3_piano.md` e la lista di prova (sezione 11).
+  - **Prove sul dispositivo (15/11, utente):** tutta la lista della sezione 11 di `docs/fase3_piano.md` superata su telefono Android e su app Windows installata (primo accesso, accesso automatico, salvataggio, Indietro, ripresa dal background, senza rete, finestra e mouse, cambio utente).
+  - **Misure di avvio, app Windows** (`avvii.jsonl`, ms dall'inizio di Python, 5 avvii con "Ricordami" e cache piena): import di flet 637 (622–658), pagina pronta 949 (948–953), **dashboard 2.872 (2.575–3.248)**; primo avvio a cache vuota fino al login 1.155. Circa 1,9 s passano tra pagina pronta e dashboard (cartella dati, token, una richiesta, scrittura della cache, costruzione dei controlli): da analizzare nella Fase 4. Telefono: misure col cronometro non ancora riportate.
+  - **Da fare da parte tua, in ordine:**
+    1. OK per portare su `main` i commit della Fase 3 (deploy Render; nessun SQL; i tre JSON di cache si riscaricano al primo accesso);
+    2. dopo il deploy: prova della webapp da iPhone (login, tab, messaggi a comparsa, margini) e da PC;
+    3. facoltativo: tempi di avvio sul telefono col cronometro (tocco dell'icona → dashboard, 5 volte).
 - **Fase 4:** —
 - **Fase 5:** —
 - **Fase 6:** —
