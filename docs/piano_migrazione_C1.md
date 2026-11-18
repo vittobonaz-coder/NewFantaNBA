@@ -258,8 +258,20 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     3. togliere `FANTANBA_MISURE` da Render, se non l'hai già fatto;
     4. OK per portare su `main` il commit finale (un deploy, nessun cambiamento visibile);
     5. installare i build normali (senza misure) su telefono e PC, sopra quelli di prova.
-  - **Da tenere d'occhio:** nelle sottoclassi dei controlli Flet non usare nomi di proprietà di Flet per gli attributi
-    (es. `badge`); non spostare un controllo da una lista a un'altra nella stessa patch.
+  - **Rischi e cose da tenere d'occhio:**
+    - `flet_fix.py` vale solo per Flet 0.82 (controlla la versione e con un'altra non fa nulla): aggiornare Flet a fine
+      migrazione, con una prova separata, e poi toglierlo (vedi "Decisioni prese", 16/11);
+    - con `flet_fix` l'aggiornamento automatico di Flet è spento: ogni gestore di eventi nuovo deve chiamare da sé
+      `update()` sui controlli che cambia (`show_dialog`/`pop_dialog` aggiornano da soli);
+    - nelle sottoclassi dei controlli Flet non usare per gli attributi nomi di proprietà di Flet (es. `badge`, che
+      disegna il pallino delle notifiche);
+    - non spostare un controllo da una lista a un'altra nello stesso `update()`: il client può smontarlo dopo lo
+      spostamento e la patch si interrompe (ricreare il contenitore, come le righe dei titolari);
+    - `tools/prova_scambi.py` controlla la parte Python, non il client: dopo modifiche al campo serve sempre una prova a
+      video (modulo, Annulla, Salva);
+    - l'avvio sul telefono (~2,4 s) è dominato dall'import di flet (~1,5 s), che non dipende dal nostro codice;
+    - foto: un giocatore nuovo senza foto inclusa si vede dal CDN NBA e, nell'app installata, resta offline dopo il primo
+      avvio con rete; per la webapp la foto va comunque committata in `assets/players/`.
 - **Fase 5:** —
 - **Fase 6:** —
 
