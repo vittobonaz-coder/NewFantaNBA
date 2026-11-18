@@ -188,9 +188,8 @@ async def main(page: ft.Page) -> None:
                        signature=_bundle_signature(bundle))
         build_dashboard(data, selected_index=selected_index)
         rest.misura_fine("accesso")
-        await save_last_profile(bundle)
-        misure.tappa(page, "profilo_salvato")
         misure.chiudi_avvio(page, "dashboard")
+        page.run_task(save_last_profile, bundle)  # Dopo la dashboard, fuori dal percorso dell'avvio
 
     async def open_offline(token: str) -> bool:
         """Avvio senza rete (app installata, "Ricordami"): ultimi dati in cache con un avviso. False se non si può."""

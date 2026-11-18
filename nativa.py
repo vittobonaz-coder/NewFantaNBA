@@ -5,9 +5,19 @@ Qui la cache va nella cartella dati dell'utente: %APPDATA%\\Bonkest\\Bonkest\\ca
 Documenti/OneDrive e dalla cartella del programma), la cartella interna privata dell'app su Android.
 Ogni avvio aggiunge una riga ad avvii.jsonl (nella stessa cartella) con i tempi, per le misure della Fase 4.
 """
+import threading
 import time
 
 T_MODULE = time.perf_counter()  # Primo istante in cui gira codice Python dell'app
+
+
+def _connessione_anticipata() -> None:
+    """In parallelo con l'import di flet (il costo fisso maggiore): client httpx e TLS con Supabase pronti."""
+    import supabase_rest
+    supabase_rest.warm_up()
+
+
+threading.Thread(target=_connessione_anticipata, daemon=True).start()
 
 import json  # noqa: E402
 import os  # noqa: E402

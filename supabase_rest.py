@@ -78,6 +78,9 @@ def misura_fine(label: str) -> None:
 # httpx.Client è thread-safe.
 _client: httpx.Client | None = None
 _client_lock = threading.Lock()
+_warm_done = threading.Event()  # Connessione anticipata (warm_up) conclusa o mai iniziata
+_warm_done.set()
+WARM_WAIT = 2.0                 # Secondi massimi di attesa della connessione anticipata prima di una RPC
 
 
 def get_http_client() -> httpx.Client:
@@ -97,12 +100,31 @@ def get_http_client() -> httpx.Client:
     return _client
 
 
+def warm_up() -> None:
+    """
+    Connessione anticipata (app installata, all'avvio, in un thread): crea il client e apre la connessione
+    TLS con Supabase mentre l'app fa altro, così la prima RPC non paga DNS, TCP e TLS.
+    La richiesta va alla radice REST senza chiave (risposta 401): nessun accesso al database.
+    """
+    _warm_done.clear()
+    try:
+        client = get_http_client()
+        t = time.perf_counter()
+        client.head("/", headers={"apikey": ""})
+        ultima_risposta["warm_up_ms"] = round((time.perf_counter() - t) * 1000)
+    except Exception as e:
+        print(f"Connessione anticipata non riuscita: {e}")  # Nessun danno: la RPC si collega da sola
+    finally:
+        _warm_done.set()
+
+
 def rpc(name: str, args: dict[str, Any]) -> Any:
     """
     Chiama la funzione SQL public.<name> (POST /rest/v1/rpc/<name>) e restituisce il JSON della risposta
     (None per le funzioni void o quando restituiscono null).
     RpcError per gli errori previsti, httpx.HTTPStatusError per gli altri, httpx.HTTPError per la rete.
     """
+    _warm_done.wait(WARM_WAIT)  # Usa la connessione anticipata invece di aprirne una seconda in parallelo
     client = get_http_client()
     t = time.perf_counter()
     response = client.post(f"/rpc/{name}", json=args)

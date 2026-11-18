@@ -373,3 +373,10 @@ Non cambiano: cron, script, SQL. **Nessuna migrazione.** Nessuna dipendenza nuov
   382 → 150 KB, stessi dati), indentati `snapshot_meta.json` e le formazioni; `Team.save_to_json` atomico.
   SnackBar: confermato anche nel client Dart (`snack_bar.dart:120`, evento `dismiss` alla chiusura) che
   `show_dialog` le toglie: punto già risolto in Fase 3.
+- **18/11, commit 5 — avvio:** la connessione anticipata parte **in cima a `nativa.py`, in un thread, in parallelo
+  con `import flet`** (sul telefono 1,2 s), non dopo la pagina come previsto: dalla pagina pronta alla richiesta di
+  accesso passano solo ~80 ms, troppo pochi per sovrapporre client (190 ms) e TLS. `supabase_rest.warm_up()` crea il
+  client e fa `HEAD /rest/v1/` senza chiave (401, nessun accesso al database); la prima RPC aspetta al massimo 2 s
+  che finisca, così usa quella connessione invece di aprirne una seconda. Sul PC: client 259 ms + connessione
+  374 ms tolti dal percorso dell'avvio. Il profilo per l'uso senza rete si salva dopo la dashboard
+  (`page.run_task`). Nuova tappa `connessione_anticipata_ms` nelle misure.

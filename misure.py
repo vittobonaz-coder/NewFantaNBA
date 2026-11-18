@@ -167,8 +167,9 @@ def nota_rete(page, info: dict) -> None:
         return
     reg.tappa("rete")
     reg.tappe.update(rete_ms=info.get("ms"), rete_byte=info.get("byte"))
-    if "client_ms" in info:
-        reg.tappe["client_http_ms"] = info.pop("client_ms")
+    for key, name in (("client_ms", "client_http_ms"), ("warm_up_ms", "connessione_anticipata_ms")):
+        if key in info:
+            reg.tappe[name] = info.pop(key)
 
 
 def riparti(page, tipo: str) -> None:
