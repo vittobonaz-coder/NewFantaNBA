@@ -46,7 +46,6 @@ def is_network_error(err: BaseException) -> bool:
 
 _misura: dict[str, float] = {}
 richieste_contate = 0
-ultima_risposta: dict[str, Any] = {}  # Ultima RPC: nome, ms, byte trasferiti e del JSON (per misure.py)
 
 
 def _on_request(request: httpx.Request) -> None:
@@ -89,14 +88,12 @@ def get_http_client() -> httpx.Client:
     if _client is None:
         with _client_lock:
             if _client is None:
-                t = time.perf_counter()
                 _client = httpx.Client(
                     base_url=f"{SUPABASE_URL}/rest/v1",
                     headers={"apikey": SUPABASE_PUBLISHABLE_KEY},
                     timeout=TIMEOUT,
                     event_hooks={"request": [_on_request], "response": [_on_response]} if MISURE else None,
                 )
-                ultima_risposta["client_ms"] = round((time.perf_counter() - t) * 1000)  # Contesto SSL, certifi
     return _client
 
 
@@ -108,10 +105,7 @@ def warm_up() -> None:
     """
     _warm_done.clear()
     try:
-        client = get_http_client()
-        t = time.perf_counter()
-        client.head("/", headers={"apikey": ""})
-        ultima_risposta["warm_up_ms"] = round((time.perf_counter() - t) * 1000)
+        get_http_client().head("/", headers={"apikey": ""})
     except Exception as e:
         print(f"Connessione anticipata non riuscita: {e}")  # Nessun danno: la RPC si collega da sola
     finally:
@@ -125,11 +119,7 @@ def rpc(name: str, args: dict[str, Any]) -> Any:
     RpcError per gli errori previsti, httpx.HTTPStatusError per gli altri, httpx.HTTPError per la rete.
     """
     _warm_done.wait(WARM_WAIT)  # Usa la connessione anticipata invece di aprirne una seconda in parallelo
-    client = get_http_client()
-    t = time.perf_counter()
-    response = client.post(f"/rpc/{name}", json=args)
-    ultima_risposta.update(rpc=name, ms=round((time.perf_counter() - t) * 1000),
-                           byte=response.num_bytes_downloaded, byte_json=len(response.content))
+    response = get_http_client().post(f"/rpc/{name}", json=args)
     if response.status_code >= 400:
         try:
             body = response.json()

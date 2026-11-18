@@ -1,4 +1,4 @@
-# Fase 4 — Fluidità dell'interfaccia (proposta del 16/11/2026, decisioni discusse, in attesa del "procedi")
+# Fase 4 — Fluidità dell'interfaccia (piano approvato il 16/11/2026, fase conclusa il 18/11/2026)
 
 **Decisioni dell'utente (16/11):** 1 correzione su Flet 0.82 ora, aggiornamento di Flet a fine migrazione
 (sezione 13); 2 menu aggiornati sul posto (B); 3 schermata dei tempi **solo temporanea, per il debug della
@@ -413,3 +413,10 @@ Non cambiano: cron, script, SQL. **Nessuna migrazione.** Nessuna dipendenza nuov
   di flet (stessa CPU, GIL): bilancio circa nullo; su Windows guadagna ~0,4 s. L'avvio del telefono (2,4 s) è ora
   dominato dall'import di flet (~1,5 s), che non dipende da noi: la "dashboard dalla cache" toglierebbe solo i
   150–400 ms di rete, quindi non conviene (decisione 4).
+- **18/11, misure "dopo" della webapp** (Render, PC, `0e7171a0`; ms del server, prima → dopo): login → dashboard
+  11.334 → **1.570**, scambio 9.697 → **54**, cambio modulo 19.410 → **199**, Annulla 19.567 → **135**,
+  Giornata↔Formazione 18.734 → **321**, tab 13.500–15.300 → **25–244**, giornate Lega / NBA 13.856 / 15.348 →
+  **57 / 406**, salvataggio 15.132 → **340** (rete 174).
+- **18/11, commit finale:** tolti `misure.py`, il tab "Tempi", le tappe e `supabase_rest.ultima_risposta`;
+  `tools/prepara_build.py` e `build_windows.ps1` di nuovo senza `--misure`. Restano la riga di `avvii.jsonl` di
+  `nativa.py` e le stampe `[MISURE]` di `supabase_rest.py` con `FANTANBA_MISURE=1`.

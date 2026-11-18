@@ -3,7 +3,7 @@ Punto d'ingresso dell'app installata (flet build apk / windows, pyproject.toml).
 lo sviluppo sul PC test.py: entrambi tengono la cache in data/.
 Qui la cache va nella cartella dati dell'utente: %APPDATA%\\Bonkest\\Bonkest\\cache su Windows (fuori da
 Documenti/OneDrive e dalla cartella del programma), la cartella interna privata dell'app su Android.
-Ogni avvio aggiunge una riga ad avvii.jsonl (nella stessa cartella) con i tempi, per le misure della Fase 4.
+Ogni avvio aggiunge una riga ad avvii.jsonl (nella stessa cartella) con i tempi (Fase 4).
 """
 import threading
 import time
@@ -27,11 +27,9 @@ from pathlib import Path  # noqa: E402
 import flet as ft  # noqa: E402
 
 import app_paths  # noqa: E402
-import misure  # noqa: E402
 
 T_FLET = time.perf_counter()  # Dopo import flet (il costo fisso maggiore, Fase 0)
-STARTUP_LOG = misure.AVVII_FILE
-misure.imposta_inizio(T_MODULE)  # Tappe dell'avvio dall'inizio di Python (solo con le misure accese)
+STARTUP_LOG = "avvii.jsonl"
 
 
 async def resolve_data_dir() -> Path:
@@ -66,12 +64,9 @@ def log_startup(page: ft.Page, t_page: float, cache_vuota: bool) -> None:
 
 async def native_main(page: ft.Page) -> None:
     t_page = time.perf_counter()
-    misure.tappa(page, "pagina")
     app_paths.set_data_dir(await resolve_data_dir(), native=True)
-    misure.tappa(page, "data_dir")
     cache_vuota = not app_paths.data_file("snapshot_meta.json").exists()
     from app import main  # Dopo set_data_dir: nessun modulo deve leggere la cache prima
-    misure.tappa(page, "import_app")
     await main(page)  # Torna dopo la prima schermata (dashboard o login)
     log_startup(page, t_page, cache_vuota)
 

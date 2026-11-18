@@ -112,7 +112,7 @@ def main() -> int:
     if not flet_fix.applica():
         _print("flet_fix non applicato (versione di Flet diversa)")
     ft.Control.update = lambda self, *a, **k: None  # Nessuna pagina: le patch si calcolano a mano
-    ui_court.Court.page = property(lambda self: None)  # Nessuna pagina (misure spente)
+    ui_court.Court.page = property(lambda self: None)  # Nessuna pagina in questo script
     builtins.print = lambda *a, **k: None           # Silenzia i print di caricamento
 
     files = sorted(glob.glob(str(league_cache.app_paths.data_file("*_gw*_state.json"))))

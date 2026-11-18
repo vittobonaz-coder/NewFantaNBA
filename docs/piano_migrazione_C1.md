@@ -222,15 +222,44 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     3. prova della webapp da iPhone (login, tab, messaggio "Formazione salvata!" dopo un salvataggio, margini) e da PC;
     4. facoltativo: tempi di avvio sul telefono col cronometro (tocco dell'icona → dashboard, 5 volte); cancellare la vecchia cartella `%APPDATA%\FantaNBA`.
   - **Da tenere d'occhio:** dopo `swap_players.py` la foto di un giocatore nuovo va committata e portata su `main` per la webapp; le app installate la prendono dal CDN NBA finché non si rifà il build.
-- **Fase 4 (dal 16/11/2026): in corso.** Piano approvato in `docs/fase4_piano.md` (decisioni in cima al piano).
-  - **Trovato nella preparazione:** il costo degli scambi e dei tab non sono i menu ma un difetto di Flet 0.82: ogni
-    `update()` fa il `repr` di tutto il sottoalbero (`logger.debug` con f-string in `object_patch.py`), ~450 ms sul PC
-    per il solo campo e ~930 ms per la pagina, anche senza modifiche; in più Flet aggiorna da sé la pagina intera dopo
-    ogni evento. Corretto a monte da Flet 0.83.0; qui si corregge con `flet_fix.py` (commit 2).
-  - **Commit 1 (misure, temporaneo):** `misure.py` (tappe dell'avvio, durata delle operazioni comprensiva
-    dell'aggiornamento automatico di Flet, andata e ritorno col client), tab "Tempi" nelle Impostazioni visibile solo
-    con le misure accese (build di prova `tools/prepara_build.py --misure` / `build_windows.ps1 -Misure`, oppure
-    `FANTANBA_MISURE=1`), `supabase_rest.ultima_risposta`. Si toglie a fine fase.
+- **Fase 4 (16–18/11/2026): conclusa.** Verificata su Android, Windows e webapp; piano e dettagli in `docs/fase4_piano.md`
+  (sezione 14 "Cambiato in corso d'opera"). Codice su `main` dal 18/11 (`0e7171a0`); commit finale (via le misure
+  temporanee) da portare su `main`. Nessuna migrazione SQL.
+  - **Causa trovata:** non i menu ma un difetto di Flet 0.82: ogni `update()` faceva il `repr` di tutto il sottoalbero
+    (`logger.debug` con f-string in `object_patch.py`), e Flet aggiornava da sé la pagina intera dopo ogni evento.
+    Corretto a monte da Flet 0.83.0; qui con `flet_fix.py`.
+  - **Fatto:**
+    - `flet_fix.py` (solo Flet 0.82): `repr` brevi dei controlli e aggiornamento automatico spento per tutta l'app;
+    - un solo `update()` per operazione; card, menu di scambio aggiornati sul posto (righe dei titolari ricreate a ogni
+      cambio modulo: riusarle interrompeva la patch sul client);
+    - velo di caricamento solo dove c'è rete o una prima costruzione; JSON compatto per i file grandi della cache;
+      salvataggio della formazione atomico;
+    - app installata: connessione a Supabase in parallelo con l'import di flet (`supabase_rest.warm_up`, nessun
+      accesso al DB); profilo per l'uso senza rete salvato dopo la dashboard; foto mancanti scaricate una volta nella
+      cartella dati (`foto.py`), una sola immagine per card;
+    - `tools/prova_scambi.py` (operazioni casuali su tutte le formazioni in cache: card, menu, totale, patch);
+    - misure temporanee (`misure.py`, tab "Tempi" nascosto) usate per il prima/dopo e tolte nel commit finale.
+  - **Misure prima → dopo** (mediane; telefono Galaxy A52s, app Windows, webapp su Render da PC, tempo del server):
+    | | Telefono | Windows | Webapp |
+    |---|---|---|---|
+    | Avvio / login → dashboard | 5,4 s → **2,4 s** | 2,7 s → **1,3 s** | 11,3 s → **1,6 s** |
+    | Scambio | 3.237 → **48 ms** | 907 → **15 ms** | 9.697 → **54 ms** |
+    | Cambio modulo | 6.466 → **52 ms** | → **17 ms** | 19.410 → **199 ms** |
+    | Annulla | 6.970 → **45 ms** | 1.922 → **16 ms** | 19.567 → **135 ms** |
+    | Giornata↔Formazione | 6.656 → **76 ms** | 1.833 → **28 ms** | 18.734 → **321 ms** |
+    | Apertura dei tab | ~5 s → **26–162 ms** | ~1,3 s → **10–44 ms** | 13,5–15,3 s → **25–244 ms** |
+    | Giornate Lega / NBA | 5,1 / 5,7 s → **67 / 230 ms** | 1,3 / 1,4 s → **54 / 109 ms** | 13,9 / 15,3 s → **57 / 406 ms** |
+    | Salvataggio (di cui rete) | 5,9 s → **0,67 s** (0,57) | 2,0 s → **0,41 s** (0,33) | 15,1 s → **0,34 s** (0,17) |
+    Sul telefono l'avvio è ora dominato dall'import di flet (~1,5 s); la connessione anticipata lì ha bilancio circa
+    nullo (stessa CPU), su Windows toglie ~0,4 s. "Dashboard subito dalla cache" non fatta: toglierebbe solo 150–400 ms.
+  - **Da fare da parte tua, in ordine:**
+    1. ~~prove e misure su telefono e Windows~~ (18/11: ok, dopo la correzione di pallino e cambio modulo);
+    2. ~~OK per `main` e misure della webapp~~ (18/11: `0e7171a0`, misure fatte);
+    3. togliere `FANTANBA_MISURE` da Render, se non l'hai già fatto;
+    4. OK per portare su `main` il commit finale (un deploy, nessun cambiamento visibile);
+    5. installare i build normali (senza misure) su telefono e PC, sopra quelli di prova.
+  - **Da tenere d'occhio:** nelle sottoclassi dei controlli Flet non usare nomi di proprietà di Flet per gli attributi
+    (es. `badge`); non spostare un controllo da una lista a un'altra nella stessa patch.
 - **Fase 5:** —
 - **Fase 6:** —
 
