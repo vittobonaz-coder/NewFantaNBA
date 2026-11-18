@@ -361,3 +361,9 @@ Non cambiano: cron, script, SQL. **Nessuna migrazione.** Nessuna dipendenza nuov
   Banco di prova (webapp locale sul PC, stesse operazioni, ms "py"): login → dashboard 1.145 → **270**
   (`show()` 958 → 70), scambio 933 → **42**, Annulla 1.832 → **127**, Giornata↔Formazione 1.799 → **80**,
   apertura Calendario 899 → **9**, Campionato 933 → **16**, Impostazioni 982 → **26**, Altre squadre **61**.
+- **18/11, commit 3 — card, menu e righe sul posto:** `PlayerCard` si costruisce una volta e `update_data` cambia
+  solo i valori (testi, foto, badge e freccia sempre presenti, nascosti quando non servono; pallini rifatti solo
+  se cambiano le partite); voci dei menu riusate per (card, destinazione); tre `Row` dei titolari riusate nel cambio
+  modulo. `tools/prova_scambi.py`: 34 formazioni in cache, 3.400 operazioni casuali, nessun errore (card uguali a
+  card nuove, menu giusti, totale giusto). Patch mediane, commit 2 → commit 3: scambio 19,6 → **9,2 ms** e
+  15,5 → **3,2 KB**; cambio modulo 22,3 → 10,6 ms e 22,7 → 7,4 KB; Annulla 27,1 → 13,1 ms e 37,8 → 14,3 KB.

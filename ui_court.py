@@ -109,9 +109,45 @@ class PlayerCard(ft.Container):
         self.setup_ui()
 
     def setup_ui(self):
+        """Costruisce la card una volta; poi update_data cambia solo i valori dei controlli (Fase 4)."""
         conf = ROLE_CONFIGS.get(self.role_type, ROLE_CONFIGS["STARTER"])
+        self.conf = conf
         self.configure_container(conf)
-        self.content = self.build_content(conf)
+        is_reserve = self.role_type == "RESERVE"
+        size = conf["avatar"]
+        # Foto: inclusa nel pacchetto -> CDN NBA -> segnaposto (sorgenti impostate da _fill)
+        self.avatar = ft.Image(src="avatar_placeholder.png", width=size, height=size,
+                               error_content=ft.Image(src="avatar_placeholder.png", width=size, height=size,
+                                                      error_content=ft.Image(src="avatar_placeholder.png",
+                                                                             width=size, height=size)))
+        self.name_text = ft.Text("", size=conf["font"], weight="bold", no_wrap=True)
+        self.team_text = ft.Text("", size=9, color="grey")
+        self.games_row = ft.Row([], spacing=3, alignment=ft.MainAxisAlignment.CENTER, height=12)
+        # Le riserve non contribuiscono al totale (mult 0), ma mostriamo il punteggio
+        # grezzo tra parentesi per aiutare l'allenatore a decidere se schierarle
+        self.score_text = ft.Text("", size=conf["font"], weight="normal" if is_reserve else "bold",
+                                  italic=is_reserve, color="grey" if is_reserve else None)
+        # Sostituzione automatica di fine giornata (fatta o prevista): freccina accanto al punteggio
+        self.hint_icon = ft.Icon(ft.Icons.ARROW_UPWARD, size=conf["font"] - 2, visible=False)
+        score_row = ft.Row([self.score_text, self.hint_icon], spacing=1,
+                           alignment=ft.MainAxisAlignment.CENTER, tight=True)
+        # Infortunio: piccolo badge nell'angolo in alto a destra (il pulsante di scambio è a sinistra)
+        self.badge_text = ft.Text("", size=8, weight="bold", color="white")
+        self.badge = ft.Container(content=self.badge_text, border_radius=3, visible=False,
+                                  padding=ft.Padding.symmetric(horizontal=3, vertical=0), right=0, top=0)
+        btn_container = ft.Container(content=self.swap_button, left=conf["button_left"], top=conf["button_top"])
+
+        self.content = ft.Stack(
+            alignment=ft.alignment.Alignment.TOP_CENTER,
+            controls=[
+                ft.Column(
+                    spacing=0,
+                    horizontal_alignment="center",
+                    controls=[self.avatar, self.name_text, self.team_text, self.games_row, score_row],
+                ),
+            ] + ([btn_container] if self.show_swap else []) + [self.badge]
+        )
+        self._fill()
 
     def configure_container(self, conf):
         self.border_radius = 12
@@ -122,82 +158,52 @@ class PlayerCard(ft.Container):
         self.height = conf["height"]
         self.opacity = conf["opacity"]
 
-    def build_content(self, conf):
-        name_parts = self.player.name.split()
-        first_initial = name_parts[0][0]
-        surname = ' '.join(name_parts[1:])
-        # Le riserve non contribuiscono al totale (mult 0), ma mostriamo il punteggio
-        # grezzo tra parentesi per aiutare l'allenatore a decidere se schierarle
-        is_reserve = self.role_type == "RESERVE"
+    def _fill(self):
+        """Valori dei controlli per il giocatore e il punteggio attuali (nessun controllo nuovo, salvo i pallini)."""
+        conf, p = self.conf, self.player
+        name_parts = p.name.split()
+        self.name_text.value = f"{name_parts[0][0]}. {' '.join(name_parts[1:])}" if name_parts else ""
+        self.team_text.value = f"{p.team_abbreviation} | {p.position}"
+
+        local, remote = self.avatar_sources()
+        self.avatar.src = local
+        self.avatar.error_content.src = remote
+
         if not has_played(self.score):
-            score_text = "-"
-        elif is_reserve:
-            score_text = f"({self.score:.1f})"
+            self.score_text.value = "-"
+        elif self.role_type == "RESERVE":
+            self.score_text.value = f"({self.score:.1f})"
         else:
-            score_text = f"{self.score * conf['mult']:.1f}"
-        score_control = ft.Text(
-            score_text,
-            size=conf["font"],
-            weight="normal" if is_reserve else "bold",
-            italic=is_reserve,
-            color="grey" if is_reserve else None,
-        )
-        # Sostituzione automatica di fine giornata (fatta o prevista): freccina accanto al punteggio
-        hint = self.sub_hints.get(self.player.id)
-        if hint in ("IN", "OUT"):
-            score_control = ft.Row(
-                [score_control, ft.Icon(ft.Icons.ARROW_UPWARD if hint == "IN" else ft.Icons.ARROW_DOWNWARD,
-                                        size=conf["font"] - 2,
-                                        color=ft.Colors.GREEN_400 if hint == "IN" else ft.Colors.RED_400)],
-                spacing=1, alignment=ft.MainAxisAlignment.CENTER, tight=True,
-            )
+            self.score_text.value = f"{self.score * conf['mult']:.1f}"
+        hint = self.sub_hints.get(p.id)
+        self.hint_icon.visible = hint in ("IN", "OUT")
+        if self.hint_icon.visible:
+            self.hint_icon.icon = ft.Icons.ARROW_UPWARD if hint == "IN" else ft.Icons.ARROW_DOWNWARD
+            self.hint_icon.color = ft.Colors.GREEN_400 if hint == "IN" else ft.Colors.RED_400
 
-        btn_container = ft.Container(
-            content=self.swap_button,
-            left=conf["button_left"], top=conf["button_top"]
-        )
+        label = injury_label(self.injuries.get(str(p.id)))
+        self.badge.visible = bool(label)
+        if label:
+            self.badge_text.value = label
+            self.badge.bgcolor = INJURY_COLORS[label]
 
-        # Infortunio: piccolo badge nell'angolo in alto a destra (il pulsante di scambio è a sinistra)
-        label = injury_label(self.injuries.get(str(self.player.id)))
-        badge = [ft.Container(
-            content=ft.Text(label, size=8, weight="bold", color="white"),
-            bgcolor=INJURY_COLORS[label], border_radius=3,
-            padding=ft.Padding.symmetric(horizontal=3, vertical=0),
-            right=0, top=0,
-        )] if label else []
+        games = [g["status"] for g in self.games]
+        if games != getattr(self, "_games_shown", None):  # Stessa squadra NBA: pallini invariati
+            self._games_shown = games
+            self.games_row.controls = self.build_games_indicator()
 
-        return ft.Stack(
-            alignment=ft.alignment.Alignment.TOP_CENTER,
-            controls=[
-                ft.Column(
-                    spacing=0,
-                    horizontal_alignment="center",
-                    controls=[
-                        self.build_avatar(conf["avatar"]),
-                        ft.Text(f"{first_initial}. {surname}", size=conf["font"], weight="bold", no_wrap=True),
-                        ft.Text(f"{self.player.team_abbreviation} | {self.player.position}", size=9, color="grey"),
-                        self.build_games_indicator(),
-                        score_control,
-                    ]
-                ),
-            ] + ([btn_container] if self.show_swap else []) + badge
-        )
-
-    def build_avatar(self, size: int) -> ft.Image:
-        """Foto inclusa nel pacchetto; se manca (giocatore arrivato dopo il build) dal CDN NBA, poi il segnaposto."""
-        placeholder = ft.Image(src="avatar_placeholder.png", width=size, height=size)
+    def avatar_sources(self) -> tuple[str, str]:
+        """(foto inclusa nel pacchetto, riserva dal CDN NBA); senza ID il segnaposto per entrambe."""
         if not self.player.id:
-            return placeholder
-        remote = ft.Image(src=NBA_HEADSHOT_URL.format(id=self.player.id), width=size, height=size,
-                          error_content=placeholder)
-        return ft.Image(src=self.player.get_avatar_img(), width=size, height=size, error_content=remote)
+            return "avatar_placeholder.png", "avatar_placeholder.png"
+        return self.player.get_avatar_img(), NBA_HEADSHOT_URL.format(id=self.player.id)
 
     @property
     def games(self) -> list[dict]:
         """Partite della squadra NBA del giocatore nella giornata."""
         return self.schedules.get(self.player.team_abbreviation, [])
 
-    def build_games_indicator(self) -> ft.Row:
+    def build_games_indicator(self) -> list[ft.Control]:
         """Un pallino per partita (pieno = giocata, ambra = in corso, vuoto = da giocare) e il numero di partite."""
         def dot(status):
             if status == "final":
@@ -209,10 +215,7 @@ class PlayerCard(ft.Container):
             return ft.Container(width=6, height=6, border_radius=3, border=ft.Border.all(1, color))
 
         games = self.games
-        return ft.Row(
-            [dot(g["status"]) for g in games] + [ft.Text(f"{len(games)}G", size=9, color="grey")],
-            spacing=3, alignment=ft.MainAxisAlignment.CENTER, height=12,
-        )
+        return [dot(g["status"]) for g in games] + [ft.Text(f"{len(games)}G", size=9, color="grey")]
 
     def show_games(self):
         """Dettaglio aperto al tocco della card: le partite NBA del giocatore nella giornata, con risultato o orario."""
@@ -263,10 +266,10 @@ class PlayerCard(ft.Container):
         return [ft.Text(" · ".join(parts), size=13, weight="bold", color=INJURY_COLORS[label])]
 
     def update_data(self, new_player: Player, new_score: float | None):
-        """Aggiorna i dati della card e rinfresca solo questa"""
+        """Nuovo giocatore nella card: cambia solo i valori dei controlli esistenti (patch piccola)."""
         self.player = new_player
         self.score = new_score
-        self.setup_ui()
+        self._fill()
 
 class LoadingOverlay(ft.Container):
     """Velo semitrasparente con spinner sopra la schermata: la formazione resta visibile sotto."""
@@ -715,22 +718,25 @@ class Court(ft.Column):
             self.controls = header + starters + others
 
     def update_starters_layout(self):
-        """Cambia SOLO il contenuto del rettangolo dei titolari"""
+        """
+        Dispone i titolari nel rettangolo secondo il modulo. Le tre righe si creano una volta e poi si
+        riusano (cambiano solo card e allineamento): al cambio modulo le card si spostano senza ricrearle.
+        """
+        if not hasattr(self, "starter_rows"):
+            self.starter_rows = [ft.Row() for _ in range(3)]
+            self.starters_container.content = ft.Column(controls=self.starter_rows)
         # Il modulo è Guardie-Ali-Centri, le righe vanno dall'alto: Centri, Ali, Guardie
         row_sizes = [int(n) for n in reversed(self.lineup.split('-'))]
-        rows = []
         start = 0
-        for size in row_sizes:
-            row_cards = self.cards[start:start + size]
+        for row, size in zip(self.starter_rows, row_sizes):
+            row.controls = self.cards[start:start + size]
             start += size
             if size == 1:
-                rows.append(ft.Row(controls=row_cards, alignment=ft.MainAxisAlignment.CENTER))
+                row.alignment, row.spacing = ft.MainAxisAlignment.CENTER, 10  # 10 = predefinito di Row
             elif size == 3:
-                rows.append(ft.Row(controls=row_cards, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=8))
+                row.alignment, row.spacing = ft.MainAxisAlignment.SPACE_BETWEEN, 8
             else:
-                rows.append(ft.Row(controls=row_cards, alignment=ft.MainAxisAlignment.SPACE_EVENLY))
-
-        self.starters_container.content = ft.Column(controls=rows)
+                row.alignment, row.spacing = ft.MainAxisAlignment.SPACE_EVENLY, 10
     
     def get_starter_roles(self, lineup_str):
         """Restituisce solo la mappa dei ruoli per i primi 5 slot (Titolari)"""
@@ -793,6 +799,10 @@ class Court(ft.Column):
             return
 
         starter_roles = self.get_starter_roles(self.lineup)
+        players = [c.player for c in self.cards]
+        # Voci riusate tra un refresh e l'altro: {(card, destinazione): voce}. Cambiano solo testo ed elenco,
+        # così la patch di uno scambio non ricrea ~150 voci (Fase 4)
+        cache: dict[tuple[int, int], ft.PopupMenuItem] = self.__dict__.setdefault("_menu_items", {})
 
         for i, card in enumerate(self.cards):
             valid_items = []
@@ -801,7 +811,7 @@ class Court(ft.Column):
                 if i == j: continue
 
                 # Simuliamo lo scambio
-                temp_players = [c.player for c in self.cards]
+                temp_players = list(players)
                 temp_players[i], temp_players[j] = temp_players[j], temp_players[i]
 
                 # Vincolo di Posizione Individuale (Solo per i Titolari 0-4)
@@ -809,13 +819,18 @@ class Court(ft.Column):
                     continue
 
                 # Se passa il test, lo scambio è legale
-                valid_items.append(
-                    ft.PopupMenuItem(
-                        content=ft.Text(other_card.player.name.split()[-1]),
+                label = other_card.player.name.split()[-1]
+                item = cache.get((i, j))
+                if item is None:
+                    item = cache[(i, j)] = ft.PopupMenuItem(
+                        content=ft.Text(label),
                         on_click=lambda e, f=i, t=j: self.handle_swap(f, t)
                     )
-                )
-            card.swap_button.items = valid_items
+                elif item.content.value != label:
+                    item.content.value = label
+                valid_items.append(item)
+            if [id(x) for x in card.swap_button.items or []] != [id(x) for x in valid_items]:
+                card.swap_button.items = valid_items
 
 
 WEEKDAYS_IT = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
