@@ -131,7 +131,8 @@ class PlayerCard(ft.Container):
                            alignment=ft.MainAxisAlignment.CENTER, tight=True)
         # Infortunio: piccolo badge nell'angolo in alto a destra (il pulsante di scambio è a sinistra)
         self.badge_text = ft.Text("", size=8, weight="bold", color="white")
-        self.badge = ft.Container(content=self.badge_text, border_radius=3, visible=False,
+        # Non "self.badge": in Flet 0.82 badge è una proprietà dei controlli (pallino in alto a destra)
+        self.injury_badge = ft.Container(content=self.badge_text, border_radius=3, visible=False,
                                   padding=ft.Padding.symmetric(horizontal=3, vertical=0), right=0, top=0)
         btn_container = ft.Container(content=self.swap_button, left=conf["button_left"], top=conf["button_top"])
 
@@ -143,7 +144,7 @@ class PlayerCard(ft.Container):
                     horizontal_alignment="center",
                     controls=[self.avatar, self.name_text, self.team_text, self.games_row, score_row],
                 ),
-            ] + ([btn_container] if self.show_swap else []) + [self.badge]
+            ] + ([btn_container] if self.show_swap else []) + [self.injury_badge]
         )
         self._fill()
 
@@ -178,10 +179,10 @@ class PlayerCard(ft.Container):
             self.hint_icon.color = ft.Colors.GREEN_400 if hint == "IN" else ft.Colors.RED_400
 
         label = injury_label(self.injuries.get(str(p.id)))
-        self.badge.visible = bool(label)
+        self.injury_badge.visible = bool(label)
         if label:
             self.badge_text.value = label
-            self.badge.bgcolor = INJURY_COLORS[label]
+            self.injury_badge.bgcolor = INJURY_COLORS[label]
 
         games = [g["status"] for g in self.games]
         if games != getattr(self, "_games_shown", None):  # Stessa squadra NBA: pallini invariati
@@ -697,25 +698,27 @@ class Court(ft.Column):
 
     def update_starters_layout(self):
         """
-        Dispone i titolari nel rettangolo secondo il modulo. Le tre righe si creano una volta e poi si
-        riusano (cambiano solo card e allineamento): al cambio modulo le card si spostano senza ricrearle.
+        Dispone i titolari nel rettangolo secondo il modulo, con righe NUOVE a ogni cambio.
+        Non riusare le righe spostando le card dall'una all'altra: in Flet 0.82 una card tolta da una lista e
+        aggiunta a un'altra nella stessa patch può essere smontata dal client dopo lo spostamento, e la patch
+        si interrompe (modulo sbagliato a video, barra Salva/Annulla bloccata): visto il 18/11 su Android e Windows.
         """
-        if not hasattr(self, "starter_rows"):
-            self.starter_rows = [ft.Row() for _ in range(3)]
-            self.starters_container.content = ft.Column(controls=self.starter_rows)
         # Il modulo è Guardie-Ali-Centri, le righe vanno dall'alto: Centri, Ali, Guardie
         row_sizes = [int(n) for n in reversed(self.lineup.split('-'))]
+        rows = []
         start = 0
-        for row, size in zip(self.starter_rows, row_sizes):
-            row.controls = self.cards[start:start + size]
+        for size in row_sizes:
+            row_cards = self.cards[start:start + size]
             start += size
             if size == 1:
-                row.alignment, row.spacing = ft.MainAxisAlignment.CENTER, 10  # 10 = predefinito di Row
+                rows.append(ft.Row(controls=row_cards, alignment=ft.MainAxisAlignment.CENTER))
             elif size == 3:
-                row.alignment, row.spacing = ft.MainAxisAlignment.SPACE_BETWEEN, 8
+                rows.append(ft.Row(controls=row_cards, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=8))
             else:
-                row.alignment, row.spacing = ft.MainAxisAlignment.SPACE_EVENLY, 10
-    
+                rows.append(ft.Row(controls=row_cards, alignment=ft.MainAxisAlignment.SPACE_EVENLY))
+
+        self.starters_container.content = ft.Column(controls=rows)
+
     def get_starter_roles(self, lineup_str):
         """Restituisce solo la mappa dei ruoli per i primi 5 slot (Titolari)"""
         return LINEUP_ROLES[lineup_str]

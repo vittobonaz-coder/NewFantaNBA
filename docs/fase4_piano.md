@@ -386,3 +386,30 @@ Non cambiano: cron, script, SQL. **Nessuna migrazione.** Nessuna dipendenza nuov
   giocatori in cache, ricorda per un giorno quelle assenti anche dal CDN e cancella le copie diventate inutili
   (foto entrate nel pacchetto). Provato con una cartella temporanea: 17 KB a foto, secondo giro senza download.
   Oggi tutte le foto delle rose sono incluse: servirà ai prossimi acquisti di mercato.
+- **18/11, prove sui dispositivi dei build "dopo" (`4556f399`): due regressioni del commit 3, corrette.**
+  - **Pallino in alto a destra su ogni card:** il badge dell'infortunio era in `self.badge`, ma in Flet 0.82 `badge`
+    è una proprietà di tutti i controlli (il pallino delle notifiche): il Container finiva lì. Rinominato
+    `self.injury_badge`. Attenzione ai nomi degli attributi nelle sottoclassi dei controlli Flet.
+  - **Cambio modulo "in tilt" (passando per 1-2-2) e Annulla che non annulla né nasconde la barra:** con le tre
+    `Row` riusate una card passa da una riga all'altra nella stessa patch e il client può smontarla dopo averla
+    spostata; la patch si interrompe a metà. Tornato a righe nuove a ogni cambio modulo (come prima del commit 3).
+    Verificato sulla webapp locale: 3-1-1 → 2-1-2 → 1-2-2 → 3-1-1 → Annulla corretti, barra nascosta.
+    `tools/prova_scambi.py` non poteva vederlo (controlla Python, non il client).
+- **18/11, misure "dopo" sui dispositivi** (build `4556f399`, mediane in ms; prima → dopo):
+  | | Telefono | Windows |
+  |---|---|---|
+  | Avvio → dashboard | 5.432 → **2.388** | 2.658 → **1.339** |
+  | di cui `show()` della dashboard | ~3.300 → ~315 | ~1.030 → ~105 |
+  | di cui import di flet | 1.212 → 1.572 | 575 → 630 |
+  | di cui dalla schermata d'attesa alla risposta | 470–740 → 150–400 | 500–720 → 150–275 |
+  | Scambio | 3.237 → **48** | 907 → **15** |
+  | Cambio modulo | 6.466 → **52** | — → **17** |
+  | Annulla | 6.970 → **45** | 1.922 → **16** |
+  | Giornata↔Formazione | 6.656 → **76** | 1.833 → **28** |
+  | Apertura dei tab (prima volta) | 4.900–5.500 → **26–162** | 1.150–1.420 → **10–44** |
+  | Giornate Lega / NBA | 5.100 / 5.700 → **67 / 230** | 1.300 / 1.440 → **54 / 109** |
+  | Salvataggio (di cui rete) | 5.860 (549) → **669** (571) | 2.048 (544) → **412** (333) |
+  Sul telefono la connessione anticipata accorcia l'attesa della rete di ~300–400 ms ma rallenta di ~350 ms l'import
+  di flet (stessa CPU, GIL): bilancio circa nullo; su Windows guadagna ~0,4 s. L'avvio del telefono (2,4 s) è ora
+  dominato dall'import di flet (~1,5 s), che non dipende da noi: la "dashboard dalla cache" toglierebbe solo i
+  150–400 ms di rete, quindi non conviene (decisione 4).
