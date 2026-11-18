@@ -23,6 +23,9 @@ TO DO:
     la cui squadra non gioca nessuna partita nella giornata (ad esempio per un rinvio) resta con “-” e non 
     avrà mai la freccia, ma a fine giornata verrà comunque sostituito, perché non è mai sceso in campo.
 
+- Automatizzare mercato
+
+- Creare utente Admin per me e Pit
 
 
 
