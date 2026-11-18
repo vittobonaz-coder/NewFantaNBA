@@ -50,14 +50,19 @@ def valid_lineup(value) -> str | None:
     return value if value in LINEUP_ROLES else None
 
 
-def write_json(path: str | Path, data: Any, indent: int | None = 4) -> None:
-    """Scrittura atomica (file temporaneo + rename): chi legge non vede mai un file a metà (su Render data/ è condivisa)."""
+def write_json(path: str | Path, data: Any, indent: int | None = None) -> None:
+    """
+    Scrittura atomica (file temporaneo + rename): chi legge non vede mai un file a metà (su Render data/ è condivisa).
+    Senza indent il JSON è compatto (calendario 382 -> ~166 KB, scrittura più rapida); indent per i file piccoli
+    che conviene poter leggere a occhio.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=indent)
+            json.dump(data, f, ensure_ascii=False, indent=indent,
+                      separators=None if indent is not None else (",", ":"))
         os.replace(tmp, path)
     except BaseException:
         try:
@@ -161,7 +166,7 @@ def write_lineup_state(team_name: str, gameweek: int, rows: list[dict], lineup: 
     # Senza modulo su Supabase preserva quello salvato in locale (l'app lo verifica comunque sui titolari)
     if valid_lineup(lineup) is None and json_path.exists():
         state["lineup"] = (read_json(json_path, {}) or {}).get("lineup", DEFAULT_LINEUP)
-    write_json(json_path, state)
+    write_json(json_path, state, indent=4)
 
 
 # --- Snapshot ---
@@ -222,7 +227,7 @@ def apply_snapshot(snapshot: dict) -> None:
         if part in versions:
             meta[part] = versions[part]
     meta[LAST_SYNC_KEY] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    write_json(snapshot_meta_path(), meta)
+    write_json(snapshot_meta_path(), meta, indent=4)
 
 
 def last_sync() -> datetime | None:

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import os
 import json
+import tempfile
 
 import app_paths
 
@@ -335,9 +336,20 @@ class Team:
             "lineup": self.lineup,
             "roster": self.to_ui_format() # Usiamo il formato UI che è già un dizionario pulito
         }
-        os.makedirs(os.path.dirname(self.filename) or ".", exist_ok=True)
-        with open(self.filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4)
+        # Scrittura atomica (file temporaneo + rename): un'interruzione non lascia il file a metà
+        folder = os.path.dirname(self.filename) or "."
+        os.makedirs(folder, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=folder, prefix=".team.", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4)
+            os.replace(tmp, self.filename)
+        except BaseException:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+            raise
         print(f"Stato del team salvato in {self.filename}")
 
     def load_from_json(self) -> bool:

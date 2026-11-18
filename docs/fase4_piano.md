@@ -367,3 +367,9 @@ Non cambiano: cron, script, SQL. **Nessuna migrazione.** Nessuna dipendenza nuov
   modulo. `tools/prova_scambi.py`: 34 formazioni in cache, 3.400 operazioni casuali, nessun errore (card uguali a
   card nuove, menu giusti, totale giusto). Patch mediane, commit 2 → commit 3: scambio 19,6 → **9,2 ms** e
   15,5 → **3,2 KB**; cambio modulo 22,3 → 10,6 ms e 22,7 → 7,4 KB; Annulla 27,1 → 13,1 ms e 37,8 → 14,3 KB.
+- **18/11, commit 4 — problemi minori:** velo tolto da dettaglio partite, Annulla e Giornata↔Formazione e dalle
+  giornate/squadre già costruite nelle barre (resta su Salva, profilo, logout e alla prima costruzione di una
+  giornata o squadra); `write_json` compatto per calendario, classifica, infortuni e `league_teams` (calendario
+  382 → 150 KB, stessi dati), indentati `snapshot_meta.json` e le formazioni; `Team.save_to_json` atomico.
+  SnackBar: confermato anche nel client Dart (`snack_bar.dart:120`, evento `dismiss` alla chiusura) che
+  `show_dialog` le toglie: punto già risolto in Fase 3.

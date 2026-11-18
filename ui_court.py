@@ -575,26 +575,14 @@ class Court(ft.Column):
             return "Errore nel salvataggio della formazione, riprova", None
 
     async def handle_card_click(self, e):
-        """Dettaglio delle partite del giocatore toccato, con il velo di caricamento finché non si apre."""
+        """Dettaglio delle partite del giocatore toccato (senza velo: nessuna rete, si apre subito)."""
         misure.etichetta(self.page, "dettaglio_partite")
-        if self.loading:
-            await self.loading.show()
-        try:
-            e.control.show_games()
-        finally:
-            if self.loading:
-                self.loading.hide()
+        e.control.show_games()
 
     async def handle_cancel(self, e):
-        """Ripristina l'ultimo salvataggio mostrando il velo di caricamento."""
+        """Ripristina l'ultimo salvataggio (senza velo: nessuna rete)."""
         misure.etichetta(self.page, "annulla")
-        if self.loading:
-            await self.loading.show()
-        try:
-            self.restore_saved_state()
-        finally:
-            if self.loading:
-                self.loading.hide()
+        self.restore_saved_state()
 
     def restore_saved_state(self):
         """Ripristina i dati all'ultimo salvataggio."""
@@ -901,12 +889,14 @@ class RoundTabs(ft.Tabs):
         if not self.lazy or not self.rounds:
             return
         view = self.built_views.get(self.current)
-        if view is not None and self.body.content is view:
-            return  # Già visibile: niente velo
-        await self.loading.show()
+        if view is not None:
+            if self.body.content is not view:  # Già costruita: si mostra subito, senza velo
+                self.body.content = view
+                self.body.update()
+            return
+        await self.loading.show()  # Velo solo alla prima costruzione
         try:
-            if view is None:
-                view = self.built_views[self.current] = self.build_round(self.rounds[self.current])
+            view = self.built_views[self.current] = self.build_round(self.rounds[self.current])
             self.body.content = view
             self.body.update()
         finally:
@@ -1456,7 +1446,7 @@ class TeamView(ft.Column):
             self.courts.append((f"Formazione G{edit_gw}",
                                 Court(edit_team, edit_gw, edit_deadline, token=token, layout=layout)))
 
-        # Velo di caricamento sopra le formazioni (cambio giornata, Salva, Annulla)
+        # Velo di caricamento sopra le formazioni (solo Salva: è l'unica operazione con la rete)
         self.loading = LoadingOverlay()
         for _, court in self.courts:
             court.loading = self.loading
@@ -1481,14 +1471,10 @@ class TeamView(ft.Column):
         await self.switch_court(e.control.data)
 
     async def switch_court(self, index: int):
-        """Passa all'altra formazione mostrando il velo mentre il client la disegna."""
+        """Passa all'altra formazione (senza velo: è già costruita, cambia solo la visibilità)."""
         if self.courts[index][1].visible:
-            return  # Già selezionata: niente velo
-        await self.loading.show()
-        try:
-            self.show_court(index)
-        finally:
-            self.loading.hide()
+            return
+        self.show_court(index)
 
     def show_court(self, index: int, refresh: bool = True):
         """Mostra solo la formazione selezionata (le altre restano in memoria con le loro modifiche)."""
