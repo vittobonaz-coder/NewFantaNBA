@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 import flet as ft
 
 import app_paths
+import flet_fix
 import league_cache
 import misure
 import supabase_rest as rest
@@ -27,6 +28,8 @@ REFRESH_AFTER = timedelta(minutes=5)        # Al ritorno in primo piano si aggio
 BACK_EXIT_WINDOW = 3.0                      # Secondi per il secondo Indietro con modifiche non salvate
 DESKTOP_PLATFORMS = (ft.PagePlatform.WINDOWS, ft.PagePlatform.MACOS, ft.PagePlatform.LINUX)
 
+if not flet_fix.applica():  # Patch veloci e niente aggiornamento automatico (solo Flet 0.82)
+    print(f"flet_fix non applicato: Flet {ft.__version__}")
 misure.installa_misura_eventi()  # Solo con le misure accese (Fase 4, temporaneo)
 
 

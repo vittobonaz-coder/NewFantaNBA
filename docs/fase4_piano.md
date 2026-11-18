@@ -340,3 +340,24 @@ Non cambiano: cron, script, SQL. **Nessuna migrazione.** Nessuna dipendenza nuov
 - **Copia negli appunti:** nel browser può essere rifiutata (permesso o clic "troppo lontano" dalla chiamata, che
   passa dal server); in quel caso un messaggio invita a selezionare il testo (selezionabile). Sull'app installata
   gli appunti non hanno questo limite.
+- **18/11, misure "prima" sui dispositivi** (build `5b492cd7` con le misure, mediane in ms):
+  | | Telefono (A52s) | Windows |
+  |---|---|---|
+  | Avvio → dashboard | 5.432 | 2.658 |
+  | di cui import di flet / client httpx / rete | 1.212 / ~190 / 270–560 | 575 / ~240 / 260–480 |
+  | di cui **`show()` della dashboard** | **~3.300** | **~1.030** |
+  | Scambio | 3.237 | 907 |
+  | Cambio modulo | 6.466 | — |
+  | Annulla | 6.970 | 1.922 |
+  | Giornata↔Formazione | 6.656 | 1.833 |
+  | Apertura dei tab (prima volta) | 4.900–5.500 | 1.150–1.420 |
+  | Giornate del calendario | 5.100–5.700 | 1.300–1.450 |
+  | Salvataggio (di cui rete) | 5.860 (549) | 2.048 (544) |
+- **18/11, commit 2 — `flet_fix.py`:** oltre ai `repr` brevi spegne l'aggiornamento automatico per tutta l'app
+  (`UpdateBehavior._auto_update_enabled = False`, valore predefinito copiato nel contesto di ogni evento; stesso
+  effetto di `ft.context.disable_auto_update()` ma per tutte le sessioni). Controllati tutti i gestori: ognuno
+  aggiorna già quello che cambia (`show_dialog`/`pop_dialog` aggiornano da soli). Un solo `update()` per scambio,
+  cambio modulo, Annulla e chiusura dei cambi (`toggle_buttons(update=False)`).
+  Banco di prova (webapp locale sul PC, stesse operazioni, ms "py"): login → dashboard 1.145 → **270**
+  (`show()` 958 → 70), scambio 933 → **42**, Annulla 1.832 → **127**, Giornata↔Formazione 1.799 → **80**,
+  apertura Calendario 899 → **9**, Campionato 933 → **16**, Impostazioni 982 → **26**, Altre squadre **61**.

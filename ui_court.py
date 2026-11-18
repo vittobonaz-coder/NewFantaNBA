@@ -474,10 +474,11 @@ class Court(ft.Column):
         self.initial_state = [(c.player, c.score) for c in self.cards]
         self.initial_lineup = self.lineup
 
-    def toggle_buttons(self, visible: bool):
-        """Mostra o nasconde la barra dei comandi."""
+    def toggle_buttons(self, visible: bool, update: bool = True):
+        """Mostra o nasconde la barra dei comandi (update=False se il chiamante aggiorna già il campo)."""
         self.controls_bar.visible = visible
-        self.update()
+        if update:
+            self.update()
 
     def status_message(self) -> str:
         if self.read_only:
@@ -535,10 +536,9 @@ class Court(ft.Column):
 
     def close_edits(self, message: str):
         """Cambi chiusi: ripristina l'ultima formazione salvata e blocca scambi e modulo."""
-        self.restore_saved_state()
         self.editable = False
         self.apply_lock()
-        self.update()
+        self.restore_saved_state()  # Aggiorna anche il campo: un solo update()
         self.show_message(message, "red")
 
     def _push_lineup(self) -> tuple[str | None, str | None]:
@@ -606,7 +606,7 @@ class Court(ft.Column):
         self.update_starters_layout()
         self.refresh_ui_and_data()
         self.refresh_menus()
-        self.toggle_buttons(False)
+        self.toggle_buttons(False, update=False)
         self.update()
     
     def set_team_name(self, name: str):
@@ -643,7 +643,7 @@ class Court(ft.Column):
         self.auto_fix_starters(new_val)
         # 2. Aggiorna la variabile di stato della formazione
         self.lineup = new_val
-        self.toggle_buttons(True)
+        self.toggle_buttons(True, update=False)
         # 3. Sposta fisicamente le righe dell'interfaccia
         self.update_starters_layout()
         # 4. Ricalcola tutti i menu a tendina per gli scambi futuri
@@ -776,7 +776,7 @@ class Court(ft.Column):
         origin_card.update_data(target_card.player, target_card.score)
         target_card.update_data(old_player, old_score)
 
-        self.toggle_buttons(True)
+        self.toggle_buttons(True, update=False)
         # Ricalcola le opzioni valide per tutti visto che il campo è cambiato
         self.refresh_ui_and_data()
         self.refresh_menus()
