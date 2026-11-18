@@ -15,6 +15,7 @@ import flet as ft
 
 import app_paths
 import flet_fix
+import foto
 import league_cache
 import misure
 import supabase_rest as rest
@@ -190,6 +191,8 @@ async def main(page: ft.Page) -> None:
         rest.misura_fine("accesso")
         misure.chiudi_avvio(page, "dashboard")
         page.run_task(save_last_profile, bundle)  # Dopo la dashboard, fuori dal percorso dell'avvio
+        if native:
+            page.run_task(asyncio.to_thread, foto.sync_missing)  # Foto mancanti nella cartella dati (senza rete poi)
 
     async def open_offline(token: str) -> bool:
         """Avvio senza rete (app installata, "Ricordami"): ultimi dati in cache con un avviso. False se non si può."""

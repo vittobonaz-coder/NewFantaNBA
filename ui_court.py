@@ -8,6 +8,7 @@ from fanta_obj import Player, Team, has_played, ROLE_MULTIPLIERS, LINEUP_ROLES, 
     find_auto_substitutions, STARTER_SLOTS, SIXTH_SLOT
 from time_manager import TimeManager, ITA_TZ
 import app_paths
+import foto
 import league_cache
 import misure
 import supabase_rest as rest
@@ -23,7 +24,6 @@ ROLE_CONFIGS = {
 
 WIDE_COURT_MIN = 760   # Da questa larghezza (dp) titolari a sinistra e panchina/riserve a destra
 WIDE_LABELS_MIN = 600  # Da questa larghezza etichette della barra dei tab più grandi
-NBA_HEADSHOT_URL = "https://cdn.nba.com/headshots/nba/latest/260x190/{id}.png"  # Riserva per le foto mancanti
 
 
 class Layout:
@@ -115,11 +115,9 @@ class PlayerCard(ft.Container):
         self.configure_container(conf)
         is_reserve = self.role_type == "RESERVE"
         size = conf["avatar"]
-        # Foto: inclusa nel pacchetto -> CDN NBA -> segnaposto (sorgenti impostate da _fill)
+        # Foto: una sola sorgente scelta in Python (foto.source: inclusa, scaricata o CDN), segnaposto se manca
         self.avatar = ft.Image(src="avatar_placeholder.png", width=size, height=size,
-                               error_content=ft.Image(src="avatar_placeholder.png", width=size, height=size,
-                                                      error_content=ft.Image(src="avatar_placeholder.png",
-                                                                             width=size, height=size)))
+                               error_content=ft.Image(src="avatar_placeholder.png", width=size, height=size))
         self.name_text = ft.Text("", size=conf["font"], weight="bold", no_wrap=True)
         self.team_text = ft.Text("", size=9, color="grey")
         self.games_row = ft.Row([], spacing=3, alignment=ft.MainAxisAlignment.CENTER, height=12)
@@ -165,9 +163,7 @@ class PlayerCard(ft.Container):
         self.name_text.value = f"{name_parts[0][0]}. {' '.join(name_parts[1:])}" if name_parts else ""
         self.team_text.value = f"{p.team_abbreviation} | {p.position}"
 
-        local, remote = self.avatar_sources()
-        self.avatar.src = local
-        self.avatar.error_content.src = remote
+        self.avatar.src = foto.source(p.id)
 
         if not has_played(self.score):
             self.score_text.value = "-"
@@ -191,12 +187,6 @@ class PlayerCard(ft.Container):
         if games != getattr(self, "_games_shown", None):  # Stessa squadra NBA: pallini invariati
             self._games_shown = games
             self.games_row.controls = self.build_games_indicator()
-
-    def avatar_sources(self) -> tuple[str, str]:
-        """(foto inclusa nel pacchetto, riserva dal CDN NBA); senza ID il segnaposto per entrambe."""
-        if not self.player.id:
-            return "avatar_placeholder.png", "avatar_placeholder.png"
-        return self.player.get_avatar_img(), NBA_HEADSHOT_URL.format(id=self.player.id)
 
     @property
     def games(self) -> list[dict]:

@@ -380,3 +380,9 @@ Non cambiano: cron, script, SQL. **Nessuna migrazione.** Nessuna dipendenza nuov
   che finisca, così usa quella connessione invece di aprirne una seconda. Sul PC: client 259 ms + connessione
   374 ms tolti dal percorso dell'avvio. Il profilo per l'uso senza rete si salva dopo la dashboard
   (`page.run_task`). Nuova tappa `connessione_anticipata_ms` nelle misure.
+- **18/11, commit 6 — foto offline:** nuovo `foto.py`. La card ha una sola `Image` (più il segnaposto) con la
+  sorgente scelta in Python: foto inclusa → (solo app installata) foto scaricata in `<cartella dati>/players/`
+  → CDN NBA. Dopo la dashboard, in un thread, `foto.sync_missing()` scarica al massimo 20 foto mancanti dei
+  giocatori in cache, ricorda per un giorno quelle assenti anche dal CDN e cancella le copie diventate inutili
+  (foto entrate nel pacchetto). Provato con una cartella temporanea: 17 KB a foto, secondo giro senza download.
+  Oggi tutte le foto delle rose sono incluse: servirà ai prossimi acquisti di mercato.
