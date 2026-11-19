@@ -51,8 +51,8 @@ sigillo dell'app già installata. **Se si perde, nessun utente può più aggiorn
    testo), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`; variabile **non segreta** `ANDROID_CERT_SHA256`
    (impronta del certificato) per il controllo della firma.
 4. Build locali (decisione 3): `tools/build_apk.ps1` firma con la chiave vera se nel `.env` ci sono
-   `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`; senza, si ferma (con
-   `-Debug` compila con la chiave di debug, solo per prove). Un APK locale firmato è "ufficiale": non va distribuito
+   `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_CERT_SHA256`; senza, si ferma (con
+   `-ChiaveDebug` compila con la chiave di debug, solo per prove). Un APK locale firmato è "ufficiale": non va distribuito
    per sbaglio.
 
 ## 3. Versione unica
@@ -164,8 +164,8 @@ Non cambiano: cron, script di amministrazione, `main.py`. Nessuna dipendenza nuo
 - Banco di prova con server finto: RPC assente (404), `nuova`, `obbligatoria`, rete assente.
 - Webapp locale nel browser integrato: login, Impostazioni con "versione web", nessuna chiamata `app_release`.
 - `nativa.py` sul PC: avvio normale (build di sviluppo: nessun controllo).
-- Build Windows locale con lo script nuovo e `controlla_build.py`; APK locale con la chiave di debug (`-Debug`) per
-  provare il controllo della firma (deve fallire senza `-Debug` atteso).
+- Build Windows locale con lo script nuovo e `controlla_build.py`; APK locale con la chiave di debug (`-ChiaveDebug`) per
+  provare il controllo della firma (senza impronta attesa deve fallire).
 
 ## 12. Lista di prova per l'utente (pre-release)
 

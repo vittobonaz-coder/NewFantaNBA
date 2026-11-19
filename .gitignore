@@ -19,3 +19,9 @@ data/injuries.json
 # Build dell'app nativa (tools/prepara_build.py + flet build)
 app_src/
 build/
+# Chiavi di firma dell'APK (Fase 5): mai nella repository
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.b64

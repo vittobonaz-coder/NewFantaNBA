@@ -12,9 +12,16 @@ T_MODULE = time.perf_counter()  # Primo istante in cui gira codice Python dell'a
 
 
 def _connessione_anticipata() -> None:
-    """In parallelo con l'import di flet (il costo fisso maggiore): client httpx e TLS con Supabase pronti."""
+    """
+    In parallelo con l'import di flet (il costo fisso maggiore): client httpx e TLS con Supabase pronti.
+    Nei build con una versione (Fase 5) la prima richiesta è il controllo degli aggiornamenti (app_release).
+    """
+    import os
+    import aggiornamenti
     import supabase_rest
-    supabase_rest.warm_up()
+    import versione
+    platform = aggiornamenti.piattaforma(os.environ.get("FLET_PLATFORM")) if versione.VERSIONE else None
+    supabase_rest.warm_up(platform)
 
 
 threading.Thread(target=_connessione_anticipata, daemon=True).start()

@@ -1,0 +1,160 @@
+name: Rilascio app
+
+# Fase 5 (docs/fase5_piano.md): con un tag vX.Y.Z (o vX.Y.Z-rc.N per una prova) compila l'APK firmato con la
+# chiave vera e l'app Windows (installer + zip) e li mette in una release IN BOZZA: la pubblica l'utente, poi
+# aggiorna app_release dallo SQL Editor (sql/2026-11_fase5_app_release.sql). Render e il cron non c'entrano.
+#
+# Segreti (Settings > Secrets and variables > Actions):  ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+# ANDROID_KEY_ALIAS.  Variabile (non segreta):  ANDROID_CERT_SHA256 (impronta del certificato, controllo firma).
+# Passo per passo: tools/README_release.md
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag già esistente da ricompilare (es. v1.0.0-rc.2)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rilascio-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+  FLET_VERSION: "0.82.0"        # Stessa versione di pyproject.toml e di Render
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Flutter SDK scaricato da flet build (~/flutter/<versione>): in cache tra un rilascio e l'altro
+      - uses: actions/cache@v4
+        with:
+          path: ~/flutter
+          key: flutter-${{ runner.os }}-flet-${{ env.FLET_VERSION }}
+
+      - name: Installazione di flet-cli
+        run: pip install "flet==${FLET_VERSION}" "flet-cli==${FLET_VERSION}"
+
+      - name: Keystore dal segreto (solo per questo job)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::Segreto ANDROID_KEYSTORE_BASE64 mancante: l'APK sarebbe firmato con la chiave di debug"
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/bonkest-release.jks"
+
+      - name: Build dell'APK
+        env:
+          FLET_ANDROID_SIGNING_KEY_STORE: ${{ runner.temp }}/bonkest-release.jks
+          FLET_ANDROID_SIGNING_KEY_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          FLET_ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}   # PKCS12: stessa password
+          FLET_ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          python tools/prepara_build.py --tag "$TAG"
+          flet build apk --no-rich-output --yes
+
+      - name: Controllo di firma e contenuto
+        env:
+          ANDROID_CERT_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
+        run: python tools/controlla_build.py apk build/apk/bonkest.apk
+
+      - name: Via il keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/bonkest-release.jks"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: build/apk/bonkest.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/flutter
+          key: flutter-${{ runner.os }}-flet-${{ env.FLET_VERSION }}
+
+      - name: Installazione di flet-cli
+        run: pip install "flet==$env:FLET_VERSION" "flet-cli==$env:FLET_VERSION"
+
+      # Solo per creare Bonkest-Setup.exe (non entra nell'app)
+      - name: Inno Setup 6
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --version=6.4.3 -y --no-progress
+          }
+
+      # Stesso script del PC: aggiramento CMake portabile, controllo DLL x64, installer e zip in build\dist
+      - name: Build dell'app Windows
+        run: .\tools\build_windows.ps1 -Tag $env:TAG -Installer
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            build/dist/Bonkest-Setup.exe
+            build/dist/bonkest-windows.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write          # Solo questo job crea la release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Release in bozza
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          sha256sum bonkest.apk Bonkest-Setup.exe bonkest-windows.zip > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          cd ..
+          version="${TAG#v}"
+          extra=""
+          case "$TAG" in *-rc.*) extra="--prerelease" ;; esac
+          gh release create "$TAG" dist/bonkest.apk dist/Bonkest-Setup.exe dist/bonkest-windows.zip \
+            dist/SHA256SUMS.txt --draft $extra --verify-tag --title "Bonkest ${version}" \
+            --notes-file docs/istruzioni_installazione.md

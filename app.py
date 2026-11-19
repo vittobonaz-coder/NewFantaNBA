@@ -6,6 +6,9 @@ propria squadra e le sole parti dello snapshot cambiate rispetto alla cache loca
 
 Fase 3 (docs/fase3_piano.md): area sicura dei telefoni, finestra ridimensionabile sul PC, tasto Indietro su
 Android, aggiornamento silenzioso al ritorno in primo piano e, nell'app installata, dati in cache senza rete.
+
+Fase 5 (docs/fase5_piano.md): nell'app installata, controllo degli aggiornamenti letto all'avvio (app_release):
+sotto la versione minima l'app non si usa, con una versione più nuova compare una barra chiudibile.
 """
 import asyncio
 import json
@@ -13,11 +16,13 @@ from datetime import datetime, timedelta, timezone
 
 import flet as ft
 
+import aggiornamenti
 import app_paths
 import flet_fix
 import foto
 import league_cache
 import supabase_rest as rest
+import versione
 from ui_court import MainDashboard, LoginView
 from time_manager import TimeManager, ITA_TZ
 
@@ -52,7 +57,8 @@ async def main(page: ft.Page) -> None:
 
     # Stato della sessione in questa pagina (sul web una per browser: niente variabili globali)
     session: dict = {"token": None, "user": None, "dashboard": None, "signature": None,
-                     "busy": False, "pending": None, "back_armed_at": 0.0}
+                     "busy": False, "pending": None, "back_armed_at": 0.0,
+                     "update": None}  # Configurazione di una versione più nuova (barra "Disponibile..."), Fase 5
 
     def show(control: ft.Control) -> None:
         """Contenuto della pagina dentro l'area sicura (barra di stato, notch, barra dei gesti)."""
@@ -131,6 +137,8 @@ async def main(page: ft.Page) -> None:
         )
         session["dashboard"] = dashboard
         session["pending"] = None
+        if banner is None and session["update"]:
+            banner = update_banner(session["update"])
         controls = ([banner] if banner else []) + [dashboard]
         show(ft.Column(controls, expand=True, spacing=0))
         if selected_index:
@@ -145,6 +153,73 @@ async def main(page: ft.Page) -> None:
                 ft.TextButton(action_label, on_click=on_action),
             ], vertical_alignment=ft.CrossAxisAlignment.CENTER),
         )
+
+    # --- Aggiornamenti (solo app installata, Fase 5) ---
+
+    async def open_download(url: str) -> None:
+        try:
+            await page.launch_url(url)  # Browser del dispositivo: scarica l'APK o l'installer
+        except Exception as e:
+            print(f"Link di download non aperto: {e}")
+            snack(f"Apri dal browser: {url}")
+
+    def update_banner(info: dict) -> ft.Container:
+        """Barra "Disponibile la versione X" con Scarica e ×: a ogni avvio finché non si aggiorna."""
+        async def download(e):
+            await open_download(info["url"])
+
+        def close(e):
+            session["update"] = None  # Fino al prossimo avvio
+            root = page.controls[0].content if page.controls else None
+            if isinstance(root, ft.Column) and bar in root.controls:
+                root.controls.remove(bar)
+                root.update()
+
+        bar = ft.Container(
+            bgcolor="#1f2f4a", padding=ft.Padding.only(left=12, right=4, top=2, bottom=2),
+            content=ft.Row([
+                ft.Icon(ft.Icons.SYSTEM_UPDATE, size=18, color="lightblue"),
+                ft.Text(f"Disponibile la versione {info.get('latest_version')}", size=12, expand=True),
+                ft.TextButton("Scarica", on_click=download),
+                ft.IconButton(ft.Icons.CLOSE, icon_size=16, tooltip="Chiudi", on_click=close),
+            ], vertical_alignment=ft.CrossAxisAlignment.CENTER),
+        )
+        return bar
+
+    def show_update_required(info: dict) -> None:
+        """Versione sotto la minima: niente accesso, solo il link per aggiornare (la webapp resta usabile)."""
+        async def download(e):
+            await open_download(info["url"])
+
+        session["dashboard"] = None
+        note = info.get("note") or ""
+        show(ft.Container(padding=24, expand=True, content=centered(
+            ft.Icon(ft.Icons.SYSTEM_UPDATE, size=56, color="amber"),
+            ft.Text("Aggiornamento necessario", size=20, weight=ft.FontWeight.BOLD),
+            ft.Text(f"Questa versione ({versione.VERSIONE}) non è più utilizzabile: "
+                    f"installa la {info.get('latest_version')} per continuare.",
+                    text_align=ft.TextAlign.CENTER),
+            *([ft.Text(note, size=12, color="grey_400", text_align=ft.TextAlign.CENTER)] if note else []),
+            ft.FilledButton("Scarica", icon=ft.Icons.DOWNLOAD, on_click=download),
+            ft.Text("Nel frattempo puoi usare la versione web dal browser.", size=12, color="grey_500",
+                    text_align=ft.TextAlign.CENTER),
+        )))
+
+    async def check_updates() -> bool:
+        """
+        Esito del controllo letto all'avvio (supabase_rest.warm_up): False se l'app non si può usare.
+        Webapp, build di sviluppo, rete assente o configurazione mancante: nessun controllo.
+        """
+        if not native or not versione.VERSIONE:
+            return True
+        info = await asyncio.to_thread(rest.release_info)
+        result = aggiornamenti.esito(info, versione.VERSIONE)
+        if result == aggiornamenti.OBBLIGATORIA:
+            show_update_required(info)
+            return False
+        if result == aggiornamenti.NUOVA:
+            session["update"] = info
+        return True
 
     async def save_last_profile(bundle: dict) -> None:
         """Solo app installata: profilo e contesto dell'ultimo accesso, per aprire la cache senza rete."""
@@ -345,6 +420,9 @@ async def main(page: ft.Page) -> None:
         except Exception as e:
             print(f"Orientamento non bloccato: {e}")
 
-    # Avvio: accesso automatico se c'è un token valido, altrimenti schermata di login
+    # Avvio: controllo degli aggiornamenti (app installata), poi accesso automatico se c'è un token valido,
+    # altrimenti schermata di login
+    if not await check_updates():
+        return
     if not await try_auto_login():
         show_login()

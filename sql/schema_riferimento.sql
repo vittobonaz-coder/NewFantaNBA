@@ -258,3 +258,20 @@ CREATE TABLE public.standings_adjustments (
 -- sql/2026-11_fase2b_save_lineup_scadenza.sql
 --   save_lineup: solo la giornata modificabile e prima della scadenza (private.league_context, con la deroga),
 --   errore CAMBI_CHIUSI; un solo UPDATE degli slot (niente slot temporanei +100).
+--
+-- =====================================================================================================
+-- FASE 5 (migrazione scritta il 19/11/2026; ordine rispetto al codice indifferente)
+-- =====================================================================================================
+--
+-- sql/2026-11_fase5_app_release.sql
+--   CREATE TABLE public.app_release (              -- aggiornamenti dell'app installata, una riga per piattaforma
+--     platform text PRIMARY KEY CHECK (platform IN ('android', 'windows')),
+--     latest_version text NOT NULL,                -- X.Y.Z: sotto questa l'app avvisa
+--     min_version text NOT NULL,                   -- X.Y.Z: sotto questa l'app non si usa
+--     url text NOT NULL,                           -- link di download (release di GitHub)
+--     note text,
+--     updated_at timestamptz NOT NULL DEFAULT now()
+--   );
+--   RLS e nessun permesso per anon/authenticated: si legge solo dalla RPC.
+--   RPC app_release(p_platform)  (SECURITY DEFINER, search_path vuoto)  anon, authenticated
+--   Si aggiorna a mano dopo ogni release pubblicata (snippet in fondo alla migrazione).

@@ -11,6 +11,7 @@ import app_paths
 import foto
 import league_cache
 import supabase_rest as rest
+import versione
 from supabase_rest import RpcError
 
 
@@ -1194,6 +1195,8 @@ class ProfileView(ft.Stack):
                 ft.Divider(color="grey_800"),
                 ft.ElevatedButton("Esci", icon=ft.Icons.LOGOUT, bgcolor=ft.Colors.RED_700,
                                   color="white", on_click=self.handle_logout),
+                # Versione installata (Fase 5): utile per l'assistenza e per sapere se aggiornare
+                ft.Text(versione.descrizione(app_paths.is_native()), size=11, color="grey_500"),
             ],
         )
         self.loading = LoadingOverlay()

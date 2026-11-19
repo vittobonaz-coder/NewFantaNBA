@@ -97,19 +97,39 @@ def get_http_client() -> httpx.Client:
     return _client
 
 
-def warm_up() -> None:
+_release: dict | None = None  # Configurazione degli aggiornamenti letta da warm_up (Fase 5)
+
+
+def warm_up(platform: str | None = None) -> None:
     """
     Connessione anticipata (app installata, all'avvio, in un thread): crea il client e apre la connessione
     TLS con Supabase mentre l'app fa altro, così la prima RPC non paga DNS, TCP e TLS.
-    La richiesta va alla radice REST senza chiave (risposta 401): nessun accesso al database.
+    Con platform ("android", "windows") la richiesta è la RPC app_release (controllo degli aggiornamenti,
+    letto poi con release_info); senza, va alla radice REST senza chiave (401): nessun accesso al database.
     """
+    global _release
     _warm_done.clear()
     try:
-        get_http_client().head("/", headers={"apikey": ""})
+        client = get_http_client()
+        if platform:
+            # Non rpc(): aspetterebbe _warm_done, cioè sé stessa
+            response = client.post("/rpc/app_release", json={"p_platform": platform})
+            if response.status_code == 200 and response.content:
+                _release = response.json()
+            elif response.status_code >= 400:
+                print(f"Controllo aggiornamenti non disponibile: HTTP {response.status_code}")  # RPC assente
+        else:
+            client.head("/", headers={"apikey": ""})
     except Exception as e:
         print(f"Connessione anticipata non riuscita: {e}")  # Nessun danno: la RPC si collega da sola
     finally:
         _warm_done.set()
+
+
+def release_info(timeout: float = WARM_WAIT) -> dict | None:
+    """Configurazione degli aggiornamenti letta all'avvio (None se assente, senza rete o non richiesta)."""
+    _warm_done.wait(timeout)
+    return _release if isinstance(_release, dict) else None
 
 
 def rpc(name: str, args: dict[str, Any]) -> Any:
