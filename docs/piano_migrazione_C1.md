@@ -272,7 +272,23 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - l'avvio sul telefono (~2,4 s) è dominato dall'import di flet (~1,5 s), che non dipende dal nostro codice;
     - foto: un giocatore nuovo senza foto inclusa si vede dal CDN NBA e, nell'app installata, resta offline dopo il primo
       avvio con rete; per la webapp la foto va comunque committata in `assets/players/`.
-- **Fase 5:** —
+- **Fase 5 (dal 19/11/2026): in corso.** Piano approvato in `docs/fase5_piano.md` (decisioni in cima al file).
+  - **Fatto (19/11, `ad8ec062` su `app-nativa`):** versione unica 1.0.0 (build 10000) da `pyproject.toml`
+    (`prepara_build.py` controlla versione, build e tag e scrive `versione.py`); versione nelle Impostazioni;
+    controllo aggiornamenti (`aggiornamenti.py`, RPC `app_release` nella connessione anticipata, schermata
+    "Aggiornamento necessario" e barra "Disponibile la versione …"; webapp esclusa); migrazione
+    `sql/2026-11_fase5_app_release.sql` (solo aggiunte); `build_windows.ps1` portabile (DLL x64 con vswhere) con
+    installer Inno Setup e zip; `build_apk.ps1` (firma dal `.env`); `controlla_build.py`; workflow
+    `.github/workflows/release.yml` (tag → release in bozza); `docs/istruzioni_installazione.md`, `tools/README_release.md`.
+  - **Verifiche fatte da me:** migrazione su Postgres usa e getta (rieseguibile, anon solo RPC, versioni malformate
+    rifiutate); `warm_up` contro server finto (risposta, RPC assente, rete assente); banco di prova dell'app in
+    modalità nativa (schermata bloccante, "Scarica", barra chiudibile, "Bonkest 1.0.0 (rc.1)"); build Windows
+    locale con lo script nuovo (exe 1.0.0+10000, DLL x64); `build_apk.ps1` si ferma senza firma e con
+    `-ChiaveDebug` produce un APK riconosciuto come "chiave di DEBUG"; `controlla_build.py` trova segreti e
+    keystore dentro zip annidati. Non provati: workflow su GitHub, installer (Inno Setup non è sul PC), firma vera.
+  - **Da fare da parte tua, in ordine:** keystore, copie, segreti e variabile GitHub (`tools/README_release.md`);
+    migrazione SQL e verifiche; OK al push di `app-nativa` e del tag `v1.0.0-rc.1`; prove della pre-release;
+    OK per `main`; tag `v1.0.0`, pubblicazione, `app_release`, istruzioni alla lega.
 - **Fase 6:** —
 
 ## Decisioni prese
