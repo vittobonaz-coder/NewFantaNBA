@@ -151,10 +151,17 @@ build_number = 10001
 
 ### 3.2 Prova: tag `-rc` sul branch di lavoro
 
+**Il numero del tag deve essere identico a `version` di `pyproject.toml`** (più `-rc.N`). Esempio con
+`version = "1.0.0"` (la prima versione):
+
 ```
-git tag v1.0.1-rc.1
-git push origin v1.0.1-rc.1
+git tag v1.0.0-rc.1
+git push origin v1.0.0-rc.1
 ```
+Se i numeri non coincidono il workflow si ferma subito con "il tag … non corrisponde alla versione …": è il
+controllo che evita di pubblicare un'app con il numero sbagliato. In quel caso cancella il tag sbagliato (vedi
+"Cancellare un tag sbagliato" in fondo alla sezione 3) e rifallo con il numero giusto.
+
 - `git tag`: attacca l'etichetta all'ultimo commit del branch su cui sei.
 - `git push origin <tag>`: manda **solo l'etichetta** su GitHub (e il commit a cui punta). Questo fa partire il
   workflow "Rilascio app". `main` e Render non vengono toccati.
@@ -200,6 +207,16 @@ update public.app_release set latest_version = '1.0.1', updated_at = now();
 
 Messaggio con il link https://github.com/vittobonaz-coder/NewFantaNBA/releases/latest — la pagina contiene già le
 istruzioni di installazione (`docs/istruzioni_installazione.md`).
+
+### Cancellare un tag sbagliato
+
+```
+git tag -d v1.0.1-rc.1
+git push origin --delete v1.0.1-rc.1
+```
+- `git tag -d`: toglie l'etichetta dal tuo PC; `git push origin --delete`: la toglie da GitHub. Il codice non
+  cambia: sparisce solo l'etichetta.
+- Se il workflow aveva già creato una bozza per quel tag, cancellala da Releases.
 
 ### Rifare un rilascio sullo stesso tag
 
