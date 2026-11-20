@@ -48,36 +48,54 @@ def scan_zip(zf: zipfile.ZipFile, prefix: str, errors: list[str], depth: int = 0
             scan_bytes(name, zf.read(info), errors, depth)
 
 
-def find_apksigner() -> str | None:
-    """apksigner dell'SDK Android (variabili ANDROID_HOME / ANDROID_SDK_ROOT, o ~/Android/sdk come installa flet)."""
-    found = shutil.which("apksigner")
-    if found:
-        return found
+def _version_key(tool: Path) -> tuple:
+    """Ordina le cartelle build-tools per versione numerica (37.0.0 > 34.0.0 > 9.0.0)."""
+    return tuple(int(x) if x.isdigit() else -1 for x in re.split(r"[.-]", tool.parent.name))
+
+
+def find_apksigners() -> list[str]:
+    """
+    apksigner disponibili, dal più recente: SDK Android (ANDROID_HOME / ANDROID_SDK_ROOT, o ~/Android/sdk come
+    installa flet), poi PATH. Se uno non funziona (es. vuole un'altra versione di Java) si prova il successivo.
+    """
+    found: list[str] = []
     roots = [os.environ.get("ANDROID_HOME"), os.environ.get("ANDROID_SDK_ROOT"), str(Path.home() / "Android" / "sdk")]
     exe = "apksigner.bat" if os.name == "nt" else "apksigner"
     for root in filter(None, roots):
-        tools = sorted(Path(root).glob(f"build-tools/*/{exe}"), reverse=True)
-        if tools:
-            return str(tools[0])
-    return None
+        for tool in sorted(Path(root).glob(f"build-tools/*/{exe}"), key=_version_key, reverse=True):
+            if str(tool) not in found:
+                found.append(str(tool))
+    on_path = shutil.which("apksigner")
+    if on_path and on_path not in found:
+        found.append(on_path)
+    return found
+
+
+def _meaningful(text: str) -> str:
+    """Testo di apksigner senza gli avvisi di Java (righe WARNING), che nasconderebbero l'errore vero."""
+    return "\n".join(ln for ln in text.splitlines() if ln.strip() and not ln.startswith("WARNING:"))
 
 
 def apk_certificate(apk: Path) -> tuple[str | None, str]:
-    """(SHA-256 del certificato del primo firmatario, testo di apksigner)."""
-    tool = find_apksigner()
-    if not tool:
+    """(SHA-256 del certificato del primo firmatario, testo di apksigner o errori di tutti i tentativi)."""
+    tools = find_apksigners()
+    if not tools:
         return None, "apksigner non trovato (Android SDK build-tools)"
     env = dict(os.environ)
     if not env.get("JAVA_HOME") and not shutil.which("java"):
         jdks = sorted((Path.home() / "java").glob("*/bin/java*"), reverse=True)  # JDK installato da flet sul PC
         if jdks:
             env["JAVA_HOME"] = str(jdks[0].parent.parent)
-    out = subprocess.run([tool, "verify", "--print-certs", str(apk)], capture_output=True, text=True, env=env)
-    text = (out.stdout + out.stderr).strip()
-    if out.returncode != 0:
-        return None, text
-    m = re.search(r"Signer #1 certificate SHA-256 digest:\s*([0-9a-fA-F:]+)", text)
-    return (m[1].replace(":", "").lower() if m else None), text
+    failures = []
+    for tool in tools:
+        out = subprocess.run([tool, "verify", "--print-certs", str(apk)], capture_output=True, text=True, env=env)
+        text = _meaningful(out.stdout + "\n" + out.stderr)
+        m = re.search(r"Signer #1 certificate SHA-256 digest:\s*([0-9a-fA-F:]+)", text)
+        if out.returncode == 0 and m:
+            print(f"apksigner usato: {tool}")
+            return m[1].replace(":", "").lower(), text
+        failures.append(f"{tool} (codice {out.returncode}): {text[:800] or '(nessun messaggio)'}")
+    return None, "\n    ".join(failures)
 
 
 def check_apk(apk: Path, expected: str | None, debug_ok: bool) -> list[str]:
@@ -86,7 +104,7 @@ def check_apk(apk: Path, expected: str | None, debug_ok: bool) -> list[str]:
         scan_zip(zf, "", errors)
     digest, text = apk_certificate(apk)
     if digest is None:
-        errors.append(f"firma non verificata: {text[-300:]}")
+        errors.append(f"firma non verificata:\n    {text}")
     else:
         debug = "CN=Android Debug" in text
         print(f"Certificato: SHA-256 {digest}{' (chiave di DEBUG)' if debug else ''}")
@@ -143,6 +161,10 @@ def main() -> int:
     errors = check_apk(args.percorso, args.cert, args.debug_ok) if args.tipo == "apk" else check_windows(args.percorso)
     if errors:
         print("ERRORE, il pacchetto non va distribuito:\n  " + "\n  ".join(errors[:30]))
+        if os.environ.get("GITHUB_ACTIONS"):
+            # Annotazioni: compaiono nel riepilogo dell'esecuzione, leggibili anche senza accesso ai log
+            for err in errors[:10]:
+                print("::error::" + err.replace("%", "%25").replace("\r", "").replace("\n", "%0A"))
         return 1
     print(f"{args.percorso}: controlli superati")
     return 0
