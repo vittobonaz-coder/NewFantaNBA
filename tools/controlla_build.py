@@ -98,6 +98,15 @@ def apk_certificate(apk: Path) -> tuple[str | None, str]:
     return None, "\n    ".join(failures)
 
 
+def normalize_digest(value: str) -> str:
+    """
+    Impronta scritta come la stampa keytool ("SHA256: AB:CD:...") o apksigner ("abcd..."): solo le cifre
+    esadecimali, minuscole. Toglie l'eventuale prefisso "SHA256:" / "SHA-256", spazi e due punti.
+    """
+    value = re.sub(r"(?i)^\s*sha-?256\s*:?", "", value or "")
+    return re.sub(r"[^0-9a-fA-F]", "", value).lower()
+
+
 def check_apk(apk: Path, expected: str | None, debug_ok: bool) -> list[str]:
     errors: list[str] = []
     with zipfile.ZipFile(apk) as zf:
@@ -109,8 +118,13 @@ def check_apk(apk: Path, expected: str | None, debug_ok: bool) -> list[str]:
         debug = "CN=Android Debug" in text
         print(f"Certificato: SHA-256 {digest}{' (chiave di DEBUG)' if debug else ''}")
         if expected:
-            if digest != expected.replace(":", "").lower():
-                errors.append("l'APK NON è firmato con la chiave attesa (ANDROID_CERT_SHA256)")
+            wanted = normalize_digest(expected)
+            if digest != wanted:
+                # Entrambe le impronte nel messaggio (non sono segrete): si capisce subito se è la chiave di debug,
+                # una chiave diversa o un'impronta copiata male (es. SHA1 invece di SHA256)
+                errors.append(f"l'APK NON è firmato con la chiave attesa (ANDROID_CERT_SHA256)."
+                              f" Impronta dell'APK: {digest}{' (chiave di DEBUG)' if debug else ''}."
+                              f" Impronta attesa: {wanted or '(vuota)'} ({len(wanted)} caratteri, ne servono 64)")
         elif not (debug_ok and debug):
             errors.append("impronta attesa mancante: passa --cert o ANDROID_CERT_SHA256 (o --debug-ok per le prove)")
     return errors
