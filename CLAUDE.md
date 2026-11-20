@@ -42,3 +42,8 @@ Migrazione ad **app nativa con `flet build`**. Android e Windows sono entrambe p
 - **Velocità:** quando dici "più veloce", misura prima e dopo.
 - **Ipotesi sbagliate:** se un'ipotesi del piano si rivela sbagliata, fermati e proponi le alternative con pro e contro invece di aggirare il problema.
 - **Stile:** commenti e docstring in italiano, sintetici; type hint; nessuna dipendenza nuova senza motivarla. Rispondimi in italiano.
+- **Fai da mentore:** voglio imparare e avere sempre il polso di quello che succede.
+  - In chat spiega cosa fai e perché, in parole semplici; ogni termine tecnico nuovo (es. tag, keystore, RPC) va spiegato la prima volta che lo usi.
+  - Nei documenti e nelle procedure che devo seguire io (es. `tools/README_release.md`), per ogni passaggio scrivi: cosa fa, perché serve, cosa vedrò, cosa fare se va storto. Per i comandi spiega le parti principali.
+  - Quando crei file nuovi, aggiungi una breve spiegazione di a cosa servono e come si collegano agli altri (nel documento della fase o in un README vicino).
+  - Prima di chiedermi una decisione, spiega le opzioni con esempi concreti e conseguenze pratiche, non solo in gergo.
