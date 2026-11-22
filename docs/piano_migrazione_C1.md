@@ -296,9 +296,12 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     `rc.4` su telefono e PC (sezione 3.2-bis di `tools/README_release.md`): accesso e versione, installer senza
     amministratore e "Ricordami", barra "Disponibile la versione 1.0.1", blocco con versione minima, valori rimessi a
     0.0.0, avvio senza rete: **tutto ok**.
+  - **22/11, rilascio:** con il tuo OK `main` = `a8011606` (avanzamento diretto da `app-nativa`, deploy di Render);
+    tag `v1.0.0` sullo stesso commit, workflow verde (Android ~8,5 min, Windows ~7 min), release `v1.0.0` in bozza.
   - **Da fare da parte tua, in ordine:** ~~keystore, copie, segreti e variabile GitHub~~; ~~migrazione SQL~~; ~~prove
-    della pre-release~~; OK per `main`; tag `v1.0.0`, pubblicazione della bozza, `app_release` a 1.0.0, istruzioni
-    alla lega.
+    della pre-release~~; ~~OK per `main`~~; controllare la webapp dopo il deploy; pubblicare la bozza `v1.0.0`;
+    `app_release` a 1.0.0; installare la 1.0.0 sopra la `rc.4` (telefono e PC, senza disinstallare); istruzioni alla
+    lega; facoltativo: cancellare le bozze `rc`.
 - **Fase 6:** —
 
 ## Decisioni prese
