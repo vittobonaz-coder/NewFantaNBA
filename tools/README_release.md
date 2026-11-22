@@ -172,6 +172,41 @@ controllo che evita di pubblicare un'app con il numero sbagliato. In quel caso c
 - **Se va storto:** clicca sul blocco rosso e poi sul passaggio fallito per leggere l'errore (o passami il testo).
   Corretto il problema si fa una nuova prova con `rc.2`.
 
+### 3.2-bis Provare la pre-release sui propri dispositivi
+
+**Perché:** prima che la versione arrivi alla lega, la provi tu dove la useranno gli altri. Finché la release è in
+bozza nessuno la vede, quindi puoi provare e rifare (`rc.N+1`) quante volte serve.
+
+1. **Scaricare i file.** GitHub → **Releases** (colonna destra della pagina della repository, o
+   `…/NewFantaNBA/releases`). La bozza compare **solo se hai fatto l'accesso** con il tuo account: apri la bozza e
+   in fondo, sotto **Assets**, ci sono i file.
+   - Telefono: il modo più semplice è aprire la pagina dal browser del telefono con l'accesso a GitHub e toccare
+     `bonkest.apk`. In alternativa scaricalo sul PC e passalo al telefono (cavo USB, o mandalo a te stesso via
+     email/Drive).
+   - PC: scarica `Bonkest-Setup.exe` (e, se vuoi provarlo, `bonkest-windows.zip`).
+2. **Solo la prima volta:** disinstalla dal telefono la vecchia app di prova (firmata con la chiave di debug),
+   altrimenti Android rifiuta l'installazione ("conflitto con un pacchetto esistente"). Su Windows non serve:
+   l'installer non tocca la vecchia cartella `build\windows`, che puoi cancellare quando vuoi.
+3. **Installa** seguendo `docs/istruzioni_installazione.md`, come farebbe un utente della lega (è anche il modo per
+   controllare che le istruzioni siano chiare).
+4. **Lista di prova** (sezione 12 di `docs/fase5_piano.md`):
+   - accesso, versione in fondo a Impostazioni → Gestione Profilo ("Bonkest 1.0.0 (rc.N)");
+   - Windows: installazione senza diritti di amministratore, avvio dal menu Start, "Ricordami";
+   - **barra "nuova versione"**: nello SQL Editor
+     `update public.app_release set latest_version = '1.0.1' where platform = 'android';` → riapri l'app: compare
+     "Disponibile la versione 1.0.1"; "Scarica" apre il link (darà "non trovato" finché la release non è
+     pubblicata: è normale); "×" la chiude. Stessa cosa con `platform = 'windows'`.
+   - **blocco**: `update public.app_release set min_version = '9.0.0' where platform = 'android';` → riapri:
+     schermata "Aggiornamento necessario", nessun accesso.
+   - **rimetti i valori di partenza** (importante!):
+     `update public.app_release set latest_version = '0.0.0', min_version = '0.0.0', updated_at = now();`
+   - modalità aereo: l'app si apre dalla cache, senza blocchi;
+   - aggiornamento: alla prossima `rc` installala **sopra** questa, senza disinstallare: accesso e dati restano.
+   - Richiede la migrazione `sql/2026-11_fase5_app_release.sql` già eseguita.
+
+**Se qualcosa non va:** annota cosa hai fatto e cosa vedi (uno screenshot aiuta); si corregge e si prova con la
+`rc` successiva.
+
 ### 3.3 Rilascio vero
 
 Dopo che il codice è su `main` (con il tuo OK):
