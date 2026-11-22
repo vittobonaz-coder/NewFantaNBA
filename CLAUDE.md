@@ -37,7 +37,7 @@ Migrazione ad **app nativa con `flet build`**. Android e Windows sono entrambe p
   - dopo una migrazione che cambia tabelle o colonne, aggiorna `sql/schema_riferimento.sql`.
 - **Segreti:**
   - la chiave segreta (service role) di Supabase non deve mai finire nel codice dell'app né nella repository: solo variabili d'ambiente, segreti di GitHub o un `.env` locale non versionato;
-  - non copiare nelle risposte password o chiavi che trovi nei file (es. `todo.txt`, `data/profiles.json`).
+  - non copiare nelle risposte password o chiavi che trovi nei file (es. `data/profiles.json`) o nella cronologia git.
 - **File e cronologia:** non cancellare file e non riscrivere la cronologia git senza chiedere. I JSON in `data/` (calendar, standings, injuries) sono una cache che l'app riscrive: non committare le loro modifiche, salvo che io lo chieda.
 - **Velocità:** quando dici "più veloce", misura prima e dopo.
 - **Ipotesi sbagliate:** se un'ipotesi del piano si rivela sbagliata, fermati e proponi le alternative con pro e contro invece di aggirare il problema.
