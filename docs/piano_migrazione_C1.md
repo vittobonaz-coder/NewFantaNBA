@@ -272,7 +272,8 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - l'avvio sul telefono (~2,4 s) è dominato dall'import di flet (~1,5 s), che non dipende dal nostro codice;
     - foto: un giocatore nuovo senza foto inclusa si vede dal CDN NBA e, nell'app installata, resta offline dopo il primo
       avvio con rete; per la webapp la foto va comunque committata in `assets/players/`.
-- **Fase 5 (dal 19/11/2026): in corso.** Piano approvato in `docs/fase5_piano.md` (decisioni in cima al file).
+- **Fase 5 (19–22/11/2026): conclusa.** Piano approvato in `docs/fase5_piano.md` (decisioni in cima al file);
+  procedura di rilascio in `tools/README_release.md`. Release `v1.0.0` pubblicata, `app_release` a 1.0.0.
   - **Fatto (19/11, `ad8ec062` su `app-nativa`):** versione unica 1.0.0 (build 10000) da `pyproject.toml`
     (`prepara_build.py` controlla versione, build e tag e scrive `versione.py`); versione nelle Impostazioni;
     controllo aggiornamenti (`aggiornamenti.py`, RPC `app_release` nella connessione anticipata, schermata
@@ -298,10 +299,24 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     0.0.0, avvio senza rete: **tutto ok**.
   - **22/11, rilascio:** con il tuo OK `main` = `a8011606` (avanzamento diretto da `app-nativa`, deploy di Render);
     tag `v1.0.0` sullo stesso commit, workflow verde (Android ~8,5 min, Windows ~7 min), release `v1.0.0` in bozza.
-  - **Da fare da parte tua, in ordine:** ~~keystore, copie, segreti e variabile GitHub~~; ~~migrazione SQL~~; ~~prove
-    della pre-release~~; ~~OK per `main`~~; controllare la webapp dopo il deploy; pubblicare la bozza `v1.0.0`;
-    `app_release` a 1.0.0; installare la 1.0.0 sopra la `rc.4` (telefono e PC, senza disinstallare); istruzioni alla
-    lega; facoltativo: cancellare le bozze `rc`.
+  - **Fatto da te (22/11):** release `v1.0.0` pubblicata; `app_release.latest_version` = 1.0.0 (nessuna barra con la
+    `rc.4`, corretto: internamente è già 1.0.0).
+  - **Restano da fare da parte tua (non bloccano la chiusura):** controllare la webapp dopo il deploy (in Gestione
+    Profilo "Bonkest — versione web"); installare la 1.0.0 sopra la `rc.4` su telefono e PC senza disinstallare (in
+    Impostazioni "Bonkest 1.0.0" senza "(rc.4)"); link `…/releases/latest` alla lega; facoltativo: cancellare le
+    bozze `rc`.
+  - **Rischi da tenere d'occhio:**
+    - perdita del keystore o della sua password: nessun aggiornamento possibile, tutti dovrebbero disinstallare e
+      reinstallare (le copie su GitHub non si possono rileggere: contano il file sul PC, le 2 copie e la password);
+    - Play Protect / Smart App Control / SmartScreen possono avvisare o bloccare (exe non firmato, APK fuori dal Play
+      Store): istruzioni in `docs/istruzioni_installazione.md`;
+    - verifica degli sviluppatori Android (annunciata da Google per il 2026–2027): potrebbe servire registrarsi per
+      continuare a distribuire l'APK fuori dal Play Store; da ricontrollare prima del prossimo rilascio importante;
+    - Inno Setup fissato a 6.4.3 con choco sul runner, actions v4/v5 con avviso di deprecazione di Node 20:
+      aggiornare quando GitHub lo richiede;
+    - build lente (~8 min): eventuale cache di Gradle/Flutter se diventano un problema.
+  - **Decisioni aperte per dopo:** migrazione 2C (ora si può imporre la versione minima con `min_version`);
+    aggiornamento di Flet a fine migrazione; Fase 6 (iOS, facoltativa).
 - **Fase 6:** —
 
 ## Decisioni prese
@@ -347,3 +362,14 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
   - all'avvio connessione anticipata; dashboard dalla cache solo se l'avvio sul telefono resta > 2 s;
   - strumentazione pubblicata su `main` per misurare Render prima delle modifiche;
   - foto mancanti scaricate una volta nella cartella dati (solo app installata); JSON compatto per i file grandi.
+- **19–22/11/2026 — Fase 5** (dettagli in `docs/fase5_piano.md`):
+  - prima versione 1.0.0; versione unica in `pyproject.toml`, build = X·10000 + Y·100 + Z;
+  - keystore nei segreti di GitHub + originale sul PC + 2 copie fuori dal PC; anche i build locali firmati con la
+    chiave vera;
+  - Windows: installer Inno Setup per utente (senza amministratore) + zip di riserva; nessuna firma del codice per ora;
+  - rilascio da tag `vX.Y.Z` (prove con `vX.Y.Z-rc.N` su `app-nativa`), release in bozza pubblicata a mano, poi
+    `app_release` aggiornata dallo SQL Editor;
+  - controllo aggiornamenti con RPC dedicata nella connessione anticipata; barra chiudibile a ogni avvio se c'è una
+    versione nuova, schermata bloccante sotto `min_version`; webapp esclusa;
+  - aggiramento CMake portabile (DLL x64 trovate con vswhere) e controllo dei pacchetti con `controlla_build.py`;
+  - istruzioni per gli utenti in `docs/istruzioni_installazione.md`, usate anche come note della release.
