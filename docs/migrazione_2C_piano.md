@@ -128,5 +128,5 @@ passato), mi fermo e ne parliamo.
 1. Nello SQL Editor: la query **RICOGNIZIONE** in cima al file (solo lei, togliendo i `-- ` davanti alle righe,
    oppure copiandola già senza). Mandami il risultato.
 2. Se è quello atteso: eseguire **tutta** la migrazione (le parti commentate in fondo restano commentate).
-3. Da PC: `.venv\Scripts\python.exe toolserifica_permessi.py`: deve finire con "Tutto a posto."
+3. Da PC: `.venv\Scripts\python.exe tools\verifica_permessi.py`: deve finire con "Tutto a posto."
 4. Webapp e app (telefono e PC): accesso, cambio formazione e salvataggio. Il giorno dopo: cron verde.
