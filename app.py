@@ -9,6 +9,9 @@ Android, aggiornamento silenzioso al ritorno in primo piano e, nell'app installa
 
 Fase 5 (docs/fase5_piano.md): nell'app installata, controllo degli aggiornamenti letto all'avvio (app_release):
 sotto la versione minima l'app non si usa, con una versione più nuova compare una barra chiudibile.
+
+Fase 6 (docs/fase6_piano.md): all'accesso si manda chi accede (client_usage); la webapp aperta da Android o
+Windows mostra una barra chiudibile che invita a installare l'app.
 """
 import asyncio
 import json
@@ -32,6 +35,8 @@ LAST_PROFILE_KEY = "fantanba.last_profile"  # Ultimo accesso riuscito (solo app 
 REFRESH_AFTER = timedelta(minutes=5)        # Al ritorno in primo piano si aggiorna se i dati sono più vecchi
 BACK_EXIT_WINDOW = 3.0                      # Secondi per il secondo Indietro con modifiche non salvate
 DESKTOP_PLATFORMS = (ft.PagePlatform.WINDOWS, ft.PagePlatform.MACOS, ft.PagePlatform.LINUX)
+APP_PLATFORMS = {ft.PagePlatform.ANDROID: "Android", ft.PagePlatform.WINDOWS: "Windows"}  # Sistemi con l'app
+RELEASES_URL = "https://github.com/vittobonaz-coder/NewFantaNBA/releases/latest"  # Download e istruzioni
 
 if not flet_fix.applica():  # Patch veloci e niente aggiornamento automatico (solo Flet 0.82)
     print(f"flet_fix non applicato: Flet {ft.__version__}")
@@ -54,11 +59,15 @@ async def main(page: ft.Page) -> None:
         page.window.width, page.window.height = 1100, 800
         page.window.min_width, page.window.min_height = 380, 600
     prefs = ft.SharedPreferences()  # Storage del dispositivo (localStorage sul web)
+    # Chi accede (webapp da iPhone, app Android...), registrato in client_usage all'accesso (Fase 6)
+    client = aggiornamenti.client_info(page.web, native, getattr(page.platform, "value", None), versione.VERSIONE)
 
     # Stato della sessione in questa pagina (sul web una per browser: niente variabili globali)
     session: dict = {"token": None, "user": None, "dashboard": None, "signature": None,
                      "busy": False, "pending": None, "back_armed_at": 0.0,
-                     "update": None}  # Configurazione di una versione più nuova (barra "Disponibile..."), Fase 5
+                     "update": None,  # Configurazione di una versione più nuova (barra "Disponibile..."), Fase 5
+                     # Webapp da Android/Windows: barra "C'è l'app" finché non si chiude (fino al ricaricamento)
+                     "app_hint": APP_PLATFORMS.get(page.platform) if page.web else None}
 
     def show(control: ft.Control) -> None:
         """Contenuto della pagina dentro l'area sicura (barra di stato, notch, barra dei gesti)."""
@@ -76,7 +85,7 @@ async def main(page: ft.Page) -> None:
 
     def show_login(message: str = ""):
         session.update(dashboard=None, token=None, user=None, pending=None)
-        login = LoginView(page, on_login_success)
+        login = LoginView(page, on_login_success, client)
         if message:
             login.error_text.value = message
         show(login)
@@ -139,6 +148,8 @@ async def main(page: ft.Page) -> None:
         session["pending"] = None
         if banner is None and session["update"]:
             banner = update_banner(session["update"])
+        if banner is None and session["app_hint"]:
+            banner = app_hint_banner(session["app_hint"])
         controls = ([banner] if banner else []) + [dashboard]
         show(ft.Column(controls, expand=True, spacing=0))
         if selected_index:
@@ -163,13 +174,13 @@ async def main(page: ft.Page) -> None:
             print(f"Link di download non aperto: {e}")
             snack(f"Apri dal browser: {url}")
 
-    def update_banner(info: dict) -> ft.Container:
-        """Barra "Disponibile la versione X" con Scarica e ×: a ogni avvio finché non si aggiorna."""
-        async def download(e):
-            await open_download(info["url"])
+    def closable_bar(text: str, icon: ft.IconData, action_label: str, url: str, session_key: str) -> ft.Container:
+        """Barra blu sopra la dashboard con un link e ×; chiusa, non ricompare finché session[session_key] è vuoto."""
+        async def open_link(e):
+            await open_download(url)
 
         def close(e):
-            session["update"] = None  # Fino al prossimo avvio
+            session[session_key] = None  # Fino al prossimo avvio (app) o ricaricamento della pagina (webapp)
             root = page.controls[0].content if page.controls else None
             if isinstance(root, ft.Column) and bar in root.controls:
                 root.controls.remove(bar)
@@ -178,13 +189,23 @@ async def main(page: ft.Page) -> None:
         bar = ft.Container(
             bgcolor="#1f2f4a", padding=ft.Padding.only(left=12, right=4, top=2, bottom=2),
             content=ft.Row([
-                ft.Icon(ft.Icons.SYSTEM_UPDATE, size=18, color="lightblue"),
-                ft.Text(f"Disponibile la versione {info.get('latest_version')}", size=12, expand=True),
-                ft.TextButton("Scarica", on_click=download),
+                ft.Icon(icon, size=18, color="lightblue"),
+                ft.Text(text, size=12, expand=True),
+                ft.TextButton(action_label, on_click=open_link),
                 ft.IconButton(ft.Icons.CLOSE, icon_size=16, tooltip="Chiudi", on_click=close),
             ], vertical_alignment=ft.CrossAxisAlignment.CENTER),
         )
         return bar
+
+    def update_banner(info: dict) -> ft.Container:
+        """Barra "Disponibile la versione X" con Scarica e ×: a ogni avvio finché non si aggiorna."""
+        return closable_bar(f"Disponibile la versione {info.get('latest_version')}", ft.Icons.SYSTEM_UPDATE,
+                            "Scarica", info["url"], "update")
+
+    def app_hint_banner(system: str) -> ft.Container:
+        """Webapp da Android/Windows (Fase 6): invito a installare l'app, più veloce e senza attese del server."""
+        return closable_bar(f"Bonkest c'è anche come app per {system}: più veloce", ft.Icons.INSTALL_MOBILE,
+                            "Scopri", RELEASES_URL, "app_hint")
 
     def show_update_required(info: dict) -> None:
         """Versione sotto la minima: niente accesso, solo il link per aggiornare (la webapp resta usabile)."""
@@ -298,7 +319,7 @@ async def main(page: ft.Page) -> None:
         rest.misura_inizio("accesso")
         show(centered(ft.ProgressRing(), ft.Text("Accesso in corso...")))
         try:
-            bundle = await asyncio.to_thread(rest.token_bundle, token, league_cache.local_versions())
+            bundle = await asyncio.to_thread(rest.token_bundle, token, league_cache.local_versions(), client)
         except Exception as e:
             print(f"Accesso automatico non riuscito: {e}")  # Server irraggiungibile: il token resta
             if rest.is_network_error(e) and await open_offline(token):

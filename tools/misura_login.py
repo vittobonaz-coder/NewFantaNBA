@@ -6,8 +6,9 @@ Misura dell'accesso dopo la Fase 2: richieste, tempi e byte, senza interfaccia e
 
 Per ogni prova: processo già avviato, cache vuota ("freddo": tutte le parti, come dopo un cron che le cambia
 tutte) oppure già aggiornata ("caldo": nessuna parte). La cache si scrive in una cartella temporanea,
-non in data/. Il token non si stampa mai. Nessuna scrittura sul database: token_bundle e get_snapshot
-al massimo rigenerano lo snapshot se è rimasto indietro, come farebbe l'app.
+non in data/. Il token non si stampa mai. Nessuna scrittura sui dati di lega: token_bundle e get_snapshot
+al massimo rigenerano lo snapshot se è rimasto indietro, come farebbe l'app; dopo la migrazione della
+Fase 6 token_bundle conta l'accesso in client_usage (client "non-indicato").
 """
 import argparse
 import os

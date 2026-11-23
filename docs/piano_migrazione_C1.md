@@ -317,7 +317,15 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - build lente (~8 min): eventuale cache di Gradle/Flutter se diventano un problema.
   - **Decisioni aperte per dopo:** migrazione 2C (ora si può imporre la versione minima con `min_version`);
     aggiornamento di Flet a fine migrazione; Fase 6 (iOS, facoltativa).
-- **Fase 6 (dal 23/11/2026): piano in attesa di OK** in `docs/fase6_piano.md`.
+- **Fase 6 (dal 23/11/2026): in corso.** Piano e decisioni in `docs/fase6_piano.md`.
+  - **Decisioni:** nessuna spesa → niente app iPhone (gli iPhone usano la webapp), niente Render a pagamento; app
+    Mac gratuita rimandata (serve macOS 11+, da sapere dall'utente col Mac).
+  - **Fatto (23/11, su `app-nativa`):** misura di Render (risveglio 22,9 s, da sveglio 0,2-0,3 s); tabella
+    `client_usage` con chi usa cosa (`sql/2026-11_fase6_client_usage.sql`, ordine rispetto al codice
+    indifferente); barra "C'è l'app" nella webapp aperta da Android o Windows. Verifiche in `docs/fase6_piano.md`
+    sezione 7.
+  - **Da fare da parte tua:** migrazione SQL; OK per `main` (Render); controllo della webapp e della query;
+    rilascio 1.0.1 quando vuoi.
 
 ## Decisioni prese
 

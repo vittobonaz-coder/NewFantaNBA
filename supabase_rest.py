@@ -156,20 +156,50 @@ def rpc(name: str, args: dict[str, Any]) -> Any:
 
 # --- Accesso e dati (una richiesta: profilo, contesto, formazione modificabile, parti dello snapshot cambiate) ---
 
-def login_bundle(username: str, password: str, remember: bool, versions: dict[str, str]) -> dict | None:
+_client_param = True  # False se il database non ha ancora p_client (migrazione Fase 6 non eseguita)
+
+
+def _bundle_rpc(name: str, args: dict[str, Any], client: dict | None) -> Any:
+    """
+    RPC di accesso con p_client (chi accede: aggiornamenti.client_info). Se il database non conosce ancora il
+    parametro (PostgREST risponde 404 PGRST202, "funzione non trovata") ripete senza e non lo manda più:
+    il codice funziona prima e dopo la migrazione sql/2026-11_fase6_client_usage.sql.
+    """
+    global _client_param
+    if client and _client_param:
+        try:
+            return rpc(name, {**args, "p_client": client})
+        except httpx.HTTPStatusError as e:
+            try:
+                code = e.response.json().get("code")
+            except (ValueError, AttributeError):
+                code = None
+            if e.response.status_code != 404 or code != "PGRST202":
+                raise
+            _client_param = False
+            print(f"RPC {name}: p_client non ancora disponibile sul database, chiamata senza")
+    return rpc(name, args)
+
+
+def login_bundle(username: str, password: str, remember: bool, versions: dict[str, str],
+                 client: dict | None = None) -> dict | None:
     """
     Login con username e password. None se le credenziali sono errate, altrimenti
     {"id", "username", "fanta_teams", "token", "expires_at", "context", "my_team", "versions", "parts"}.
     Il token dura 90 giorni con remember ("Ricordami", da salvare sul dispositivo), 7 senza.
     versions: versioni delle parti dello snapshot già in cache (league_cache.local_versions()).
+    client: chi accede, registrato in client_usage (Fase 6); None = nessuna informazione.
     """
-    return rpc("login_bundle", {"p_username": username, "p_password": password, "p_remember": remember,
-                                "p_versions": versions})
+    return _bundle_rpc("login_bundle", {"p_username": username, "p_password": password, "p_remember": remember,
+                                        "p_versions": versions}, client)
 
 
-def token_bundle(token: str, versions: dict[str, str]) -> dict | None:
-    """Accesso con il token salvato sul dispositivo: come login_bundle, senza token. None se scaduto o revocato."""
-    return rpc("token_bundle", {"p_token": token, "p_versions": versions})
+def token_bundle(token: str, versions: dict[str, str], client: dict | None = None) -> dict | None:
+    """
+    Accesso con il token salvato sul dispositivo: come login_bundle, senza token. None se scaduto o revocato.
+    client solo all'apertura dell'app (non negli aggiornamenti silenziosi), così client_usage conta le aperture.
+    """
+    return _bundle_rpc("token_bundle", {"p_token": token, "p_versions": versions}, client)
 
 
 def get_snapshot(versions: dict[str, str]) -> dict:

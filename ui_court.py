@@ -1594,10 +1594,11 @@ class MainDashboard(ft.Tabs):
             container.update()
 
 class LoginView(ft.Column):
-    def __init__(self, page: ft.Page, on_login_success):
+    def __init__(self, page: ft.Page, on_login_success, client: dict | None = None):
         super().__init__()
         self.app_page = page
         self.on_login_success = on_login_success
+        self.client = client  # Chi accede, per client_usage (aggiornamenti.client_info, Fase 6)
         self.alignment = ft.MainAxisAlignment.CENTER
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
         
@@ -1638,7 +1639,7 @@ class LoginView(ft.Column):
             user = await asyncio.to_thread(rest.login_bundle,
                                            (self.username_field.value or "").strip(),
                                            self.password_field.value or "", remember,
-                                           league_cache.local_versions())
+                                           league_cache.local_versions(), self.client)
             self.error_text.value = "" if user else "Credenziali errate"
         except Exception as err:
             print(f"Errore durante il login: {err}")

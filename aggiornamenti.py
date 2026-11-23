@@ -40,3 +40,17 @@ def piattaforma(flet_platform: str | None) -> str | None:
     """Nome della piattaforma in app_release da FLET_PLATFORM ("android", "windows"); None per le altre."""
     value = (flet_platform or "").lower()
     return value if value in ("android", "windows") else None
+
+
+def client_info(web: bool, native: bool, platform: str | None, version: str | None) -> dict:
+    """
+    Chi sta accedendo, per la tabella client_usage (Fase 6, sql/2026-11_fase6_client_usage.sql):
+    {"client": "android" | "windows" (app installata) | "web-ios", "web-android"... (webapp dal browser di quel
+    sistema) | "sviluppo", "version": "X.Y.Z" o None}. platform: valore di page.platform ("android", "ios"...).
+    """
+    system = re.sub(r"[^a-z]", "", (platform or "").lower()) or "altro"
+    if web:
+        return {"client": f"web-{system}", "version": None}
+    if native:
+        return {"client": system, "version": version}
+    return {"client": "sviluppo", "version": None}

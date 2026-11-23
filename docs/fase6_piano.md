@@ -1,4 +1,4 @@
-# Fase 6 — iOS e dismissione di Render: piano (in attesa di OK)
+# Fase 6 — iOS e dismissione di Render: piano
 
 **A cosa serve questo file:** è il piano della Fase 6 (`docs/piano_migrazione_C1.md`, sezione "Fase 6"). Contiene
 le verifiche fatte, le opzioni con costi e conseguenze, e le decisioni aperte. Le decisioni prese andranno in cima.
@@ -9,6 +9,9 @@ le verifiche fatte, le opzioni con costi e conseguenze, e le decisioni aperte. L
   sviluppatore Apple) e B4. Niente app per iPhone: chi ha l'iPhone usa la webapp (A0).
 - Nella lega gli utenti con l'iPhone sono 2, **entrambi hanno anche un PC**: uno Windows (può già usare l'app
   Windows), uno Mac (vedi A5).
+- **23/11/2026 — approvate B1, B2, B3.** B2 salva anche ultimo accesso e numero di aperture (costa niente).
+  **App Mac (A5) per ora no:** si può aggiungere più tardi senza toccare il resto (un job in più nel workflow),
+  dopo aver saputo che versione di macOS ha l'utente col Mac (serve almeno 11 Big Sur).
 
 La fase è **facoltativa** e il piano originale la descrive così:
 - **iOS:** solo un report su cosa servirebbe (Mac, account Apple, TestFlight), **nessuna implementazione**;
@@ -36,8 +39,9 @@ La fase è **facoltativa** e il piano originale la descrive così:
   in quella modalità Python gira nel browser con *Pyodide* (Python compilato per il browser), dove non ci sono
   thread né connessioni di rete "normali". Noi usiamo `httpx.Client` sincrono con thread (`asyncio.to_thread`,
   `run_parallel`): andrebbe riscritto lo strato di rete. Ipotesi da verificare con una prova, non una certezza.
-- **Non abbiamo misure di Render:** non so quanto aspetta oggi chi apre la webapp col server addormentato
-  (l'ordine di grandezza su Render Free è 30-60 s, ma va misurato).
+- **Misura di Render (B3, 23/11):** prima risposta della pagina con il server addormentato **22,9 s**; da sveglio
+  0,24-0,32 s (`curl` dal PC, solo la pagina HTML: poi il browser scarica il client Flutter, già in cache dalla
+  seconda volta, e fa l'accesso). Chi apre la webapp dopo 15 minuti di inattività aspetta quindi ~25 s in più.
 
 ## 2. Parte A — iPhone
 
@@ -102,9 +106,8 @@ si addormenta di più ma costa zero; il problema vero per gli iPhone resta l'att
 
 ## 5. Proposta di lavoro (se approvi)
 
-1. B3: misura del risveglio di Render (tu apri la webapp dopo 20 minuti di inattività, io ti do il cronometro
-   da seguire; oppure misuro io dal browser integrato).
-2. B2: migrazione SQL `sql/2026-11_fase6_piattaforma_login.sql` (parametro facoltativo, compatibile con webapp e
+1. B3: misura del risveglio di Render (fatta da me con `curl`, vedi sezione 1).
+2. B2: migrazione SQL `sql/2026-11_fase6_client_usage.sql` (parametro facoltativo, compatibile con webapp e
    app 1.0.0 già distribuite) + invio della piattaforma da app e webapp + query per vedere chi usa cosa.
 3. B1: barra "C'è l'app" nella webapp per Android/PC (chiudibile, una volta per sessione).
 4. Report iOS (questo documento, sezione 2) come conclusione della parte A.
@@ -114,23 +117,58 @@ si addormenta di più ma costa zero; il problema vero per gli iPhone resta l'att
 
 ## 6. Decisioni aperte
 
-1. ~~iPhone~~: deciso A0 (nessuna spesa). **Mac (A5):** app per Mac gratuita, oppure l'utente col Mac resta
-   sulla webapp?
-2. **Render:** B1 + B2 + B3 (proposta)? Oppure lasciare tutto com'è (fase chiusa col solo report)?
-3. **B2, cosa salvare:** solo piattaforma e versione (proposta), oppure anche data dell'ultimo accesso per utente?
+1. ~~iPhone~~: deciso A0 (nessuna spesa). **Mac (A5):** rimandata, in attesa della versione di macOS dell'utente.
+2. ~~Render~~: approvate B1 + B2 + B3.
+3. ~~B2, cosa salvare~~: piattaforma, versione, primo e ultimo accesso, numero di aperture.
 4. ~~B4 (Render a pagamento)~~: escluso (nessuna spesa). B3 resta utile per sapere quanto aspettano gli iPhone.
 5. **Ordine con Flet e migrazione 2C:** proposta: Fase 6 (B1-B3) → migrazione 2C → aggiornamento di Flet →
    eventuale app iOS.
 
-## 7. Cosa devi fare tu (dopo l'OK)
+## 7. Fatto e verificato (23/11)
 
-- Rispondere alle decisioni sopra.
-- Per B2: eseguire la migrazione nello SQL Editor, quando te la preparo.
-- Dare l'OK al passaggio su `main` (deploy Render) per B1/B2 lato web.
-- Per B3: se vuoi misurare tu dal telefono, aprire la webapp dopo 20 minuti di inattività con un cronometro.
+**File nuovi o cambiati e come si collegano:**
+- `sql/2026-11_fase6_client_usage.sql` (nuovo): tabella `client_usage` e nuove firme di `login_bundle` /
+  `token_bundle` con `p_client`; in fondo le query "chi usa cosa" da lanciare nello SQL Editor e il rollback.
+- `aggiornamenti.py`: `client_info()` decide il nome del client (`web-ios`, `android`…) da `page.web`,
+  `page.platform` e `versione.VERSIONE`.
+- `supabase_rest.py`: `login_bundle` / `token_bundle` accettano `client`; `_bundle_rpc` lo manda come `p_client`
+  e, se il database non ha ancora la migrazione (risposta 404 PGRST202), ripete senza e smette di mandarlo
+  finché il processo non riparte. Così l'ordine tra deploy e SQL non conta.
+- `app.py`: calcola `client` una volta per pagina e lo passa a login e accesso automatico (non agli aggiornamenti
+  silenziosi: `accessi` conta le aperture); barra "Bonkest c'è anche come app per Android/Windows" con "Scopri"
+  (link alla pagina delle Release, con le istruzioni) e ×, solo nella webapp aperta da Android o Windows.
+  La barra degli aggiornamenti (Fase 5) e la nuova usano lo stesso `closable_bar`.
+- `ui_court.py`: `LoginView` riceve `client` e lo passa a `login_bundle`.
+- `sql/schema_riferimento.sql` (sezione FASE 6), `tools/misura_login.py` (nota: ora conta un accesso).
 
-## 8. Rischi
+**Verifiche:**
+- migrazione su Postgres usa e getta (funzioni della Fase 2 simulate): eseguita 2 volte; una sola funzione per
+  nome; chiamata senza `p_client` (app 1.0.0) funziona e registra `non-indicato`; con `p_client` registra client e
+  versione e aggiorna la riga; credenziali errate o token falso: nulla registrato; client/versione non validi non
+  bloccano l'accesso (`non-valido`); anon non legge la tabella né chiama `private.record_client`; query "versioni
+  vecchie" corretta; rollback eseguibile;
+- `_bundle_rpc` contro un server finto: database senza `p_client` → una sola chiamata fallita poi senza; con
+  `p_client` → mandato; un errore 500 non viene nascosto;
+- webapp in locale (banco come Render, accesso simulato): browser Windows → barra "per Windows" e client
+  `web-windows`, la × la chiude; Android simulato → barra "per Android", `web-android`; iPhone simulato → nessuna
+  barra, `web-ios`;
+- **non verificato sui dispositivi:** l'app installata manda `android`/`windows` con la versione solo dalla
+  prossima release (1.0.1); va controllato allora, con la query della migrazione, dopo averla aperta su telefono e PC.
 
-- B2 cambia la firma di `login_bundle`/`token_bundle`: va fatto con un parametro facoltativo, altrimenti le app
-  1.0.0 già installate smettono di accedere. Lo verifico su Postgres usa e getta come nelle fasi precedenti.
-- Prezzi e regole Apple e Render cambiano: vanno ricontrollati sui siti ufficiali al momento di spendere.
+## 8. Cosa devi fare tu, in ordine
+
+1. **Eseguire la migrazione** `sql/2026-11_fase6_client_usage.sql` nello SQL Editor (tutto il file; le parti
+   commentate in fondo no). Poi la verifica 1 in fondo al file: devono uscire 2 righe con `p_client` nella firma.
+2. **OK per portare `app-nativa` su `main`** (deploy Render): la webapp manda il client e mostra la barra.
+3. Dopo il deploy: aprire la webapp dal PC (barra "per Windows"), poi nello SQL Editor la query "Per utente"
+   della migrazione: deve comparire una riga `web-windows` per te.
+4. Quando vuoi (non urgente): rilascio 1.0.1 con `tools/README_release.md` (sezione 3), così anche le app
+   installate mandano piattaforma e versione.
+
+## 9. Rischi
+
+- Se la migrazione si esegue **dopo** il deploy, la webapp si accorge che `p_client` manca e smette di mandarlo
+  fino al riavvio del processo su Render (succede da solo quando il server si addormenta, dopo 15 minuti).
+- Le statistiche sono indicative: `accessi` conta le aperture, non il tempo d'uso; chi resta sempre con la stessa
+  pagina aperta conta una volta.
+- Prezzi e regole Apple e Render cambiano: vanno ricontrollati sui siti ufficiali se un giorno si volesse spendere.

@@ -275,3 +275,25 @@ CREATE TABLE public.standings_adjustments (
 --   RLS e nessun permesso per anon/authenticated: si legge solo dalla RPC.
 --   RPC app_release(p_platform)  (SECURITY DEFINER, search_path vuoto)  anon, authenticated
 --   Si aggiorna a mano dopo ogni release pubblicata (snippet in fondo alla migrazione).
+
+
+-- =====================================================================================================
+-- FASE 6 (migrazione scritta il 23/11/2026; ordine rispetto al codice indifferente)
+-- =====================================================================================================
+--
+-- sql/2026-11_fase6_client_usage.sql
+--   CREATE TABLE public.client_usage (             -- chi usa cosa: una riga per utente e client
+--     user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+--     client text NOT NULL,                        -- android, windows, web-ios, web-android, web-windows...,
+--                                                  -- sviluppo, non-indicato (app 1.0.0), non-valido
+--     app_version text,                            -- X.Y.Z dell'app installata, null per la webapp
+--     first_seen_at timestamptz NOT NULL DEFAULT now(),
+--     last_seen_at timestamptz NOT NULL DEFAULT now(),
+--     accessi integer NOT NULL DEFAULT 1,          -- aperture (login o accesso automatico)
+--     PRIMARY KEY (user_id, client)
+--   );
+--   RLS e nessun permesso per anon/authenticated: si legge solo dallo SQL Editor (query nella migrazione).
+--   private.record_client(p_user, p_client)  registra l'accesso, non fa mai fallire il login
+--   login_bundle(p_username, p_password, p_remember, p_versions, p_client jsonb DEFAULT NULL)
+--   token_bundle(p_token, p_versions, p_client jsonb DEFAULT NULL)
+--     (sostituiscono le firme della Fase 2; p_client = {"client": "...", "version": "X.Y.Z"})
