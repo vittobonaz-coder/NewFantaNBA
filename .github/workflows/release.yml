@@ -151,10 +151,20 @@ jobs:
       - name: Installazione di flet-cli
         run: pip install "flet==${FLET_VERSION}" "flet-cli==${FLET_VERSION}"
 
+      # In caso di errore le ultime righe diventano un'annotazione ::error:: (leggibile senza accesso ai log)
       - name: Build dell'app Mac
         run: |
           python tools/prepara_build.py --tag "$TAG"
-          flet build macos --no-rich-output --yes
+          set +e
+          flet build macos --no-rich-output --yes -v 2>&1 | tee "$RUNNER_TEMP/flet_macos.log"
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -ne 0 ]; then
+            msg=$(grep -v "^\s*$" "$RUNNER_TEMP/flet_macos.log" | tail -n 60 | cut -c1-300 \
+                  | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            echo "::error title=flet build macos::${msg}"
+            exit "$status"
+          fi
 
       # ditto (strumento di macOS) e non zip: conserva link simbolici e permessi dentro Bonkest.app
       - name: Controllo e zip
