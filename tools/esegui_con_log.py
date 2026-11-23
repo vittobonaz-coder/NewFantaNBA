@@ -27,15 +27,31 @@ def clean(lines: list[str]) -> list[str]:
     return out
 
 
+SPINNER = re.compile(r"^\(\s*●\s*\)")  # Righe dell'animazione di flet ("( ●   ) Running Flutter doctor...")
+FLET_ERROR = "Error building Flet app"
+
+
+def interesting(lines: list[str]) -> list[str]:
+    """
+    Le righe utili: senza animazioni; con flet, quelle PRIMA del primo riquadro "Error building Flet app"
+    (l'errore vero è lì, dopo flet ripete il riquadro e lancia flutter doctor).
+    """
+    rows = [line for line in clean(lines) if not SPINNER.match(line)]
+    first = next((i for i, line in enumerate(rows) if FLET_ERROR in line), None)
+    return rows[:first] if first else rows
+
+
 def report(command: str, code: int, lines: list[str]) -> None:
-    tail = clean(lines)
+    tail = interesting(lines)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
             f.write(f"### Comando fallito (codice {code}): `{command}`\n\n```\n" + "\n".join(tail[-150:]) + "\n```\n")
     message = command + "\n" + "\n".join(line[:200] for line in tail[-40:])[-3800:]
     message = message.replace("%", "%25").replace("\r", "").replace("\n", "%0A").replace("::", ": :")
-    print(f"::error title=Comando fallito ({code})::{message}", flush=True)
+    # A capo prima: flet lascia sulla riga codici del terminale (es. "\x1b[?25h") e GitHub riconosce il comando
+    # solo a inizio riga
+    print(f"\n::error title=Comando fallito ({code})::{message}", flush=True)
 
 
 def main() -> int:
@@ -48,7 +64,7 @@ def main() -> int:
         for line in proc.stdout:
             print(line, end="", flush=True)
             lines.append(line)
-            del lines[:-500]  # Basta la coda
+            del lines[:-3000]  # Basta la coda (abbondante: l'errore di flet sta prima delle sue ripetizioni)
         code = proc.wait()
         if code:
             report(command, code, lines)
