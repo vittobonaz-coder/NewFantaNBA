@@ -1,4 +1,4 @@
-# Fase 6 — iOS e dismissione di Render: piano
+# Fase 6 — iOS e dismissione di Render: piano (conclusa il 23/11/2026)
 
 **A cosa serve questo file:** è il piano della Fase 6 (`docs/piano_migrazione_C1.md`, sezione "Fase 6"). Contiene
 le verifiche fatte, le opzioni con costi e conseguenze, e le decisioni aperte. Le decisioni prese andranno in cima.

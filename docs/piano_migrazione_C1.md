@@ -317,7 +317,7 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - build lente (~8 min): eventuale cache di Gradle/Flutter se diventano un problema.
   - **Decisioni aperte per dopo:** migrazione 2C (ora si può imporre la versione minima con `min_version`);
     aggiornamento di Flet a fine migrazione; Fase 6 (iOS, facoltativa).
-- **Fase 6 (dal 23/11/2026): in corso.** Piano e decisioni in `docs/fase6_piano.md`.
+- **Fase 6 (23/11/2026): conclusa.** Piano e decisioni in `docs/fase6_piano.md`.
   - **Decisioni:** nessuna spesa → niente app iPhone (gli iPhone usano la webapp), niente Render a pagamento; app
     Mac gratuita rimandata (serve macOS 11+, da sapere dall'utente col Mac).
   - **Fatto (23/11, su `app-nativa`):** misura di Render (risveglio 22,9 s, da sveglio 0,2-0,3 s); tabella
@@ -325,8 +325,12 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     indifferente); barra "C'è l'app" nella webapp aperta da Android o Windows. Verifiche in `docs/fase6_piano.md`
     sezione 7.
   - **23/11:** con il tuo OK `main` = `98197386` (avanzamento diretto da `app-nativa`, deploy di Render).
-  - **Da fare da parte tua:** migrazione SQL; ~~OK per `main`~~; controllo della webapp e della query;
-    rilascio 1.0.1 quando vuoi.
+  - **Fatto da te (23/11):** migrazione SQL eseguita; webapp controllata (barra "per Windows" visibile, riga
+    `web-windows` nella query "Per utente").
+  - **Nessun rilascio dedicato:** nell'app installata l'unica differenza è che manda piattaforma e versione;
+    arriverà con il prossimo rilascio che serve per altri motivi. Fino ad allora le app 1.0.0 compaiono come
+    `non-indicato` in `client_usage`.
+  - **Dopo la migrazione (in ordine proposto):** migrazione 2C, aggiornamento di Flet, eventuale app Mac (A5).
 
 ## Decisioni prese
 
@@ -382,3 +386,8 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     versione nuova, schermata bloccante sotto `min_version`; webapp esclusa;
   - aggiramento CMake portabile (DLL x64 trovate con vswhere) e controllo dei pacchetti con `controlla_build.py`;
   - istruzioni per gli utenti in `docs/istruzioni_installazione.md`, usate anche come note della release.
+- **23/11/2026 — Fase 6** (dettagli in `docs/fase6_piano.md`):
+  - nessuna spesa: niente app iPhone (gli iPhone usano la webapp), Render resta sul piano gratuito;
+  - registro di chi usa cosa in `client_usage` (piattaforma, versione, primo/ultimo accesso, aperture);
+  - barra "C'è l'app" nella webapp aperta da Android o Windows;
+  - app Mac gratuita rimandata (serve macOS 11+); nessun rilascio 1.0.1 solo per questa fase.
