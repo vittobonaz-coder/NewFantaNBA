@@ -317,7 +317,7 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     - build lente (~8 min): eventuale cache di Gradle/Flutter se diventano un problema.
   - **Decisioni aperte per dopo:** migrazione 2C (ora si può imporre la versione minima con `min_version`);
     aggiornamento di Flet a fine migrazione; Fase 6 (iOS, facoltativa).
-- **Fase 6:** —
+- **Fase 6 (dal 23/11/2026): piano in attesa di OK** in `docs/fase6_piano.md`.
 
 ## Decisioni prese
 
