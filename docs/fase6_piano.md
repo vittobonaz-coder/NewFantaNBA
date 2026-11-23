@@ -69,6 +69,10 @@ la blocca e va sbloccata una volta da Impostazioni di Sistema → Privacy e sicu
 "Esegui comunque" di SmartScreen su Windows). Contro: non posso provarla io (serve un Mac), le prove le farebbe
 l'utente col Mac; un job in più nel workflow (~10 min) e un file in più in ogni release; Mac non è piattaforma
 obbligatoria. Da verificare: che il build funzioni sui Mac Apple Silicon e Intel.
+**Versione minima: macOS 11 Big Sur** (il modello di progetto di flet 0.82 fissa `MACOSX_DEPLOYMENT_TARGET = 11.0`,
+visto in `build/flutter/macos/`). Big Sur gira sui Mac dal 2013-2014 in poi (MacBook Air/Pro fine 2013, iMac e
+Mac mini 2014). Sotto Big Sur l'app non si apre: resta la webapp. Un futuro aggiornamento di Flet potrebbe alzare
+il minimo.
 
 **Proposta:** A0 adesso. Se la lentezza della webapp pesa davvero agli utenti iPhone, A1 come fase a sé, con un
 amico con iPhone disponibile per le prove.
