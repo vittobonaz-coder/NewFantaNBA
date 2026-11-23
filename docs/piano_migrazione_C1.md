@@ -324,7 +324,8 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     `client_usage` con chi usa cosa (`sql/2026-11_fase6_client_usage.sql`, ordine rispetto al codice
     indifferente); barra "C'è l'app" nella webapp aperta da Android o Windows. Verifiche in `docs/fase6_piano.md`
     sezione 7.
-  - **Da fare da parte tua:** migrazione SQL; OK per `main` (Render); controllo della webapp e della query;
+  - **23/11:** con il tuo OK `main` = `98197386` (avanzamento diretto da `app-nativa`, deploy di Render).
+  - **Da fare da parte tua:** migrazione SQL; ~~OK per `main`~~; controllo della webapp e della query;
     rilascio 1.0.1 quando vuoi.
 
 ## Decisioni prese
