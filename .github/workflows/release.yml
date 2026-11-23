@@ -160,8 +160,12 @@ jobs:
           status=${PIPESTATUS[0]}
           set -e
           if [ "$status" -ne 0 ]; then
-            msg=$(grep -v "^\s*$" "$RUNNER_TEMP/flet_macos.log" | tail -n 60 | cut -c1-300 \
-                  | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            # Senza colori e caratteri di controllo (GitHub scarta le annotazioni che li contengono)
+            sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$RUNNER_TEMP/flet_macos.log" | tr -cd '[:print:]\n' \
+              | grep -v '^[[:space:]]*$' > "$RUNNER_TEMP/flet_macos_pulito.log" || true
+            { echo "### flet build macos: ultime righe"; echo '```'; tail -n 150 "$RUNNER_TEMP/flet_macos_pulito.log"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            msg=$(tail -n 40 "$RUNNER_TEMP/flet_macos_pulito.log" | cut -c1-200 | sed 's/%/%25/g; s/::/: :/g' \
+                  | awk '{printf "%s%%0A", $0}' | cut -c1-3800)
             echo "::error title=flet build macos::${msg}"
             exit "$status"
           fi
