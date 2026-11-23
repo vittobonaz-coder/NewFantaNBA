@@ -331,9 +331,11 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
     arriverà con il prossimo rilascio che serve per altri motivi. Fino ad allora le app 1.0.0 compaiono come
     `non-indicato` in `client_usage`.
   - **Dopo la migrazione (in ordine proposto):** migrazione 2C, aggiornamento di Flet, eventuale app Mac (A5).
-- **Migrazione 2C (dal 23/11/2026): in corso.** Piano, decisioni e verifiche in `docs/migrazione_2C_piano.md`;
-  migrazione `sql/2026-11_2C_chiusura_letture.sql` pronta e provata su Postgres usa e getta, da eseguire da te
-  dopo la query di ricognizione.
+- **Migrazione 2C (23/11/2026): conclusa.** Piano, decisioni e verifiche in `docs/migrazione_2C_piano.md`;
+  `sql/2026-11_2C_chiusura_letture.sql` eseguita: la chiave pubblicabile non legge più nessuna tabella (solo RPC),
+  `login_with_token` cancellata, `login` solo interna a `login_bundle`. `tools/verifica_permessi.py`: tutto a posto;
+  webapp e app provate. Da guardare: il cron del giorno dopo.
+  - **Prossimi (in ordine proposto):** aggiornamento di Flet; eventuale app Mac (A5).
 
 ## Decisioni prese
 

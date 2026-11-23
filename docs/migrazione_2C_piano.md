@@ -1,4 +1,4 @@
-# Migrazione 2C — chiusura delle vecchie strade d'accesso al database: piano
+# Migrazione 2C — chiusura delle vecchie strade d'accesso al database: piano (conclusa il 23/11/2026)
 
 **A cosa serve questo file:** è il piano della "migrazione 2C", rimandata dalla Fase 2 (`docs/fase2_piano.md`,
 parte C) a dopo la Fase 5 (`docs/piano_migrazione_C1.md`, "Decisioni prese"). Contiene cosa si toglie, chi lo usa
@@ -134,3 +134,11 @@ Aggiunta alla migrazione come pulizia (sezione 4: tolto il permesso ad anon); ri
 2. Se è quello atteso: eseguire **tutta** la migrazione (le parti commentate in fondo restano commentate).
 3. Da PC: `.venv\Scripts\python.exe tools\verifica_permessi.py`: deve finire con "Tutto a posto."
 4. Webapp e app (telefono e PC): accesso, cambio formazione e salvataggio. Il giorno dopo: cron verde.
+
+## 9. Esito (23/11)
+
+- Migrazione eseguita da te; ricognizione dopo: solo le 10 RPC attese, nessuna tabella; webapp e app provate
+  (accesso, formazione, salvataggio): tutto OK.
+- `tools/verifica_permessi.py` rilanciato da me dopo la migrazione: "Tutto a posto." (prima: 11 controlli non
+  superati, esattamente quelli attesi).
+- Resta da guardare: il run del cron del giorno dopo (usa la chiave segreta, non dovrebbe cambiare nulla).
