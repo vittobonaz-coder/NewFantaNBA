@@ -123,10 +123,14 @@ passato), mi fermo e ne parliamo.
   controlli che la migrazione deve cambiare (9 tabelle leggibili, `login` e `login_with_token` chiamabili); tutti
   gli altri OK.
 
+**Ricognizione sul database vero (23/11):** come attesa, più `update_updated_at_column()`, la vecchia funzione
+"da trigger" già vista nella ricognizione del 12/11: non collegata a nessun trigger e non chiamabile come RPC.
+Aggiunta alla migrazione come pulizia (sezione 4: tolto il permesso ad anon); riprovata su Postgres usa e getta.
+
 ## 8. Cosa devi fare tu, in ordine
 
-1. Nello SQL Editor: la query **RICOGNIZIONE** in cima al file (solo lei, togliendo i `-- ` davanti alle righe,
-   oppure copiandola già senza). Mandami il risultato.
+1. ~~Nello SQL Editor: la query **RICOGNIZIONE** in cima al file (solo lei, togliendo i `-- ` davanti alle righe,
+   oppure copiandola già senza). Mandami il risultato.~~ Fatto il 23/11.
 2. Se è quello atteso: eseguire **tutta** la migrazione (le parti commentate in fondo restano commentate).
 3. Da PC: `.venv\Scripts\python.exe tools\verifica_permessi.py`: deve finire con "Tutto a posto."
 4. Webapp e app (telefono e PC): accesso, cambio formazione e salvataggio. Il giorno dopo: cron verde.
