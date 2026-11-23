@@ -3,6 +3,13 @@
 **A cosa serve questo file:** è il piano della Fase 6 (`docs/piano_migrazione_C1.md`, sezione "Fase 6"). Contiene
 le verifiche fatte, le opzioni con costi e conseguenze, e le decisioni aperte. Le decisioni prese andranno in cima.
 
+## Decisioni prese
+
+- **23/11/2026 — nessuna spesa**, né per Apple né per Render: escluse A1, A2, A3 (tutte richiedono l'account
+  sviluppatore Apple) e B4. Niente app per iPhone: chi ha l'iPhone usa la webapp (A0).
+- Nella lega gli utenti con l'iPhone sono 2, **entrambi hanno anche un PC**: uno Windows (può già usare l'app
+  Windows), uno Mac (vedi A5).
+
 La fase è **facoltativa** e il piano originale la descrive così:
 - **iOS:** solo un report su cosa servirebbe (Mac, account Apple, TestFlight), **nessuna implementazione**;
 - **Render:** quando gli utenti Android/PC sono passati all'app, ridurre il carico della webapp **senza toglierla**
@@ -56,6 +63,13 @@ La fase è **facoltativa** e il piano originale la descrive così:
 Esempio concreto per A1: rilasci la 1.1.0 a dicembre; se non esce nulla di nuovo fino a marzo, a inizio marzo
 devi rifare un build (stesso codice, numero nuovo) e caricarlo, altrimenti agli iPhone l'app smette di aprirsi.
 
+**A5. App per Mac, gratuita (aggiunta il 23/11):** `flet build macos` gira su una macchina macOS di GitHub
+Actions, gratis. Senza account a pagamento l'app non è "notarizzata" (controllata da Apple): al primo avvio macOS
+la blocca e va sbloccata una volta da Impostazioni di Sistema → Privacy e sicurezza → "Apri comunque" (come
+"Esegui comunque" di SmartScreen su Windows). Contro: non posso provarla io (serve un Mac), le prove le farebbe
+l'utente col Mac; un job in più nel workflow (~10 min) e un file in più in ogni release; Mac non è piattaforma
+obbligatoria. Da verificare: che il build funzioni sui Mac Apple Silicon e Intel.
+
 **Proposta:** A0 adesso. Se la lentezza della webapp pesa davvero agli utenti iPhone, A1 come fase a sé, con un
 amico con iPhone disponibile per le prove.
 
@@ -96,11 +110,11 @@ si addormenta di più ma costa zero; il problema vero per gli iPhone resta l'att
 
 ## 6. Decisioni aperte
 
-1. **iPhone:** A0 (nessuna app, proposta), A1 TestFlight, A2 Store non in elenco, A3 Ad Hoc? Quanti utenti della
-   lega hanno l'iPhone? Sei disposto a spendere 99 €/anno?
+1. ~~iPhone~~: deciso A0 (nessuna spesa). **Mac (A5):** app per Mac gratuita, oppure l'utente col Mac resta
+   sulla webapp?
 2. **Render:** B1 + B2 + B3 (proposta)? Oppure lasciare tutto com'è (fase chiusa col solo report)?
 3. **B2, cosa salvare:** solo piattaforma e versione (proposta), oppure anche data dell'ultimo accesso per utente?
-4. **B4 (Render a pagamento):** da decidere solo dopo la misura B3.
+4. ~~B4 (Render a pagamento)~~: escluso (nessuna spesa). B3 resta utile per sapere quanto aspettano gli iPhone.
 5. **Ordine con Flet e migrazione 2C:** proposta: Fase 6 (B1-B3) → migrazione 2C → aggiornamento di Flet →
    eventuale app iOS.
 
