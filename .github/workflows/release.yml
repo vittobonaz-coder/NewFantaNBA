@@ -151,6 +151,18 @@ jobs:
       - name: Installazione di flet-cli
         run: pip install "flet==${FLET_VERSION}" "flet-cli==${FLET_VERSION}"
 
+      # Xcode più recente installato: connectivity_plus (usato da flet) chiama API di macOS 26
+      # (NWPath.isUltraConstrained) che con l'Xcode predefinito (16.4) non compilano. L'app resta per macOS 11+.
+      - name: Scelta di Xcode
+        run: |
+          ls -d /Applications/Xcode*.app
+          latest=$(ls -d /Applications/Xcode_*.app | grep -E 'Xcode_[0-9.]+\.app$' | sort -V | tail -n 1)
+          echo "Xcode scelto: $latest"
+          sudo xcode-select -s "$latest/Contents/Developer"
+          xcodebuild -version
+          major=$(xcodebuild -version | head -n 1 | sed -E 's/Xcode ([0-9]+).*/\1/')
+          if [ "$major" -lt 26 ]; then echo "::error::Serve Xcode 26 o più recente (trovato $major)"; exit 1; fi
+
       # tools/esegui_con_log.py: in caso di errore le ultime righe vanno nel riepilogo e in un'annotazione
       # (leggibili senza accesso ai log)
       - name: Build dell'app Mac
