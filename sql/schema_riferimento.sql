@@ -297,3 +297,18 @@ CREATE TABLE public.standings_adjustments (
 --   login_bundle(p_username, p_password, p_remember, p_versions, p_client jsonb DEFAULT NULL)
 --   token_bundle(p_token, p_versions, p_client jsonb DEFAULT NULL)
 --     (sostituiscono le firme della Fase 2; p_client = {"client": "...", "version": "X.Y.Z"})
+
+
+-- =====================================================================================================
+-- MIGRAZIONE 2C (scritta il 23/11/2026; ordine rispetto al codice indifferente)
+-- =====================================================================================================
+--
+-- sql/2026-11_2C_chiusura_letture.sql  (sostituisce quanto detto sopra per la Fase 1, migrazione B)
+--   anon e authenticated NON leggono più nessuna tabella o vista di public: tolti i SELECT su matchups,
+--   lineup_players, nba_games, nba_players, player_injuries, cron_runs, rosters, v_standings e
+--   fanta_teams(id, name), cancellate le policy "lettura dati di lega". RLS sempre attiva.
+--   I dati di lega arrivano solo dalle RPC (SECURITY DEFINER).
+--   login_with_token cancellata. login: nessun permesso per anon/authenticated (solo service_role);
+--   la usa login_bundle al suo interno.
+--   RPC chiamabili con la chiave pubblicabile: app_release, change_password, change_team_name,
+--   change_username, get_snapshot, league_context, login_bundle, logout, save_lineup, token_bundle.

@@ -7,6 +7,10 @@ una tabella di lega con le stesse dipendenze dell'app vera.
   (come l'app senza "Ricordami"); a parte questo, solo letture.
 - Misura l'avvio a freddo (creazione del processo -> prima schermata) e lo scrive in un file
   nella cartella dati dell'app, per verificare anche i percorsi scrivibili.
+
+NON FUNZIONA PIÙ dopo la migrazione 2C (sql/2026-11_2C_chiusura_letture.sql): la RPC login e la lettura
+diretta di matchups non sono più permesse alla chiave pubblicabile. Resta come documentazione della Fase 0;
+la cartella serve ancora per il suo ambiente Python (spike_android/.venv), usato da flet build.
 """
 import time
 

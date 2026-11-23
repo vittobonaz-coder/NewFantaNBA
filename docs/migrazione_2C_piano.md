@@ -1,8 +1,14 @@
-# Migrazione 2C — chiusura delle vecchie strade d'accesso al database: piano (in attesa di OK)
+# Migrazione 2C — chiusura delle vecchie strade d'accesso al database: piano
 
 **A cosa serve questo file:** è il piano della "migrazione 2C", rimandata dalla Fase 2 (`docs/fase2_piano.md`,
 parte C) a dopo la Fase 5 (`docs/piano_migrazione_C1.md`, "Decisioni prese"). Contiene cosa si toglie, chi lo usa
 ancora, cosa si guadagna davvero e le decisioni aperte.
+
+## Decisioni prese (23/11/2026)
+
+- Nessuno strumento esterno legge o scrive il database: solo l'app (webapp e installata), il cron e gli script.
+- `login`: si toglie solo il permesso di chiamarla da fuori (proposta), non si sposta tra le private.
+- Si fa.
 
 ## 1. Cosa toglie
 
@@ -90,7 +96,7 @@ passato), mi fermo e ne parliamo.
   locale o da GitHub Actions con un segreto. Attenzione per allora: la repository è pubblica, quindi un backup non
   va mai salvato in chiaro tra i file o gli artifact di GitHub.
 
-## 6. Decisioni aperte
+## 6. Decisioni (chiuse il 23/11, vedi in cima)
 
 1. **Strumenti esterni:** usi (o usa qualcuno della lega) qualcosa fuori da questa repository che legge il
    database con la chiave pubblica? Esempi: un foglio Google con IMPORTDATA/IMPORTJSON, un bot Telegram,
@@ -98,3 +104,29 @@ passato), mi fermo e ne parliamo.
 2. **`login`:** togliere solo il permesso da fuori (proposta: una riga, si annulla con una riga) oppure spostarla
    tra le funzioni private (`private.login`, più pulito ma bisogna riscrivere anche `login_bundle`).
 3. **Farla o no:** procedere (proposta, è piccola e reversibile) oppure lasciare tutto com'è.
+
+## 7. Fatto e verificato (23/11)
+
+- `sql/2026-11_2C_chiusura_letture.sql` (nuovo): in cima la query RICOGNIZIONE (sola lettura) da lanciare prima,
+  poi la migrazione, in fondo verifiche e rollback.
+- `tools/verifica_permessi.py`: ora si aspetta tabelle **non** leggibili, `login` e `login_with_token` non
+  chiamabili, `app_release` chiamabile.
+- `spike_android/main.py`: nota "non funziona più dopo la 2C" (la cartella resta per `spike_android/.venv`).
+- `sql/schema_riferimento.sql`: sezione MIGRAZIONE 2C.
+
+**Verifiche:**
+- migrazione su Postgres usa e getta (stato della Fase 1/2 simulato): eseguibile 2 volte; dopo, la ricognizione
+  mostra solo le RPC; anon non legge nessuna delle 9 tabelle/viste né `fanta_teams(id, name)`; `login` non
+  chiamabile da anon ma sì da `service_role`; `login_with_token` sparita; `login_bundle` funziona ancora
+  (chiama `login` e legge tabelle e vista dall'interno); `get_snapshot` funziona; il rollback riapre tutto;
+- `tools/verifica_permessi.py` contro il database vero **prima** della migrazione: falliscono esattamente gli 11
+  controlli che la migrazione deve cambiare (9 tabelle leggibili, `login` e `login_with_token` chiamabili); tutti
+  gli altri OK.
+
+## 8. Cosa devi fare tu, in ordine
+
+1. Nello SQL Editor: la query **RICOGNIZIONE** in cima al file (solo lei, togliendo i `-- ` davanti alle righe,
+   oppure copiandola già senza). Mandami il risultato.
+2. Se è quello atteso: eseguire **tutta** la migrazione (le parti commentate in fondo restano commentate).
+3. Da PC: `.venv\Scripts\python.exe toolserifica_permessi.py`: deve finire con "Tutto a posto."
+4. Webapp e app (telefono e PC): accesso, cambio formazione e salvataggio. Il giorno dopo: cron verde.

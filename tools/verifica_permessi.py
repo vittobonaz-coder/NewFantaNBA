@@ -1,7 +1,8 @@
 """
 Controllo "da fuori" dei permessi del database dopo la migrazione B della Fase 1
-(sql/2026-11_fase1b_rls_revoche.sql) e la migrazione A della Fase 2 (sql/2026-11_fase2a_snapshot_bundle.sql):
-usa SOLO la chiave pubblicabile, come chiunque abbia la repository o l'APK.
+(sql/2026-11_fase1b_rls_revoche.sql), la migrazione A della Fase 2 (sql/2026-11_fase2a_snapshot_bundle.sql) e la
+migrazione 2C (sql/2026-11_2C_chiusura_letture.sql): usa SOLO la chiave pubblicabile, come chiunque abbia la
+repository o l'APK. Dalla 2C nessuna tabella è leggibile direttamente: i dati arrivano solo dalle RPC.
 
   python tools/verifica_permessi.py
 
@@ -36,22 +37,26 @@ def main() -> int:
     r = client.get("/fanta_teams", params={"select": "user_id", "limit": 1})
     check("fanta_teams.user_id non leggibile", r.status_code >= 400, f"HTTP {r.status_code}")
 
-    # Dati di lega: leggibili
+    # Dati di lega: dalla migrazione 2C non più leggibili direttamente (solo dalle RPC)
     for table, select in (("matchups", "gameweek"), ("lineup_players", "slot"), ("nba_games", "game_id"),
                           ("nba_players", "id"), ("player_injuries", "nba_player_id"), ("cron_runs", "mode"),
-                          ("rosters", "nba_player_id"), ("v_standings", "team_name"), ("fanta_teams", "id,name")):
+                          ("rosters", "nba_player_id"), ("v_standings", "team_name"), ("fanta_teams", "id,name"),
+                          ("client_usage", "client"), ("app_release", "platform")):
         r = client.get(f"/{table}", params={"select": select, "limit": 1})
-        check(f"{table} leggibile", r.status_code == 200, f"HTTP {r.status_code}")
+        check(f"{table} non leggibile direttamente", r.status_code >= 400, f"HTTP {r.status_code}")
 
     # Scrittura diretta: negata. L'id non esiste, quindi anche con permessi aperti non cambierebbe nulla
     r = client.patch("/matchups", params={"id": f"eq.{NO_ROW}"}, json={"home_score": 0},
                      headers={"Prefer": "return=minimal"})
     check("scrittura diretta su matchups negata", r.status_code >= 400, f"HTTP {r.status_code}")
 
-    # RPC: login con credenziali inventate -> null
+    # Vecchie RPC della Fase 1 (migrazione 2C): login solo interna a login_bundle, login_with_token cancellata
     r = client.post("/rpc/login", json={"p_username": "verifica_inesistente", "p_password": "x"})
-    check("rpc login raggiungibile, credenziali errate -> null", r.status_code == 200 and r.json() is None,
-          f"HTTP {r.status_code} {r.text[:60]}")
+    check("rpc login non chiamabile da fuori", r.status_code >= 400, f"HTTP {r.status_code}")
+    r = client.post("/rpc/login_with_token", json={"p_token": "verifica_inesistente"})
+    check("rpc login_with_token non esiste più", r.status_code >= 400, f"HTTP {r.status_code}")
+    r = client.post("/rpc/app_release", json={"p_platform": "android"})
+    check("rpc app_release", r.status_code == 200 and "latest_version" in (r.json() or {}), f"HTTP {r.status_code}")
 
     # RPC solo per la chiave segreta
     r = client.post("/rpc/admin_set_password", json={"p_user_id": NO_ROW, "p_password": "x"})
