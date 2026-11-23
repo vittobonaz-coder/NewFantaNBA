@@ -78,6 +78,18 @@ passato), mi fermo e ne parliamo.
 - dopo l'esecuzione (tu): `python tools/verifica_permessi.py` aggiornato, tutto OK; webapp: accesso, cambio
   formazione e salvataggio; app sul telefono e sul PC: accesso; il cron del giorno dopo verde.
 
+## 5-bis. Funzioni future (domanda del 23/11)
+
+- **Storico dei tabellini** (tutte le partite e i fantapunteggi di tutte le giornate): non è bloccato. Si farà con
+  una RPC nuova (es. lo storico di una giornata o di una squadra in una richiesta), come tutto il resto dell'app
+  dalla Fase 2. Leggere le tabelle direttamente sarebbe comunque contro l'impostazione attuale (più richieste,
+  dati non filtrati).
+- **Backup completo del campionato:** non è toccato. Un backup vero deve includere anche `profiles` (password
+  cifrate), `login_tokens`, `player_stats`, `standings_adjustments`, che la chiave pubblica non legge già dalla
+  Fase 1: serve in ogni caso la chiave segreta o la connessione diretta al database (es. `pg_dump`), da uno script
+  locale o da GitHub Actions con un segreto. Attenzione per allora: la repository è pubblica, quindi un backup non
+  va mai salvato in chiaro tra i file o gli artifact di GitHub.
+
 ## 6. Decisioni aperte
 
 1. **Strumenti esterni:** usi (o usa qualcuno della lega) qualcosa fuori da questa repository che legge il
