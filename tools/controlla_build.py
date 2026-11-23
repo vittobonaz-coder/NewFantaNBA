@@ -3,10 +3,13 @@ Controlli sul pacchetto costruito, prima di distribuirlo (Fase 5, docs/fase5_pia
 
   python tools/controlla_build.py apk build/apk/bonkest.apk [--cert SHA256 | --debug-ok]
   python tools/controlla_build.py windows build/windows
+  python tools/controlla_build.py macos build/macos/Bonkest.app
 
 apk:     firma con il certificato atteso (--cert o variabile ANDROID_CERT_SHA256; flet build firma in silenzio
          con la chiave di debug se mancano le opzioni di firma), nessun segreto né keystore nel contenuto.
 windows: exe e DLL a 64 bit (aggiramento CMake, tools/build_windows.ps1), nessun segreto né keystore.
+macos:   eseguibile e librerie "universali" (Intel x86_64 + Apple Silicon arm64: l'app deve girare su
+         qualunque Mac con macOS 11+), nessun segreto né keystore. Fase 6, docs/fase6_piano.md (A5).
 Esce con 1 al primo gruppo di errori.
 """
 import argparse
@@ -162,9 +165,59 @@ def check_windows(folder: Path) -> list[str]:
     return errors
 
 
+MACHO_CPU = {0x01000007: "x86_64", 0x0100000C: "arm64"}
+MACOS_ARCHS = {"x86_64", "arm64"}
+
+
+def macho_archs(path: Path) -> set[str] | None:
+    """
+    Architetture di un file Mach-O (formato degli eseguibili Mac), leggendo solo l'intestazione:
+    file "fat"/universale (magic CAFEBABE, elenco di architetture) o "sottile" a 64 bit (FEEDFACF).
+    None se il file non è un Mach-O.
+    """
+    with open(path, "rb") as f:
+        head = f.read(4096)
+    if len(head) < 8:
+        return None
+    if head[:4] == b"\xca\xfe\xba\xbe":  # fat, numeri in big-endian
+        count = struct.unpack_from(">I", head, 4)[0]
+        if count > 30:  # Stesso magic delle classi Java: non è un Mach-O
+            return None
+        cpus = [struct.unpack_from(">I", head, 8 + 20 * i)[0] for i in range(count)]
+        return {MACHO_CPU.get(c, hex(c)) for c in cpus}
+    if head[:4] == b"\xcf\xfa\xed\xfe":  # sottile a 64 bit, little-endian
+        return {MACHO_CPU.get(struct.unpack_from("<I", head, 4)[0], "altro")}
+    return None
+
+
+def check_macos(app: Path) -> list[str]:
+    errors: list[str] = []
+    exe_dir = app / "Contents" / "MacOS"
+    if not exe_dir.is_dir() or not any(exe_dir.iterdir()):
+        return [f"{app}: manca Contents/MacOS (non è un'app Mac)"]
+    found = 0
+    for path in sorted(app.rglob("*")):
+        if not path.is_file() or path.is_symlink():
+            continue
+        rel = path.relative_to(app).as_posix()
+        if path.name.lower().endswith(FORBIDDEN_SUFFIXES) or path.name.startswith(FORBIDDEN_NAMES):
+            errors.append(f"file vietato: {rel}")
+        archs = macho_archs(path)
+        if archs is not None:
+            found += 1
+            if not MACOS_ARCHS <= archs:
+                errors.append(f"{rel}: architetture {sorted(archs)}, servono {sorted(MACOS_ARCHS)}")
+        elif path.suffix.lower() in (".zip", ".py", ".json", ".txt", ".toml", ".env", ".plist"):
+            scan_bytes(rel, path.read_bytes(), errors)
+    print(f"File Mach-O controllati: {found}")
+    if not found:
+        errors.append("nessun eseguibile Mach-O trovato")
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Controlli sul pacchetto costruito")
-    parser.add_argument("tipo", choices=["apk", "windows"])
+    parser.add_argument("tipo", choices=["apk", "windows", "macos"])
     parser.add_argument("percorso", type=Path)
     parser.add_argument("--cert", default=os.environ.get("ANDROID_CERT_SHA256"), help="SHA-256 atteso del certificato")
     parser.add_argument("--debug-ok", action="store_true", help="accetta la chiave di debug (solo build di prova)")
@@ -172,7 +225,12 @@ def main() -> int:
     if not args.percorso.exists():
         print(f"ERRORE: {args.percorso} non esiste")
         return 1
-    errors = check_apk(args.percorso, args.cert, args.debug_ok) if args.tipo == "apk" else check_windows(args.percorso)
+    if args.tipo == "apk":
+        errors = check_apk(args.percorso, args.cert, args.debug_ok)
+    elif args.tipo == "windows":
+        errors = check_windows(args.percorso)
+    else:
+        errors = check_macos(args.percorso)
     if errors:
         print("ERRORE, il pacchetto non va distribuito:\n  " + "\n  ".join(errors[:30]))
         if os.environ.get("GITHUB_ACTIONS"):

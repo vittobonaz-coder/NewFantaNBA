@@ -1,7 +1,8 @@
 name: Rilascio app
 
 # Fase 5 (docs/fase5_piano.md): con un tag vX.Y.Z (o vX.Y.Z-rc.N per una prova) compila l'APK firmato con la
-# chiave vera e l'app Windows (installer + zip) e li mette in una release IN BOZZA: la pubblica l'utente, poi
+# chiave vera, l'app Windows (installer + zip) e, dalla Fase 6, l'app Mac (zip, non firmata) e li mette in una
+# release IN BOZZA: la pubblica l'utente, poi
 # aggiorna app_release dallo SQL Editor (sql/2026-11_fase5_app_release.sql). Render e il cron non c'entrano.
 #
 # Segreti (Settings > Secrets and variables > Actions):  ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
@@ -128,8 +129,56 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  # Fase 6 (A5): app per Mac, non firmata (nessun account Apple a pagamento). Facoltativa: se questo job
+  # fallisce, la release esce lo stesso con Android e Windows (vedi il job release).
+  macos:
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/flutter
+          key: flutter-${{ runner.os }}-flet-${{ env.FLET_VERSION }}
+
+      - name: Installazione di flet-cli
+        run: pip install "flet==${FLET_VERSION}" "flet-cli==${FLET_VERSION}"
+
+      - name: Build dell'app Mac
+        run: |
+          python tools/prepara_build.py --tag "$TAG"
+          flet build macos --no-rich-output --yes
+
+      # ditto (strumento di macOS) e non zip: conserva link simbolici e permessi dentro Bonkest.app
+      - name: Controllo e zip
+        run: |
+          app=$(find build/macos -maxdepth 1 -name "*.app" | head -n 1)
+          if [ -z "$app" ]; then echo "::error::Nessuna .app in build/macos"; ls -la build/macos; exit 1; fi
+          echo "App: $app"
+          lipo -archs "$app/Contents/MacOS/"* || true
+          python tools/controlla_build.py macos "$app"
+          mkdir -p build/dist
+          ditto -c -k --keepParent "$app" build/dist/Bonkest-macOS.zip
+          ls -la build/dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: build/dist/Bonkest-macOS.zip
+          if-no-files-found: error
+          retention-days: 14
+
   release:
-    needs: [android, windows]
+    needs: [android, windows, macos]
+    # Android e Windows obbligatori; il Mac no: se il suo job fallisce la release si crea senza il suo file
+    if: ${{ !cancelled() && needs.android.result == 'success' && needs.windows.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -149,12 +198,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd dist
-          sha256sum bonkest.apk Bonkest-Setup.exe bonkest-windows.zip > SHA256SUMS.txt
+          files="bonkest.apk Bonkest-Setup.exe bonkest-windows.zip"
+          if [ -f Bonkest-macOS.zip ]; then
+            files="$files Bonkest-macOS.zip"
+          else
+            echo "::warning::App Mac non costruita: la release esce senza Bonkest-macOS.zip"
+          fi
+          sha256sum $files > SHA256SUMS.txt
           cat SHA256SUMS.txt
+          paths=""
+          for f in $files SHA256SUMS.txt; do paths="$paths dist/$f"; done
           cd ..
           version="${TAG#v}"
           extra=""
           case "$TAG" in *-rc.*) extra="--prerelease" ;; esac
-          gh release create "$TAG" dist/bonkest.apk dist/Bonkest-Setup.exe dist/bonkest-windows.zip \
-            dist/SHA256SUMS.txt --draft $extra --verify-tag --title "Bonkest ${version}" \
+          gh release create "$TAG" $paths --draft $extra --verify-tag --title "Bonkest ${version}" \
             --notes-file docs/istruzioni_installazione.md

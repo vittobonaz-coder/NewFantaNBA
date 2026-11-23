@@ -16,6 +16,15 @@ Stesso account e stessi dati su telefono, PC e versione web.
 3. Bonkest si apre dal menu Start. In alternativa c'è **bonkest-windows.zip**: estrailo dove vuoi e avvia
    `bonkest.exe`.
 
+### Mac (macOS 11 Big Sur o più recente)
+1. Scarica **Bonkest-macOS.zip**: Safari di solito lo estrae da solo, altrimenti doppio clic sullo zip.
+2. Trascina **Bonkest** nella cartella **Applicazioni**.
+3. Primo avvio: l'app non è firmata da Apple, quindi il doppio clic dà un avviso. Su macOS 11-14: clic
+   **destro** (o Ctrl+clic) su Bonkest → **Apri** → **Apri**. Su macOS 15 o più recente: doppio clic, poi
+   Impostazioni di Sistema → Privacy e sicurezza → in fondo **Apri comunque**. Serve solo la prima volta.
+4. Se dice che l'app "è danneggiata": apri il Terminale e scrivi `xattr -cr /Applications/Bonkest.app`, poi
+   riprova (toglie il segno "scaricato da internet" che macOS mette al file).
+
 ### iPhone
 Nessuna app: continua a usare la versione web dal browser.
 

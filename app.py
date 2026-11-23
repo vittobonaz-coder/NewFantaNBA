@@ -10,8 +10,8 @@ Android, aggiornamento silenzioso al ritorno in primo piano e, nell'app installa
 Fase 5 (docs/fase5_piano.md): nell'app installata, controllo degli aggiornamenti letto all'avvio (app_release):
 sotto la versione minima l'app non si usa, con una versione più nuova compare una barra chiudibile.
 
-Fase 6 (docs/fase6_piano.md): all'accesso si manda chi accede (client_usage); la webapp aperta da Android o
-Windows mostra una barra chiudibile che invita a installare l'app.
+Fase 6 (docs/fase6_piano.md): all'accesso si manda chi accede (client_usage); la webapp aperta da Android, Windows o
+Mac mostra una barra chiudibile che invita a installare l'app.
 """
 import asyncio
 import json
@@ -35,7 +35,8 @@ LAST_PROFILE_KEY = "fantanba.last_profile"  # Ultimo accesso riuscito (solo app 
 REFRESH_AFTER = timedelta(minutes=5)        # Al ritorno in primo piano si aggiorna se i dati sono più vecchi
 BACK_EXIT_WINDOW = 3.0                      # Secondi per il secondo Indietro con modifiche non salvate
 DESKTOP_PLATFORMS = (ft.PagePlatform.WINDOWS, ft.PagePlatform.MACOS, ft.PagePlatform.LINUX)
-APP_PLATFORMS = {ft.PagePlatform.ANDROID: "Android", ft.PagePlatform.WINDOWS: "Windows"}  # Sistemi con l'app
+APP_PLATFORMS = {ft.PagePlatform.ANDROID: "Android", ft.PagePlatform.WINDOWS: "Windows",  # Sistemi con l'app
+                 ft.PagePlatform.MACOS: "Mac"}
 RELEASES_URL = "https://github.com/vittobonaz-coder/NewFantaNBA/releases/latest"  # Download e istruzioni
 
 if not flet_fix.applica():  # Patch veloci e niente aggiornamento automatico (solo Flet 0.82)
@@ -66,7 +67,7 @@ async def main(page: ft.Page) -> None:
     session: dict = {"token": None, "user": None, "dashboard": None, "signature": None,
                      "busy": False, "pending": None, "back_armed_at": 0.0,
                      "update": None,  # Configurazione di una versione più nuova (barra "Disponibile..."), Fase 5
-                     # Webapp da Android/Windows: barra "C'è l'app" finché non si chiude (fino al ricaricamento)
+                     # Webapp da Android/Windows/Mac: barra "C'è l'app" finché non si chiude (fino al ricaricamento)
                      "app_hint": APP_PLATFORMS.get(page.platform) if page.web else None}
 
     def show(control: ft.Control) -> None:
@@ -203,7 +204,7 @@ async def main(page: ft.Page) -> None:
                             "Scarica", info["url"], "update")
 
     def app_hint_banner(system: str) -> ft.Container:
-        """Webapp da Android/Windows (Fase 6): invito a installare l'app, più veloce e senza attese del server."""
+        """Webapp da Android/Windows/Mac (Fase 6): invito a installare l'app, più veloce e senza attese del server."""
         return closable_bar(f"Bonkest c'è anche come app per {system}: più veloce", ft.Icons.INSTALL_MOBILE,
                             "Scopri", RELEASES_URL, "app_hint")
 

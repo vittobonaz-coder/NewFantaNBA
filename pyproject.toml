@@ -1,4 +1,4 @@
-# Configurazione di `flet build apk` / `flet build windows` (Flet 0.82) per l'app nativa.
+# Configurazione di `flet build apk` / `flet build windows` / `flet build macos` (Flet 0.82) per l'app nativa.
 # Render NON usa questo file: installa requirements.txt e avvia main.py.
 # Prima del build: python tools/prepara_build.py (copia in app_src/ solo i file ammessi: mai .env né data/).
 [project]

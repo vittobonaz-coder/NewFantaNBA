@@ -165,10 +165,12 @@ controllo che evita di pubblicare un'app con il numero sbagliato. In quel caso c
 - `git tag`: attacca l'etichetta all'ultimo commit del branch su cui sei.
 - `git push origin <tag>`: manda **solo l'etichetta** su GitHub (e il commit a cui punta). Questo fa partire il
   workflow "Rilascio app". `main` e Render non vengono toccati.
-- **Cosa vedrai:** su GitHub → **Actions** compare un'esecuzione "Rilascio app" con tre blocchi: `android` e
-  `windows` lavorano in parallelo (20–30 minuti la prima volta, meno dopo grazie alla cache), poi `release`.
-  Alla fine in **Releases** trovi una bozza contrassegnata "Pre-release" con `bonkest.apk`, `Bonkest-Setup.exe`,
-  `bonkest-windows.zip` e `SHA256SUMS.txt`.
+- **Cosa vedrai:** su GitHub → **Actions** compare un'esecuzione "Rilascio app" con quattro blocchi: `android`,
+  `windows` e `macos` lavorano in parallelo (20–30 minuti la prima volta, meno dopo grazie alla cache), poi
+  `release`. Alla fine in **Releases** trovi una bozza contrassegnata "Pre-release" con `bonkest.apk`,
+  `Bonkest-Setup.exe`, `bonkest-windows.zip`, `Bonkest-macOS.zip` e `SHA256SUMS.txt`.
+  Il Mac è facoltativo: se il blocco `macos` è rosso la bozza si crea lo stesso, senza `Bonkest-macOS.zip`
+  (nel riepilogo dell'esecuzione compare un avviso giallo).
 - **Se va storto:** clicca sul blocco rosso e poi sul passaggio fallito per leggere l'errore (o passami il testo).
   Corretto il problema si fa una nuova prova con `rc.2`.
 
@@ -184,6 +186,8 @@ bozza nessuno la vede, quindi puoi provare e rifare (`rc.N+1`) quante volte serv
      `bonkest.apk`. In alternativa scaricalo sul PC e passalo al telefono (cavo USB, o mandalo a te stesso via
      email/Drive).
    - PC: scarica `Bonkest-Setup.exe` (e, se vuoi provarlo, `bonkest-windows.zip`).
+   - Mac: non avendone uno, scarica `Bonkest-macOS.zip` e mandalo all'amico col Mac (Drive, WeTransfer…) insieme
+     alla sezione "Mac" di `docs/istruzioni_installazione.md`: la bozza la vedi solo tu.
 2. **Solo la prima volta:** disinstalla dal telefono la vecchia app di prova (firmata con la chiave di debug),
    altrimenti Android rifiuta l'installazione ("conflitto con un pacchetto esistente"). Su Windows non serve:
    l'installer non tocca la vecchia cartella `build\windows`, che puoi cancellare quando vuoi.

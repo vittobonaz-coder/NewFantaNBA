@@ -37,9 +37,9 @@ def esito(info: dict | None, installata: str | None) -> str:
 
 
 def piattaforma(flet_platform: str | None) -> str | None:
-    """Nome della piattaforma in app_release da FLET_PLATFORM ("android", "windows"); None per le altre."""
+    """Nome della piattaforma in app_release da FLET_PLATFORM ("android", "windows", "macos"); None per le altre."""
     value = (flet_platform or "").lower()
-    return value if value in ("android", "windows") else None
+    return value if value in ("android", "windows", "macos") else None
 
 
 def client_info(web: bool, native: bool, platform: str | None, version: str | None) -> dict:
