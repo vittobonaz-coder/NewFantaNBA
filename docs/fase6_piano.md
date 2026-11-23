@@ -196,3 +196,25 @@ L'aggiornamento di Flet resta rimandato (da ricordare).
 file di prova (trova una libreria solo arm64 e un segreto, passa con file universali); YAML del workflow letto
 correttamente. Il build vero: prova `v1.0.0-rc.5` su GitHub (esito sotto). L'avvio sul Mac lo può provare solo
 l'amico.
+
+**Prove su GitHub (23-24/11):**
+- `rc.5`: la macchina `macos-14` non esiste più su GitHub → `macos-15`. La release è uscita lo stesso senza il file
+  Mac (verificato che il Mac è davvero facoltativo).
+- `rc.6`-`rc.9`: build fallito senza messaggio leggibile (log visibili solo con l'accesso). Aggiunto
+  `tools/esegui_con_log.py`: esegue i comandi e, se uno fallisce, mette le righe utili in un'annotazione e nel
+  riepilogo. `rc.10`: l'annotazione mostra la causa: `connectivity_plus` 7.3.1 (componente di flet per lo stato
+  della connessione) usa un'API di macOS 26 (`NWPath.isUltraConstrained`) che con Xcode 16.4, predefinito sulla
+  macchina, non compila.
+- **`rc.11`: tutto verde.** Il workflow sceglie l'Xcode più recente installato (passo "Scelta di Xcode", si ferma
+  se è più vecchio della 26). `controlla_build.py macos` superato: tutti gli eseguibili e le librerie sono
+  universali (Intel + Apple Silicon). L'app resta per macOS 11+: l'API nuova si usa solo se c'è macOS 26.
+
+**Da fare da parte tua, in ordine:**
+1. Eseguire `sql/2026-11_fase6_app_release_macos.sql` nello SQL Editor (aggiunge la riga `macos`).
+2. Releases → bozza `v1.0.0-rc.11` → scaricare `Bonkest-macOS.zip` e mandarlo all'amico col Mac con la sezione
+   "Mac" di `docs/istruzioni_installazione.md`. Prove sue: si apre (clic destro → Apri), accesso con "Ricordami",
+   in Impostazioni "Bonkest 1.0.0 (rc.11)", cambio formazione e salvataggio, chiusura e riapertura (entra da
+   solo), finestra ridimensionabile.
+3. Cancellare le bozze `rc.5`-`rc.10` (e poi la `rc.11`).
+4. Se le prove vanno bene: rilascio vero `1.0.1` (`tools/README_release.md`, sezione 3) con le tre app, poi OK
+   per `main` (la webapp mostra la barra "per Mac" solo dopo, quando il file Mac è nella release pubblicata).

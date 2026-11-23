@@ -335,7 +335,11 @@ Aggiornare a fine di ogni fase: data, cosa è stato fatto, commit, cosa resta da
   `sql/2026-11_2C_chiusura_letture.sql` eseguita: la chiave pubblicabile non legge più nessuna tabella (solo RPC),
   `login_with_token` cancellata, `login` solo interna a `login_bundle`. `tools/verifica_permessi.py`: tutto a posto;
   webapp e app provate. Da guardare: il cron del giorno dopo.
-  - **Prossimi (in ordine proposto):** aggiornamento di Flet; eventuale app Mac (A5).
+  - **Prossimi:** aggiornamento di Flet (rimandato, da ricordare).
+- **App per Mac (Fase 6, A5, dal 23/11/2026): in prova.** Dettagli in `docs/fase6_piano.md` sezione 10. Build su
+  GitHub verde con `v1.0.0-rc.11` (Xcode più recente, app universale Intel + Apple Silicon, macOS 11+).
+  Da fare: migrazione `sql/2026-11_fase6_app_release_macos.sql`; prova dell'amico col Mac (Monterey 12.7.6);
+  poi rilascio 1.0.1 con le tre app e OK per `main`.
 
 ## Decisioni prese
 
