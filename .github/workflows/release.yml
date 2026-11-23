@@ -132,7 +132,7 @@ jobs:
   # Fase 6 (A5): app per Mac, non firmata (nessun account Apple a pagamento). Facoltativa: se questo job
   # fallisce, la release esce lo stesso con Android e Windows (vedi il job release).
   macos:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4

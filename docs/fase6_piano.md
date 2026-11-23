@@ -1,4 +1,4 @@
-# Fase 6 — iOS e dismissione di Render: piano (conclusa il 23/11/2026)
+# Fase 6 — iOS e dismissione di Render: piano (conclusa il 23/11/2026; app Mac aggiunta dopo)
 
 **A cosa serve questo file:** è il piano della Fase 6 (`docs/piano_migrazione_C1.md`, sezione "Fase 6"). Contiene
 le verifiche fatte, le opzioni con costi e conseguenze, e le decisioni aperte. Le decisioni prese andranno in cima.
@@ -172,3 +172,27 @@ si addormenta di più ma costa zero; il problema vero per gli iPhone resta l'att
 - Le statistiche sono indicative: `accessi` conta le aperture, non il tempo d'uso; chi resta sempre con la stessa
   pagina aperta conta una volta.
 - Prezzi e regole Apple e Render cambiano: vanno ricontrollati sui siti ufficiali se un giorno si volesse spendere.
+
+## 10. App per Mac (A5), aggiunta il 23/11
+
+**Decisione:** l'utente col Mac ha macOS 12 Monterey (12.7.6): sopra il minimo (11 Big Sur), quindi si fa.
+L'aggiornamento di Flet resta rimandato (da ricordare).
+
+**Cosa ho fatto:**
+- `.github/workflows/release.yml`: job `macos` su una macchina macOS di GitHub (`macos-15`): `prepara_build.py`,
+  `flet build macos`, controllo, zip con `ditto` (strumento di macOS che conserva link e permessi dentro la
+  `.app`), file `Bonkest-macOS.zip` nella release. **Facoltativo:** se fallisce, la release esce lo stesso con
+  Android e Windows (con un avviso), perché il Mac non è una piattaforma obbligatoria.
+- `tools/controlla_build.py macos`: legge l'intestazione di ogni eseguibile e libreria Mac (formato *Mach-O*) e
+  controlla che sia "universale", cioè contenga sia la versione Intel (x86_64) sia quella Apple Silicon (arm64):
+  non sappiamo che processore ha il Mac dell'amico, e Monterey gira su entrambi. Più il solito controllo dei segreti.
+- `aggiornamenti.py`: piattaforma `macos` per il controllo aggiornamenti; `sql/2026-11_fase6_app_release_macos.sql`
+  aggiunge la riga `macos` ad `app_release` (vincolo allargato, solo aggiunte).
+- `app.py`: la barra "C'è l'app" compare anche nella webapp aperta da Mac ("per Mac").
+- `docs/istruzioni_installazione.md`: sezione Mac (trascinare in Applicazioni, primo avvio con clic destro → Apri,
+  rimedio per "app danneggiata"); `tools/README_release.md`: quattro blocchi, zip da passare all'amico.
+
+**Verifiche:** migrazione su Postgres usa e getta (riga macos, `ios` rifiutata, rollback); controllo Mach-O con
+file di prova (trova una libreria solo arm64 e un segreto, passa con file universali); YAML del workflow letto
+correttamente. Il build vero: prova `v1.0.0-rc.5` su GitHub (esito sotto). L'avvio sul Mac lo può provare solo
+l'amico.
