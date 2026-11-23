@@ -9,12 +9,16 @@
 --      i dati di lega arrivano solo dalle RPC (get_snapshot, login_bundle, token_bundle);
 --   2. cancella la RPC login_with_token (sostituita da token_bundle nella Fase 2);
 --   3. la RPC login non si chiama più da fuori; resta come pezzo interno di login_bundle, che gira con i
---      permessi del proprietario (SECURITY DEFINER) e quindi può ancora usarla.
+--      permessi del proprietario (SECURITY DEFINER) e quindi può ancora usarla;
+--   4. toglie ad anon anche update_updated_at_column(): vecchia funzione "da trigger" (vedi la ricognizione del
+--      12/11 in sql/schema_riferimento.sql), non collegata a nessun trigger e non chiamabile come RPC.
+--      Solo pulizia: non cambia nulla per nessuno. Comparsa nella ricognizione del 23/11.
 --
 -- PRIMA DI ESEGUIRE: lancia da sola la query RICOGNIZIONE qui sotto (sola lettura) e mandami il risultato.
 -- Elenca le funzioni di public che anon può chiamare e le tabelle/viste che anon può leggere. Attesi:
 --   funzioni: app_release, change_password, change_team_name, change_username, get_snapshot, league_context,
---             login, login_bundle, login_with_token, logout, save_lineup, token_bundle
+--             login, login_bundle, login_with_token, logout, save_lineup, token_bundle,
+--             update_updated_at_column (verificato il 23/11)
 --   tabelle:  cron_runs, fanta_teams, lineup_players, matchups, nba_games, nba_players, player_injuries,
 --             rosters, v_standings
 -- Se compare altro, non eseguire la migrazione: ne parliamo.
@@ -67,6 +71,10 @@ drop function if exists public.login_with_token(text);
 -- 3. login solo dall'interno ----------------------------------------------------------------------------
 
 revoke all on function public.login(text, text, boolean) from public, anon, authenticated;
+
+-- 4. Pulizia: vecchia funzione da trigger, inutilizzata --------------------------------------------------
+
+revoke all on function public.update_updated_at_column() from public, anon, authenticated;
 
 commit;
 notify pgrst, 'reload schema';

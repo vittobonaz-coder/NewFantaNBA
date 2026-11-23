@@ -309,6 +309,6 @@ CREATE TABLE public.standings_adjustments (
 --   fanta_teams(id, name), cancellate le policy "lettura dati di lega". RLS sempre attiva.
 --   I dati di lega arrivano solo dalle RPC (SECURITY DEFINER).
 --   login_with_token cancellata. login: nessun permesso per anon/authenticated (solo service_role);
---   la usa login_bundle al suo interno.
+--   la usa login_bundle al suo interno. update_updated_at_column(): tolto l'EXECUTE ad anon (pulizia).
 --   RPC chiamabili con la chiave pubblicabile: app_release, change_password, change_team_name,
 --   change_username, get_snapshot, league_context, login_bundle, logout, save_lineup, token_bundle.
