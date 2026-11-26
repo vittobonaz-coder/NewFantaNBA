@@ -6,6 +6,9 @@
 -- La vista v_standings è in sql/v_standings.sql.
 -- Da aggiornare ogni volta che una migrazione in sql/ cambia tabelle o colonne.
 -- Aggiornato il 14/11/2026 dopo le migrazioni A, B e C della Fase 1 (stato attuale in fondo al file).
+-- CREATE TABLE allineate all'export di Supabase del 26/11/2026: tutte le 17 tabelle di public, comprese
+-- quelle delle Fasi 2, 5 e 6. A quella data la migrazione 2026-11_fase6_app_release_macos.sql
+-- NON risulta eseguita (app_release accetta solo android e windows).
 
 CREATE TABLE public.profiles (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -142,6 +145,41 @@ CREATE TABLE public.standings_adjustments (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT standings_adjustments_pkey PRIMARY KEY (id),
   CONSTRAINT standings_adjustments_fanta_team_id_fkey FOREIGN KEY (fanta_team_id) REFERENCES public.fanta_teams(id)
+);
+CREATE TABLE public.edit_override (  -- Fase 2: deroga ai cambi, al massimo una riga
+  id boolean NOT NULL DEFAULT true CHECK (id),
+  gameweek integer NOT NULL,
+  until_at timestamp with time zone NOT NULL,
+  note text,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT edit_override_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.app_snapshot (  -- Fase 2: dati uguali per tutti, per parti con versione
+  part text NOT NULL CHECK (part = ANY (ARRAY['calendar'::text, 'standings'::text, 'injuries'::text, 'lineups'::text])),
+  version text NOT NULL,
+  data jsonb NOT NULL,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  checked_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT app_snapshot_pkey PRIMARY KEY (part)
+);
+CREATE TABLE public.app_release (  -- Fase 5: aggiornamenti dell'app installata, una riga per piattaforma
+  platform text NOT NULL CHECK (platform = ANY (ARRAY['android'::text, 'windows'::text])),
+  latest_version text NOT NULL CHECK (latest_version ~ '^\d+\.\d+\.\d+$'::text),
+  min_version text NOT NULL CHECK (min_version ~ '^\d+\.\d+\.\d+$'::text),
+  url text NOT NULL,
+  note text,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT app_release_pkey PRIMARY KEY (platform)
+);
+CREATE TABLE public.client_usage (  -- Fase 6: chi usa cosa, una riga per utente e client
+  user_id uuid NOT NULL,
+  client text NOT NULL CHECK (client ~ '^[a-z0-9-]{1,30}$'::text),
+  app_version text CHECK (app_version ~ '^\d+\.\d+\.\d+$'::text),
+  first_seen_at timestamp with time zone NOT NULL DEFAULT now(),
+  last_seen_at timestamp with time zone NOT NULL DEFAULT now(),
+  accessi integer NOT NULL DEFAULT 1,
+  CONSTRAINT client_usage_pkey PRIMARY KEY (user_id, client),
+  CONSTRAINT client_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 
 -- =====================================================================================================

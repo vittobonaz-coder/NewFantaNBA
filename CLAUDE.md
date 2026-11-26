@@ -15,7 +15,7 @@ App per gestire un campionato privato di fantabasket NBA: una decina di squadre 
 - **Cache locale:** JSON in `data/`. Si riscaricano solo se dopo il download è girato un cron (tabella `cron_runs`). `data/sync_meta.json` e `*_state.json` non sono versionati.
 - **Cron:** `cron_test_script.py` gira su GitHub Actions (`.github/workflows/cron-test.yml`), lanciato da pg_cron di Supabase. Scrive punteggi, partite NBA, infortuni e rollover delle giornate.
 - **Script di amministrazione locali:** `setup_fanta_championship.py`, `swap_players.py`, `reset_pre_setup.py`, `backfill_lineups.py`, `generate_avg_excel.py`, `download_*`.
-- **Database:** schema di riferimento in `sql/schema_riferimento.sql`; migrazioni in `sql/`.
+- **Database:** schema di riferimento in `sql/schema_riferimento.sql` (importato qui sotto, quindi sempre nel contesto); vista classifica in `sql/v_standings.sql`; migrazioni in `sql/`. Prima di scrivere codice o SQL che tocca il database, verifica tabelle, colonne, vincoli, RLS e RPC nello schema.
 
 ## Lavoro in corso
 
@@ -47,3 +47,7 @@ Migrazione ad **app nativa con `flet build`**. Android e Windows sono entrambe p
   - Nei documenti e nelle procedure che devo seguire io (es. `tools/README_release.md`), per ogni passaggio scrivi: cosa fa, perché serve, cosa vedrò, cosa fare se va storto. Per i comandi spiega le parti principali.
   - Quando crei file nuovi, aggiungi una breve spiegazione di a cosa servono e come si collegano agli altri (nel documento della fase o in un README vicino).
   - Prima di chiedermi una decisione, spiega le opzioni con esempi concreti e conseguenze pratiche, non solo in gergo.
+
+## Schema del database (sempre nel contesto)
+
+@sql/schema_riferimento.sql

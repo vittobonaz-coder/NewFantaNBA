@@ -35,8 +35,9 @@ LAST_PROFILE_KEY = "fantanba.last_profile"  # Ultimo accesso riuscito (solo app 
 REFRESH_AFTER = timedelta(minutes=5)        # Al ritorno in primo piano si aggiorna se i dati sono più vecchi
 BACK_EXIT_WINDOW = 3.0                      # Secondi per il secondo Indietro con modifiche non salvate
 DESKTOP_PLATFORMS = (ft.PagePlatform.WINDOWS, ft.PagePlatform.MACOS, ft.PagePlatform.LINUX)
-APP_PLATFORMS = {ft.PagePlatform.ANDROID: "Android", ft.PagePlatform.WINDOWS: "Windows",  # Sistemi con l'app
-                 ft.PagePlatform.MACOS: "Mac"}
+# Sistemi con l'app pubblicata. Mac (ft.PagePlatform.MACOS: "Mac") da aggiungere quando esce il rilascio con
+# l'app per Mac: prima l'invito porterebbe a una release senza il file per Mac.
+APP_PLATFORMS = {ft.PagePlatform.ANDROID: "Android", ft.PagePlatform.WINDOWS: "Windows"}
 RELEASES_URL = "https://github.com/vittobonaz-coder/NewFantaNBA/releases/latest"  # Download e istruzioni
 
 if not flet_fix.applica():  # Patch veloci e niente aggiornamento automatico (solo Flet 0.82)
