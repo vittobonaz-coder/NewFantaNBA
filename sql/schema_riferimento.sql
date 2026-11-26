@@ -350,3 +350,39 @@ CREATE TABLE public.client_usage (  -- Fase 6: chi usa cosa, una riga per utente
 --   la usa login_bundle al suo interno. update_updated_at_column(): tolto l'EXECUTE ad anon (pulizia).
 --   RPC chiamabili con la chiave pubblicabile: app_release, change_password, change_team_name,
 --   change_username, get_snapshot, league_context, login_bundle, logout, save_lineup, token_bundle.
+
+
+-- =====================================================================================================
+-- MERCATO (migrazione scritta il 26/11/2026; da eseguire: parte 1, poi carica_giocatori.py, poi parte 2)
+-- =====================================================================================================
+--
+-- sql/2026-11_mercato.sql
+--   nba_players: + espn_id text (dalla mappa NBA->ESPN), + search_name text (nomi.normalize_name, indicizzato).
+--     Con carica_giocatori.py contiene TUTTI i giocatori NBA (circa 526), non solo quelli nei roster.
+--   CREATE TABLE public.market_windows (           -- una finestra ogni 2 giornate (6, 8, ..., 22)
+--     gameweek integer PRIMARY KEY,                -- chiude alla fine di questa giornata
+--     closes_at timestamptz NOT NULL,              -- 19:00 di Roma dell'ultimo giorno
+--     first_gameweek integer NOT NULL,             -- prima giornata con i nuovi giocatori (gameweek + 1)
+--     closed_at timestamptz,                       -- esecuzione degli scambi (null = da eseguire)
+--     result jsonb                                 -- ordine usato e scambi eseguiti
+--   );
+--   CREATE TABLE public.market_offers (            -- offerte: id = ordine di inserimento = priorità
+--     id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--     window_gw integer NOT NULL REFERENCES market_windows(gameweek),
+--     fanta_team_id uuid NOT NULL REFERENCES fanta_teams(id) ON DELETE CASCADE,
+--     out_player_id integer NOT NULL REFERENCES nba_players(id),
+--     in_player_id integer NOT NULL REFERENCES nba_players(id),
+--     status text NOT NULL DEFAULT 'attiva' CHECK (status IN ('attiva','annullata','eseguita','non_eseguita')),
+--     note text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
+--   );
+--   market_offers_attiva_key UNIQUE (window_gw, fanta_team_id, out_player_id, in_player_id) WHERE status = 'attiva'
+--   Entrambe con RLS e nessun permesso per anon/authenticated (offerte segrete).
+--   private: user_team, market_roles_ok, market_open_window, market_state, market_plan (anteprima, legge le
+--            offerte di tutti), market_close (esegue in una transazione), market_close_due (per pg_cron).
+--   RPC (SECURITY DEFINER, search_path vuoto):
+--     market_state(p_token)                                   anon, authenticated
+--     market_offer(p_token, p_out_player, p_in_name)          anon, authenticated
+--     market_cancel(p_token, p_offer_id)                      anon, authenticated
+--     market_close(p_gameweek)                                solo service_role (esecuzione manuale)
+--   pg_cron: job fanta-mercato, '0 17-22 * * 2' -> select private.market_close_due()
+--     (esegue la finestra scaduta solo se il cron daily di oggi è riuscito; i run successivi non fanno nulla).

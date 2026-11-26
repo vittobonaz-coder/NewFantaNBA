@@ -25,7 +25,7 @@ DEST = ROOT / "app_src"
 
 # Moduli dell'app nativa (nativa.py e tutto ciò che importa) e asset (icona, foto, regolamento)
 APP_MODULES = ["nativa.py", "app.py", "app_paths.py", "ui_court.py", "fanta_obj.py", "league_cache.py",
-               "supabase_rest.py", "time_manager.py", "flet_fix.py", "foto.py", "aggiornamenti.py",
+               "supabase_rest.py", "time_manager.py", "nomi.py", "flet_fix.py", "foto.py", "aggiornamenti.py",
                "versione.py"]
 ASSET_FILES = ["icon.png", "avatar_placeholder.png", "rules.json"]
 ASSET_DIRS = ["players"]

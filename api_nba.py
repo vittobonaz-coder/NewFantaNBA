@@ -1,7 +1,6 @@
 import json
 import os
 import time
-import unicodedata
 import re
 import pandas as pd
 import requests
@@ -10,25 +9,12 @@ from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import commonallplayers
 from time_manager import NBA_TZ
+from nomi import normalize_name  # spostata in nomi.py (la usa anche l'app); resta importabile da qui
 
 
 # Sigle NBA ufficiali (nba_players.nba_team) che su ESPN sono diverse
 NBA_TO_ESPN_TEAM = {"GSW": "GS", "NOP": "NO", "NYK": "NY", "SAS": "SA", "UTA": "UTAH", "WAS": "WSH"}
 ESPN_TO_NBA_TEAM = {espn: nba for nba, espn in NBA_TO_ESPN_TEAM.items()}
-
-
-def normalize_name(name):
-    """Nome confrontabile tra NBA ed ESPN (es. 'Luka Dončić Jr.' -> 'luka doncic')."""
-    # Rimuove accenti e diacritici (es. Dončić -> Doncic)
-    name = unicodedata.normalize('NFKD', name).encode('ASCII', 'ignore').decode('utf-8')
-    name = name.lower()
-    # Rimuove apostrofi, punti e trattini
-    name = name.replace(".", "").replace("'", "").replace("-", " ")
-    # Rimuove suffissi comuni
-    name = re.sub(r'\b(jr|sr|ii|iii|iv)\b', '', name)
-    # Rimuove doppi spazi causati dalle pulizie precedenti
-    name = " ".join(name.split())
-    return name
 
 
 class NbaDataManager:
