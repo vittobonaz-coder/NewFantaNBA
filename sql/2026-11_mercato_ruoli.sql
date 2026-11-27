@@ -49,8 +49,8 @@ $$;
 commit;
 
 -- VERIFICA (atteso: {G,A}  {A,C}  {C}  {G}  {})
--- select private.position_codes('G/A'), private.position_codes('Forward-Center'), private.position_codes('C'),
---        private.position_codes('Guard'), private.position_codes('');
+-- select private.position_codes('G/A') as g_a, private.position_codes('Forward-Center') as forward_center,
+--        private.position_codes('C') as c, private.position_codes('Guard') as guard, private.position_codes('') as vuoto;
 -- VERIFICA (atteso: nessuna riga, cioè ogni roster attuale soddisfa già il vincolo)
 -- select t.name from public.fanta_teams t
 -- where exists (select 1 from public.rosters r where r.fanta_team_id = t.id)
