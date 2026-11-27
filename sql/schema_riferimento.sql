@@ -377,7 +377,7 @@ CREATE TABLE public.client_usage (  -- Fase 6: chi usa cosa, una riga per utente
 --   );
 --   market_offers_attiva_key UNIQUE (window_gw, fanta_team_id, out_player_id, in_player_id) WHERE status = 'attiva'
 --   Entrambe con RLS e nessun permesso per anon/authenticated (offerte segrete).
---   private: user_team, market_roles_ok, market_open_window, market_state, market_plan (anteprima, legge le
+--   private: user_team, position_codes (ruoli "Guard-Forward" o "G/A" -> {G,A}), market_roles_ok, market_open_window, market_state, market_plan (anteprima, legge le
 --            offerte di tutti), market_close (esegue in una transazione), market_close_due (per pg_cron).
 --   RPC (SECURITY DEFINER, search_path vuoto):
 --     market_state(p_token)                                   anon, authenticated

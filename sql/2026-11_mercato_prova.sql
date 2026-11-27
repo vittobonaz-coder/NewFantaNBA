@@ -1,5 +1,6 @@
 -- Prova del mercato sui dati veri SENZA modificarli.
--- Da eseguire nello SQL Editor di Supabase dopo la parte 1 di sql/2026-11_mercato.sql e carica_giocatori.py,
+-- Da eseguire nello SQL Editor di Supabase dopo la parte 1 di sql/2026-11_mercato.sql, sql/2026-11_mercato_ruoli.sql
+-- e carica_giocatori.py,
 -- PRIMA che qualcuno faccia offerte vere (il piano mostra le offerte di tutti).
 --
 -- Come funziona: tutto sta in un unico blocco DO che alla fine solleva apposta un errore. L'errore annulla
@@ -31,10 +32,10 @@ begin
         from public.nba_players p
         where p.espn_id is not null
           and not exists (select 1 from public.rosters r where r.nba_player_id = p.id)
-          and p.position ilike '%guard%'
+          and 'G' = any(private.position_codes(p.position))
     ),
     primo as (
-        select r.fanta_team_id, min(r.nba_player_id) filter (where p.position ilike '%guard%') as out_id
+        select r.fanta_team_id, min(r.nba_player_id) filter (where 'G' = any(private.position_codes(p.position))) as out_id
         from public.rosters r join public.nba_players p on p.id = r.nba_player_id
         group by r.fanta_team_id
     )

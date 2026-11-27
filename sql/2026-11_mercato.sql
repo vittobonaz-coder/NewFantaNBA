@@ -13,7 +13,7 @@
 --   - alla chiusura si procede dall'ultimo al primo di v_standings (stesso ordine della classifica):
 --     ogni squadra ottiene la sua prima offerta (in ordine di inserimento) ancora realizzabile, al massimo una;
 --   - realizzabile = free agent non ancora preso, e dopo lo scambio il roster ha almeno una guardia, un'ala
---     e un centro, tre giocatori diversi (un "Guard-Forward" vale come guardia o come ala, non tutte e due);
+--     e un centro, tre giocatori diversi (un "Guard-Forward" o "G/A" vale come guardia o come ala, non tutte e due);
 --   - le offerte restano segrete: anon e authenticated non leggono le tabelle; dalle RPC ognuno vede solo
 --     le proprie, e dopo la chiusura gli scambi eseguiti di tutti.
 --
@@ -92,6 +92,20 @@ as $$
 $$;
 
 -- Dopo lo scambio (p_out esce, p_in entra) il roster ha una guardia, un'ala e un centro, tre giocatori diversi
+-- Ruoli di un giocatore come codici dell'app: 'Forward-Guard' -> {A,G}, 'G/A' -> {G,A}, 'Center' -> {C}.
+-- Nel database convivono i due formati (vedi Player.get_clean_position in fanta_obj.py, stessa traduzione).
+create or replace function private.position_codes(p_position text)
+returns text[]
+language sql
+immutable
+set search_path = ''
+as $$
+    select coalesce(array_agg(case trim(x) when 'Guard' then 'G' when 'Forward' then 'A' when 'Center' then 'C'
+                                           else trim(x) end), '{}')
+    from regexp_split_to_table(replace(coalesce(p_position, ''), '-', '/'), '/') as x
+    where trim(x) <> '';
+$$;
+
 create or replace function private.market_roles_ok(p_team uuid, p_out integer, p_in integer)
 returns boolean
 language sql
@@ -100,7 +114,7 @@ security definer
 set search_path = ''
 as $$
     with r as (
-        select p.id, coalesce(p.position, '') as position
+        select p.id, private.position_codes(p.position) as codes
         from public.nba_players p
         where p.id in (select ro.nba_player_id from public.rosters ro
                        where ro.fanta_team_id = p_team and ro.nba_player_id <> p_out)
@@ -109,7 +123,7 @@ as $$
     select exists (
         select 1 from r g, r a, r c
         where g.id <> a.id and g.id <> c.id and a.id <> c.id
-          and g.position ilike '%guard%' and a.position ilike '%forward%' and c.position ilike '%center%'
+          and 'G' = any(g.codes) and 'A' = any(a.codes) and 'C' = any(c.codes)
     );
 $$;
 
@@ -529,7 +543,7 @@ notify pgrst, 'reload schema';
 -- drop function if exists public.market_close(integer), private.market_close_due(), private.market_close(integer),
 --     private.market_plan(integer), public.market_cancel(text, bigint), public.market_offer(text, integer, text),
 --     public.market_state(text), private.market_state(uuid), private.market_open_window(timestamptz),
---     private.market_roles_ok(uuid, integer, integer), private.user_team(uuid);
+--     private.market_roles_ok(uuid, integer, integer), private.position_codes(text), private.user_team(uuid);
 -- drop table if exists public.market_offers, public.market_windows;
 -- alter table public.nba_players drop column if exists search_name, drop column if exists espn_id;
 -- Attenzione: gli scambi già eseguiti restano nei roster e nelle formazioni.
