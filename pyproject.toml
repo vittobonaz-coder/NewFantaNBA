@@ -3,7 +3,7 @@
 # Prima del build: python tools/prepara_build.py (copia in app_src/ solo i file ammessi: mai .env né data/).
 [project]
 name = "bonkest"                # nome dei file costruiti: bonkest.apk, bonkest.exe
-version = "1.0.0"                # versione = tag del rilascio vX.Y.Z (controllato da prepara_build.py)
+version = "1.0.1"                # versione = tag del rilascio vX.Y.Z (controllato da prepara_build.py)
 description = "Bonkest: fantabasket NBA privato"
 requires-python = ">=3.12"
 # httpx arriva con flet; tzdata serve a zoneinfo (il Python incorporato non ha i fusi orari)
@@ -17,7 +17,7 @@ org = "it.bonkest"             # identificativo Android: it.bonkest.bonkest (non
 product = "Bonkest"            # nome sotto l'icona e della finestra
 company = "Bonkest"            # cartella dati su Windows: %APPDATA%\Bonkest\Bonkest
 copyright = "Bonkest"
-build_number = 10000           # X*10000 + Y*100 + Z: Android rifiuta numeri più bassi (prepara_build.py)
+build_number = 10001           # X*10000 + Y*100 + Z: Android rifiuta numeri più bassi (prepara_build.py)
 
 [tool.flet.app]
 path = "app_src"               # preparata da tools/prepara_build.py, non versionata
