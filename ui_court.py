@@ -13,6 +13,8 @@ import league_cache
 import supabase_rest as rest
 import versione
 from supabase_rest import RpcError
+from mercato import MarketService
+from ui_mercato import MarketView
 
 
 ROLE_CONFIGS = {
@@ -1143,6 +1145,27 @@ class StandingsView(ft.Column):
         ]
 
 
+class ChampionshipView(ft.Tabs):
+    """Tab Campionato: Classifica e Mercato. Il mercato scarica i suoi dati solo alla prima apertura."""
+    def __init__(self, market_view: MarketView):
+        super().__init__(content=None, length=2)
+        self.expand = True
+        self.selected_index = 0
+        self.market_view = market_view
+        self.on_change = self.handle_change
+        self.content = ft.Column(expand=True, controls=[
+            ft.TabBar(tabs=[ft.Tab(label="Classifica", icon=ft.Icons.EMOJI_EVENTS),
+                            ft.Tab(label="Mercato", icon=ft.Icons.SWAP_HORIZ)],
+                      label_color=ft.Colors.ORANGE, unselected_label_color=ft.Colors.GREY,
+                      indicator_color=ft.Colors.ORANGE),
+            ft.TabBarView(expand=True, controls=[StandingsView(), market_view]),
+        ])
+
+    async def handle_change(self, e):
+        if int(e.data) == 1:
+            await self.market_view.load()
+
+
 class ProfileView(ft.Stack):
     """
     Gestione Profilo: cambio di username, nome squadra e password, confermati dalla password attuale.
@@ -1509,7 +1532,10 @@ class MainDashboard(ft.Tabs):
         calendar_gw = current_gw if current_gw is not None else edit_gw  # Pre-campionato: la prima giornata
         self.lazy_builders = {
             2: lambda: CalendarView(calendar_gw, arrows=desktop),
-            3: StandingsView,
+            3: lambda: ChampionshipView(MarketView(
+                MarketService(user["token"], rest.rpc) if user.get("token") else None,
+                # Chi si può cedere: la rosa della formazione più recente (stessi giocatori in tutte le giornate)
+                lambda: (edit_team or current_team).players if (edit_team or current_team) else [])),
             4: lambda: SettingsView(user, team_row, on_team_renamed=self.team_view.rename_team, on_logout=on_logout),
         }
         self.lazy_containers = {i: ft.Container() for i in self.lazy_builders}

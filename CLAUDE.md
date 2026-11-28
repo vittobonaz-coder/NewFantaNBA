@@ -7,6 +7,7 @@ App per gestire un campionato privato di fantabasket NBA: una decina di squadre 
 - **Interfaccia:** Flet 0.82.
   - `app.py`: avvio, login, sincronizzazione.
   - `ui_court.py`: interfaccia.
+  - `mercato.py` (dati e RPC del mercato, testabile senza UI) e `ui_mercato.py` (schermata Mercato, sotto-tab di Campionato).
   - `fanta_obj.py`: modelli (Team, Player).
   - `time_manager.py`: giornate e scadenze dei cambi.
 - **Versione web:** `main.py` (FastAPI + uvicorn) è il punto d'ingresso su Render, piano Free con 0,1 CPU, che si addormenta dopo 15 minuti. Render pubblica da `main`.
